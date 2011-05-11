@@ -21,23 +21,23 @@ package bitset
 
 // BitSet internal details 
 type BitSet struct {
-	cap uint
+	capacity uint
 	set      []uint64
 }
 
 // Make a BitSet with an upper limit on size.
-func New(cap uint) *BitSet {
-	return &BitSet{cap, make([]uint64, (cap+(64-1))/64)}
+func New(capacity uint) *BitSet {
+	return &BitSet{capacity, make([]uint64, (capacity+(64-1))/64)}
 }
 
 // Query maximum size of a bit set
 func (b *BitSet) Cap() uint {
-	return b.cap
+	return b.capacity
 }
 
 /// Test whether bit i is set. 
 func (b *BitSet) Bit(i uint) bool {
-	if b != nil && i < b.cap {
+	if b != nil && i < b.capacity {
 		return ((b.set[i/64] & (1 << (i % 64))) != 0)
 	}
 	return false
@@ -45,14 +45,14 @@ func (b *BitSet) Bit(i uint) bool {
 
 // Set bit i to 1
 func (b *BitSet) SetBit(i uint) {
-	if b != nil && i < b.cap {
+	if b != nil && i < b.capacity {
 		b.set[i/64] |= (1 << (i % 64))
 	}
 }
 
 // Clear bit i to 0
 func (b *BitSet) ClearBit(i uint) {
-	if b != nil && i < b.cap {
+	if b != nil && i < b.capacity {
 		b.set[i/64] &^= 1 << (i % 64)
 	}
 }
