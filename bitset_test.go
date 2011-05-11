@@ -88,7 +88,7 @@ func TestOutOfBoundsOK(t *testing.T) {
 	v.SetBit(66)   
 }
 
-func TestCapt(t *testing.T) {
+func TestCap(t *testing.T) {
 	v := New(1000)
 	if v.Cap() != 1000 {
 		t.Errorf("Cap should be 1000, but is %d.", v.Cap())
