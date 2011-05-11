@@ -23,10 +23,6 @@
 */
 package bitset
 
-// for MaxUint64
-import (
-	"math"
-)
 
 // BitSets are arrays of uint64. 
 type BitSet []uint64
@@ -49,8 +45,8 @@ func (set BitSet) SetBit(i uint) {
 }
 
 // Clear bit i to 0
-func (set BitSet) ClearBit( i uint) {
-	set[i/64]&=(1<<(i%64))^math.MaxUint64
+func (set BitSet) ClearBit(i uint) {
+	set[i/64] &^= 1 << (i % 64)
 }
 
 // Clear entire BitSet
