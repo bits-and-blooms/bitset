@@ -94,3 +94,24 @@ func TestMaxSizet(t *testing.T) {
 		t.Errorf("MaxSize should be 1000, but is %d.", v.MaxSize())
 	}
 }
+
+func TestSize(t *testing.T) {
+	tot := uint(64*4+11) // just some multi unit64 number
+	v := New(tot)
+	checkLast := true
+	for i := uint(0); i < tot; i++ {
+		sz := v.Size()
+		if sz != i {
+			t.Errorf("Size reported as %d, but it should be %d", sz, i)
+			checkLast = false
+			break
+		} 
+		v.SetBit(i)
+	}
+	if checkLast {
+		sz := v.Size()
+		if sz != tot {
+			t.Errorf("After all bits set, size reported as %d, but it should be %d", sz, tot)   
+		}
+	}
+}
