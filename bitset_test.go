@@ -88,28 +88,28 @@ func TestOutOfBoundsOK(t *testing.T) {
 	v.SetBit(66)   
 }
 
-func TestMaxSizet(t *testing.T) {
+func TestCapt(t *testing.T) {
 	v := New(1000)
-	if v.MaxSize() != 1000 {
-		t.Errorf("MaxSize should be 1000, but is %d.", v.MaxSize())
+	if v.Cap() != 1000 {
+		t.Errorf("Cap should be 1000, but is %d.", v.Cap())
 	}
 }
 
-func TestSize(t *testing.T) {
+func TestCount(t *testing.T) {
 	tot := uint(64*4+11) // just some multi unit64 number
 	v := New(tot)
 	checkLast := true
 	for i := uint(0); i < tot; i++ {
-		sz := v.Size()
+		sz := v.Count()
 		if sz != i {
-			t.Errorf("Size reported as %d, but it should be %d", sz, i)
+			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			checkLast = false
 			break
 		} 
 		v.SetBit(i)
 	}
 	if checkLast {
-		sz := v.Size()
+		sz := v.Count()
 		if sz != tot {
 			t.Errorf("After all bits set, size reported as %d, but it should be %d", sz, tot)   
 		}
@@ -117,13 +117,13 @@ func TestSize(t *testing.T) {
 }
 
 // test setting every 3rd bit, just in case something odd is happening
-func TestSize2(t *testing.T) {
+func TestCount2(t *testing.T) {
 	tot := uint(64*4+11) // just some multi unit64 number
 	v := New(tot)
 	for i := uint(0); i < tot; i+=3 {
-		sz := v.Size()
+		sz := v.Count()
 		if sz != i/3 {
-			t.Errorf("Size reported as %d, but it should be %d", sz, i)
+			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			break
 		} 
 		v.SetBit(i)

@@ -21,23 +21,23 @@ package bitset
 
 // BitSet internal details 
 type BitSet struct {
-	max_size uint
+	cap uint
 	set      []uint64
 }
 
 // Make a BitSet with an upper limit on size.
-func New(max_size uint) *BitSet {
-	return &BitSet{max_size, make([]uint64, (max_size+(64-1))/64)}
+func New(cap uint) *BitSet {
+	return &BitSet{cap, make([]uint64, (cap+(64-1))/64)}
 }
 
 // Query maximum size of a bit set
-func (b *BitSet) MaxSize() uint {
-	return b.max_size
+func (b *BitSet) Cap() uint {
+	return b.cap
 }
 
 /// Test whether bit i is set. 
 func (b *BitSet) Bit(i uint) bool {
-	if b != nil && i < b.max_size {
+	if b != nil && i < b.cap {
 		return ((b.set[i/64] & (1 << (i % 64))) != 0)
 	}
 	return false
@@ -45,14 +45,14 @@ func (b *BitSet) Bit(i uint) bool {
 
 // Set bit i to 1
 func (b *BitSet) SetBit(i uint) {
-	if b != nil && i < b.max_size {
+	if b != nil && i < b.cap {
 		b.set[i/64] |= (1 << (i % 64))
 	}
 }
 
 // Clear bit i to 0
 func (b *BitSet) ClearBit(i uint) {
-	if b != nil && i < b.max_size {
+	if b != nil && i < b.cap {
 		b.set[i/64] &^= 1 << (i % 64)
 	}
 }
@@ -83,7 +83,7 @@ func popcount_2(x uint64) uint64 {
 }
 
 // Size (number of set bits)
-func (b *BitSet) Size() uint {
+func (b *BitSet) Count() uint {
    	if b != nil {
 		cnt := uint64(0)
 		for i, _ := range b.set {
