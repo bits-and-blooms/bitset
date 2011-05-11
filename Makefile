@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-TARG=bloom
+TARG=bitset
 GOFILES=\
 	bitset.go
 
