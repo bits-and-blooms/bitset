@@ -115,3 +115,17 @@ func TestSize(t *testing.T) {
 		}
 	}
 }
+
+// test setting every 3rd bit, just in case something odd is happening
+func TestSize2(t *testing.T) {
+	tot := uint(64*4+11) // just some multi unit64 number
+	v := New(tot)
+	for i := uint(0); i < tot; i+=3 {
+		sz := v.Size()
+		if sz != i/3 {
+			t.Errorf("Size reported as %d, but it should be %d", sz, i)
+			break
+		} 
+		v.SetBit(i)
+	}
+}
