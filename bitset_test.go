@@ -10,7 +10,7 @@ import (
 )
 
 func TestbBitSetNew(t *testing.T) {
-	v := New(10000)
+	v := New(16)
 	if v.Bit(0) != false {
 		t.Errorf("Unable to make a bit set and read its 0th value.")
 	}
@@ -71,8 +71,8 @@ func TestClear(t *testing.T) {
 func TestOutOfBoundsBad(t *testing.T) {
 	v := New(64)
 	defer func() {
-	        if r := recover(); r != nil {
-	            t.Error("Out of index error within the next set of bits should not have caused a panic")
+	        if r := recover(); r == nil {
+	            t.Error("Long distance out of index error should have caused a panic")
 	        }
 	    }()
 	v.SetBit(1000)
@@ -81,8 +81,8 @@ func TestOutOfBoundsBad(t *testing.T) {
 func TestOutOfBoundsOK(t *testing.T) {
 	v := New(65)
 	defer func() {
-	        if r := recover(); r != nil {
-	            t.Error("Out of index error within the next set of bits should not caused a panic")
+	        if r := recover(); r == nil {
+	            t.Error("Local out of index error should have caused a panic")
 	        }
 	    }()
 	v.SetBit(66)   
@@ -128,4 +128,59 @@ func TestCount2(t *testing.T) {
 		} 
 		v.SetBit(i)
 	}
+}
+
+// nil tests
+
+func TestNullBit(t *testing.T) {
+	var v *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Checking bit of null reference should have caused a panic")
+	        }
+	    }()
+	v.Bit(66)   
+}
+
+func TestNullSetBit(t *testing.T) {
+	var v *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Setting bit of null reference should have caused a panic")
+	        }
+	    }()
+	v.SetBit(66)   
+} 
+
+func TestNullClearBit(t *testing.T) {
+	var v *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Clearning bit of null reference should have caused a panic")
+	        }
+	    }()
+	v.ClearBit(66)   
+}
+
+func TestNullClear(t *testing.T) {
+	var v *BitSet = nil
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("Clearing null reference should not have caused a panic")
+	        }
+	    }()
+	v.Clear()   
+} 
+
+func TestNullCount(t *testing.T) {
+	var v *BitSet = nil
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("Counting null reference should not have caused a panic")
+	        }
+	    }() 
+	cnt := v.Count()
+	if cnt != 0 {
+	   t.Errorf("Count reported as %d, but it should be 0", cnt)
+	}  
 }

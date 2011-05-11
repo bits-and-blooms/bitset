@@ -19,6 +19,10 @@
 */
 package bitset
 
+import (
+	"fmt"
+)
+
 // BitSet internal details 
 type BitSet struct {
 	capacity uint
@@ -37,24 +41,26 @@ func (b *BitSet) Cap() uint {
 
 /// Test whether bit i is set. 
 func (b *BitSet) Bit(i uint) bool {
-	if b != nil && i < b.capacity {
-		return ((b.set[i>>6] & (1 << (i % 64))) != 0)
+	if i >= b.capacity {
+		panic(fmt.Sprintf("index out of range: %v", i))
 	}
-	return false
+	return ((b.set[i>>6] & (1 << (i % 64))) != 0)
 }
 
 // Set bit i to 1
 func (b *BitSet) SetBit(i uint) {
-	if b != nil && i < b.capacity {
-		b.set[i>>6] |= (1 << (i % 64))
+	if i >= b.capacity {
+		panic(fmt.Sprintf("index out of range: %v", i))
 	}
+	b.set[i>>6] |= (1 << (i % 64))
 }
 
 // Clear bit i to 0
 func (b *BitSet) ClearBit(i uint) {
-	if b != nil && i < b.capacity {
-		b.set[i>>6] &^= 1 << (i % 64)
-	}
+	if i >= b.capacity {
+		panic(fmt.Sprintf("index out of range: %v", i))
+	}	
+	b.set[i>>6] &^= 1 << (i % 64)
 }
 
 // Clear entire BitSet
