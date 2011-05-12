@@ -13,9 +13,12 @@
 
 	b := bitset.New(64000)
 	b.SetBit(1000)
+	b.SetBit(999)
 	if b.Bit(1000) {
 		b.ClearBit(1000)
 	}
+	b.Clear()
+	
 */
 package bitset
 
@@ -31,7 +34,7 @@ type BitSet struct {
 
 // Make a BitSet with an upper limit on size.
 func New(capacity uint) *BitSet {
-	return &BitSet{capacity, make([]uint64, (capacity+(64-1))/64)}
+	return &BitSet{capacity, make([]uint64, (capacity+(64-1))>>6)}
 }
 
 // Query maximum size of a bit set
@@ -44,7 +47,7 @@ func (b *BitSet) Bit(i uint) bool {
 	if i >= b.capacity {
 		panic(fmt.Sprintf("index out of range: %v", i))
 	}
-	return ((b.set[i>>6] & (1 << (i % 64))) != 0)
+	return ((b.set[i>>6] & (1 << (i & (64-1)))) != 0)
 }
 
 // Set bit i to 1
@@ -52,7 +55,7 @@ func (b *BitSet) SetBit(i uint) {
 	if i >= b.capacity {
 		panic(fmt.Sprintf("index out of range: %v", i))
 	}
-	b.set[i>>6] |= (1 << (i % 64))
+	b.set[i>>6] |= (1 << (i & (64-1)))
 }
 
 // Clear bit i to 0
@@ -60,7 +63,7 @@ func (b *BitSet) ClearBit(i uint) {
 	if i >= b.capacity {
 		panic(fmt.Sprintf("index out of range: %v", i))
 	}	
-	b.set[i>>6] &^= 1 << (i % 64)
+	b.set[i>>6] &^= 1 << (i & (64-1))
 }
 
 // Clear entire BitSet
@@ -88,7 +91,7 @@ func popcount_2(x uint64) uint64 {
     return x & 0x7f;
 }
 
-// Size (number of set bits)
+// Count (number of set bits)
 func (b *BitSet) Count() uint {
    	if b != nil {
 		cnt := uint64(0)

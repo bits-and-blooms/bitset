@@ -184,3 +184,13 @@ func TestNullCount(t *testing.T) {
 	   t.Errorf("Count reported as %d, but it should be 0", cnt)
 	}  
 }
+
+func TestMap(t *testing.T) {
+	attended := map[string] bool {
+	    "Ann": true,
+	    "Joe": true,
+	}
+	if there := attended["Ann"]; !there {
+		t.Errorf("John didn't come: %d", there)
+	}
+}
