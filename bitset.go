@@ -69,7 +69,7 @@ func (b *BitSet) ClearBit(i uint) {
 // Clear entire BitSet
 func (b *BitSet) Clear() {
 	if b != nil {
-		for i, _ := range b.set {
+		for i := range b.set {
 			b.set[i] = 0
 		}
 	}
@@ -95,8 +95,8 @@ func popcount_2(x uint64) uint64 {
 func (b *BitSet) Count() uint {
    	if b != nil {
 		cnt := uint64(0)
-		for i, _ := range b.set {
-			cnt += popcount_2(b.set[i])
+		for _, word := range b.set {
+			cnt += popcount_2(word)
 		}
 		return uint(cnt)
 	}
