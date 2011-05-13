@@ -96,6 +96,13 @@ func TestCap(t *testing.T) {
 	}
 }
 
+func TestLen(t *testing.T) {
+	v := New(1000)
+	if v.Len() != 1000 {
+		t.Errorf("Len should be 1000, but is %d.", v.Cap())
+	}
+}
+
 func TestCount(t *testing.T) {
 	tot := uint(64*4+11) // just some multi unit64 number
 	v := New(tot)
@@ -194,4 +201,26 @@ func TestMap(t *testing.T) {
 	if there := attended["Ann"]; !there {
 		t.Errorf("John didn't come: %d", there)
 	}
+}
+
+func TestEqu(t *testing.T) {
+	a := New(100)
+	b := New(99)
+	c := New(100)
+	if a.Equ(b) {
+        t.Error("Sets of different sizes should be not be equal")
+    }
+	if !a.Equ(c){
+        t.Error("Two empty sets of the same size should be equal")
+    }
+ 	a.SetBit(99)
+ 	c.SetBit(0)
+    if a.Equ(c){
+        t.Error("Two sets with differences should not be equal")
+    }
+	c.SetBit(99)
+ 	a.SetBit(0)
+    if !a.Equ(c){
+        t.Error("Two sets with the same bits set should be equal")
+    }
 }
