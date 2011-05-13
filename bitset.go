@@ -111,15 +111,21 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
-// Test two sets equivalence
-func (b *BitSet) Equ(c *BitSet) bool {
+// Test the equvalence of two BitSets. 
+// False if they are of different sizes, otherwise true
+// only if all the same bits are set
+func (b *BitSet) Equal(c *BitSet) bool {
 	if c == nil {
 		return false
 	}
 	if b.length != c.length {
 		return false
 	}
-	for p, v := range b.set {
+	for p, v := range b.set { 
+		// Note: this assumes that the extra bits will be
+		// the same. This is not _quite_ guaranteed except
+		// by convention. Is it worth special casing the
+		// last word?
 		if c.set[p] != v {
 			return false
 		}

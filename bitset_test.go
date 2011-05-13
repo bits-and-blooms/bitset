@@ -203,24 +203,24 @@ func TestMap(t *testing.T) {
 	}
 }
 
-func TestEqu(t *testing.T) {
+func TestEqual(t *testing.T) {
 	a := New(100)
 	b := New(99)
 	c := New(100)
-	if a.Equ(b) {
+	if a.Equal(b) {
         t.Error("Sets of different sizes should be not be equal")
     }
-	if !a.Equ(c){
+	if !a.Equal(c){
         t.Error("Two empty sets of the same size should be equal")
     }
  	a.SetBit(99)
  	c.SetBit(0)
-    if a.Equ(c){
+    if a.Equal(c){
         t.Error("Two sets with differences should not be equal")
     }
 	c.SetBit(99)
  	a.SetBit(0)
-    if !a.Equ(c){
+    if !a.Equal(c){
         t.Error("Two sets with the same bits set should be equal")
     }
 }
