@@ -32,6 +32,8 @@ type BitSet struct {
 	set      []uint64
 }
 
+type BitSetError string
+
 // Make a BitSet with an upper limit on capacity.
 func New(length uint) *BitSet {
 	return &BitSet{length, make([]uint64, (length+(64-1))>>6)}
@@ -43,11 +45,47 @@ func (b *BitSet) Cap() uint {
 	return b.length
 }
 
+// Word size of a bit set
+const WordSize = uint(64)
+
+// Query words used in a bit set
+func (b *BitSet) WordCount() uint {
+	return b.length / WordSize
+}
+
+// Is the length an exact multiple of word sizes?
+func (b *BitSet) isEven() bool {
+   return (b.length % WordSize) == 0
+}
+
+// Clone this BitSet
+func (b *BitSet) Clone() *BitSet {
+	c := New(b.length)
+	copy(c.set, b.set)
+	return c
+}
+// Copy this BitSet into a destination BitSet
+// Returning the size of the destination BitSet
+// like array copy
+func (b *BitSet) Copy(c *BitSet) (count uint) {
+	if c == nil {
+		return
+	}
+	copy(c.set, b.set)
+	count = c.length
+	if b.length < c.length {
+		count = b.length
+	}
+	return
+}
+
+
 // Query length of a bit set (which is the same as its capacity,
 // by analogy to len and cap functions on Arrays.
 func (b *BitSet) Len() uint {
 	return b.length
 } 
+
 
 /// Test whether bit i is set. 
 func (b *BitSet) Bit(i uint) bool {
@@ -133,5 +171,97 @@ func (b *BitSet) Equal(c *BitSet) bool {
 	return true
 }
 
+func checkBitSetsForNull(b1 *BitSet, b2 *BitSet) (e *BitSetError) {
+	if b1==nil || b2==nil { 
+		err := BitSetError("Null pointer")
+		return &err
+	}
+	return nil  
+}                 
+// call this only with non-nil parameters. 
+// ie, call checkBitSetsForNull first
+func swapToSmaller(b1 *BitSet, b2 *BitSet) (b3 *BitSet, b4 *BitSet) {
+	b3,b4 = b1,b2
+	if b1.length > b2.length {
+		b3,b4 = b2,b1
+	}
+	return  
+}
 
+// Difference of base set and other set
+// This is the BitSet equivalent of &^ (and not)
+// Sets can be of different capacities, but neither can be nil
+func (b1 *BitSet) Difference(b2 *BitSet) (b3 *BitSet, err *BitSetError) {
+	err = checkBitSetsForNull(b1, b2)
+	if err != nil {
+		return nil, err
+	}
+	b3 = b1.Clone()
+	szl := b2.WordCount()
+	for i ,word := range b1.set {
+		if uint(i) >= szl {
+			break
+		}
+		b3.set[i] = word &^ b2.set[i]
+	}
+	return
+}
 
+// Union of base set and other set
+// This is the BitSet equivalent of | (or)
+// Sets can be of different capacities, but neither can be nil
+func (b1 *BitSet) Union(b2 *BitSet) (b3 *BitSet, err *BitSetError) {
+	err = checkBitSetsForNull(b1, b2)
+	if err != nil {
+		return nil, err
+	}
+	b1,b2 = swapToSmaller(b1,b2)
+	// b2 is bigger, so clone it
+	b3 = b2.Clone()
+	szl := b1.WordCount()
+	for i ,word := range b1.set {
+		if uint(i) >= szl {
+			break
+		}
+		b3.set[i] = word | b2.set[i]
+	}
+	return
+}
+
+// Intersection of base set and other set
+// This is the BitSet equivalent of & (and)
+// Sets can be of different capacities, but neither can be nil
+func (b1 *BitSet) Intersection(b2 *BitSet) (b3 *BitSet, err *BitSetError) {
+	err = checkBitSetsForNull(b1, b2)
+	if err != nil {
+		return nil, err
+	}
+	b1,b2 = swapToSmaller(b1,b2)
+	// b1 is smaller; use its size: larger bits will be clear
+	b3 = New(b1.Cap())
+	for i ,word := range b1.set {
+		b3.set[i] = word & b2.set[i]
+	}
+	return
+}
+
+// SymmetricDifference of base set and other set
+// This is the BitSet equivalent of ^ (xor)
+// Sets can be of different capacities, but neither can be nil
+func (b1 *BitSet) SymmetricDifference(b2 *BitSet) (b3 *BitSet, err *BitSetError) {
+	err = checkBitSetsForNull(b1, b2)
+	if err != nil {
+		return nil, err
+	}
+	b1,b2 = swapToSmaller(b1,b2)
+	// b2 is bigger, so clone it
+	b3 = b2.Clone()
+	szl := b1.WordCount()
+	for i ,word := range b1.set {
+		if uint(i) >= szl {
+			break
+		}
+		b3.set[i] = word ^ b2.set[i]
+	}
+	return
+}

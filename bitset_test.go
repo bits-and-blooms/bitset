@@ -224,3 +224,262 @@ func TestEqual(t *testing.T) {
         t.Error("Two sets with the same bits set should be equal")
     }
 }
+
+
+// NOTE: These following tests rely on understanding the
+// the internal structure of bitsets. It's a little easier
+// to test that way.
+
+
+func TestDifferenceSimple (t *testing.T) {
+	a := New(64)
+	b := New(64)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	c,e := a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.set[0] != 0 {
+		t.Errorf("Set difference of exact sets should be 0, but was %x", c.set[0])
+	}
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0
+	c,e = a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
+		t.Error("Set difference of set with bits set less one all clear should be original set")
+	}
+	a.set[0] = 0
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	c,e = a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.set[0] != 0 {
+		t.Error("Set difference of set with no bits set less one with bits should be zero")
+	}
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0xffffffffffffffff
+	c,e = a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.set[0] != 0 {
+		t.Error("Set diff of set to all bits set should be zero")
+	}
+	a.set[0] = 0xffffffffffffffff
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	c,e = a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.set[0] != 0xf0f0f0f0f0f0f0f0 {
+		t.Error("Set diff from all bits should remove bits in 2nd set")
+	}	
+}
+
+func TestSetDifferenceDifferentSizes (t *testing.T) {
+	a := New(642)
+	b := New(1011)
+	c,e := a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.Count() != 0 {
+		t.Errorf("Set difference of empty sets should be empty.")
+	}
+	c,e = b.Difference(a)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.Count() != 0 {
+		t.Errorf("Set difference of empty sets should be empty.")
+	}
+	a.SetBit(450)
+	b.SetBit(999)
+	c,e = a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.Count() != 1 || !c.Bit(450) {
+		t.Errorf("Set difference a-b should be a, basically")
+	}
+	a.Clear()
+	b.Clear()
+	a.SetBit(450)
+	b.SetBit(450)
+	b.SetBit(999)
+	c,e = a.Difference(b)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.Count() != 0 || c.Bit(450) {
+		t.Errorf("Set difference a-b should now be empty, but count is %d", c.Count())
+	}
+	c,e = b.Difference(a)
+	if e!= nil {
+		t.Errorf("Set difference returned error: %d", e)
+	}
+	if c.Count() != 1 || !c.Bit(999) {
+		t.Errorf("Set difference b-a should be b, basically")
+	}
+}
+
+func TestUnionSimple (t *testing.T) {
+	a := New(64)
+	b := New(64)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0xf0f0f0f0f0f0f0f0
+	c,e := a.Union(b)
+	if e!= nil {
+		t.Errorf("Set union returned error: %d", e)
+	}
+	if c.Count() != 64 {
+		t.Error("Union should be of size 64")
+	}
+}
+
+func TestUnionDifferent (t *testing.T) {
+	a := New(64)
+	b := New(64*2+5)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[1] = 0xf0f0f0f0f0f0f0f0
+	b.SetBit(64*2)
+	c,e := a.Union(b)
+	if e!= nil {
+		t.Errorf("Set union returned error: %d", e)
+	}
+	if c.Count() != 65 {
+		t.Error("Union should be of size 65")
+	}
+	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
+		t.Error("First word is wrong in union")
+	}
+	if c.set[1] != 0xf0f0f0f0f0f0f0f0 {
+		t.Error("Second word is wrong in union")
+	}
+	if c.set[2] != 1 {
+		t.Errorf("c.set[0]: %x, c.set[1]: %x, c.set[2]: %x", c.set[0],c.set[1],c.set[2])
+	}
+}
+
+func TestIntersectionSimple (t *testing.T) {
+	a := New(64)
+	b := New(64)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0xf0f0f0f0f0f0f0f0
+	c,e := a.Intersection(b)
+	if e!= nil {
+		t.Errorf("Set intersection returned error: %d", e)
+	}
+	if c.Count() != 0 {
+		t.Error("Intersection should be empty")
+	}
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	c,e = a.Intersection(b)
+	if e!= nil {
+		t.Errorf("Set intersection returned error: %d", e)
+	}
+	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
+		t.Error("Intersection should be the same")
+	}
+}
+
+func TestIntersectionDifferent (t *testing.T) {
+	a := New(64)
+	b := New(64*2+5)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[1] = 0xf0f0f0f0f0f0f0f0
+	b.SetBit(64*2+2)
+	c,e := a.Intersection(b)
+	if e!= nil {
+		t.Errorf("Set union returned error: %d", e)
+	}
+	if c.Count() != 0 {
+		t.Error("Union should be of size 0")
+	}
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[1] = 0x0f0f0f0f0f0f0f0f
+	b.SetBit(64*2+2)
+	c,e = a.Intersection(b)
+	if e!= nil {
+		t.Errorf("Set union returned error: %d", e)
+	}
+	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
+		t.Error("Intersection should be of similar word")
+	}	
+}
+
+func TestSymmetricDifferenceSimple (t *testing.T) {
+	a := New(64)
+	b := New(64)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0xf0f0f0f0f0f0f0f0
+	c,e := a.SymmetricDifference(b)
+	if e!= nil {
+		t.Errorf("Set symmetric difference returned error: %d", e)
+	}
+	if c.Count() != 64 {
+		t.Error("Symmetric difference should be of size 64")
+	}
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	c,e = a.SymmetricDifference(b)
+	if e!= nil {
+		t.Errorf("Set symmetric difference returned error: %d", e)
+	}
+	if c.Count() != 0 {
+		t.Error("Symmetric difference should be of size 0")
+	}
+}
+
+func TestSymmetricDifferenceDifferent (t *testing.T) {
+	a := New(64)
+	b := New(64*2+5)
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[1] = 0xf0f0f0f0f0f0f0f0
+	b.SetBit(64*2)
+	c,e := a.SymmetricDifference(b)
+	if e!= nil {
+		t.Errorf("Set SymmetricDifference returned error: %d", e)
+	}
+	if c.Count() != 65 {
+		t.Error("SymmetricDifference should be of size 65")
+	}
+	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
+		t.Error("First word is wrong in SymmetricDifference")
+	}
+	if c.set[1] != 0xf0f0f0f0f0f0f0f0 {
+		t.Error("Second word is wrong in SymmetricDifference")
+	}
+	if c.set[2] != 1 {
+		t.Errorf("c.set[0]: %x, c.set[1]: %x, c.set[2]: %x", c.set[0],c.set[1],c.set[2])
+	}
+	a.Clear()
+	b.Clear()
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.set[0] = 0x0f0f0f0f0f0f0f0f
+	b.SetBit(64*2)
+	c,e = a.SymmetricDifference(b)
+	if e!= nil {
+		t.Errorf("Set SymmetricDifference returned error: %d", e)
+	}
+	if c.Count() != 1 {
+		t.Errorf("SymmetricDifference should be of size 1, but is %d", c.Count())
+	}
+	if c.set[0] != 0 {
+		t.Error("First word is wrong in SymmetricDifference")
+	}
+	if c.set[1] != 0 {
+		t.Error("Second word is wrong in SymmetricDifference")
+	}
+	if c.set[2] != 1 {
+		t.Errorf("c.set[0]: %x, c.set[1]: %x, c.set[2]: %x", c.set[0],c.set[1],c.set[2])
+	}
+}
+
