@@ -7,10 +7,15 @@
 
 	It provides methods for making a BitSet of an arbitrary
 	upper limit, setting and testing bit locations, and clearing
-	bit locations as well as the entire set.
+	bit locations as well as the entire set, counting the number
+	of bits.
+	
+	It also supports set intersection, union, difference and 
+	symmetric difference, cloning, equality testing, and subsetting.
 
 	Example use:
-
+    
+	import "bitset"
 	b := bitset.New(64000)
 	b.SetBit(1000)
 	b.SetBit(999)
