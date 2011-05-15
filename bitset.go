@@ -52,6 +52,7 @@ func (b *BitSet) Cap() uint {
 
 // Word size of a bit set
 const WordSize = uint(64)
+const allBits  uint64 = 0xffffffffffffffff
 
 // Query words used in a bit set
 func (b *BitSet) WordCount() uint {
@@ -61,6 +62,13 @@ func (b *BitSet) WordCount() uint {
 // Is the length an exact multiple of word sizes?
 func (b *BitSet) isEven() bool {
    return (b.length % WordSize) == 0
+}
+
+// Clean last word by setting unused bits to 0
+func (b *BitSet) cleanLastWord() {
+   if !b.isEven() {
+		b.set[b.WordCount()-1] &= (allBits >> (64 - (b.length % 64)))
+	}
 }
 
 // Clone this BitSet
@@ -116,6 +124,14 @@ func (b *BitSet) ClearBit(i uint) {
 	b.set[i>>6] &^= 1 << (i & (64-1))
 }
 
+// Flip bit at i
+func (b *BitSet) FlipBit(i uint) {
+	if i >= b.length {
+		panic(fmt.Sprintf("index out of range: %v", i))
+	}	
+	b.set[i>>6] ^= 1 << (i & (64-1))
+}
+
 // Clear entire BitSet
 func (b *BitSet) Clear() {
 	if b != nil {
@@ -124,6 +140,17 @@ func (b *BitSet) Clear() {
 		}
 	}
 }
+
+// Flip every bit in set
+func (b *BitSet) FlipAll() {
+	if b != nil {
+		for i,word := range b.set {
+			b.set[i] = ^word
+		}
+		b.cleanLastWord()
+	}
+}	
+
 
 // From Wikipedia: http://en.wikipedia.org/wiki/Hamming_weight                                     
 const m1  uint64 = 0x5555555555555555 //binary: 0101...
@@ -299,3 +326,36 @@ func (b *BitSet) Subset(start, end uint) (c *BitSet, err *BitSetError) {
 	}
 	return c, nil
 }
+
+// Returns true if all bits are set, false otherwise
+func (b *BitSet) All() bool {
+	return b.Count()==b.length
+}
+
+// Return true if any bit is set, false otherwise
+func (b *BitSet) Any() bool {
+	if b != nil {
+		for _,word := range b.set {
+			if word > 0 {
+				return true
+			}
+		}
+		return false
+	}
+	return false
+}
+
+// Return true if no bit is set, false otherwise
+func (b *BitSet) None() bool {
+	if b != nil {
+		for _,word := range b.set {
+			if word > 0 {
+				return false
+			}
+		}
+		return true
+	}
+	return true
+}	
+
+// TODO: Find First/last set/unset bits

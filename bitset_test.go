@@ -529,3 +529,36 @@ func TestSubset(t *testing.T) {
 		t.Errorf("bitpattern incorrect, was %f", d.set[0])
 	}   
 }
+
+func TestFlipAll(t *testing.T) {
+	a := New(64*2)
+	a.FlipAll()
+	if a.Count() != 64*2 {
+		t.Errorf("After flipping all, count should be %d, but is %d", 64*2, a.Count())
+	}
+	a = New(64*11+10)
+	a.FlipAll()
+	if a.Count() != 64*11+10 {
+		t.Errorf("After flipping all, count should be %d, but is %d", 64*11+10, a.Count())
+	}
+}
+
+func TestFlipBit(t *testing.T) {
+	a := New(64*2)
+	a.FlipBit(100)
+	if a.Count() != 1 {
+		t.Errorf("After flipping all, count should be %d, but is %d", 1, a.Count())
+	}
+	if !a.Bit(100) {
+		t.Errorf("After flipping a clear bit, the bit should be set, but is not")
+	}
+	a.FlipBit(100)
+	if a.Count() != 0 {
+		t.Errorf("After flipping all, count should be %d, but is %d", 1, a.Count())
+	}
+	if a.Bit(100) {
+		t.Errorf("After flipping a set bit, the bit should be clear, but is not")
+	}
+}
+
+// TODO: Tests for None, Any, ALL 
