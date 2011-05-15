@@ -265,3 +265,32 @@ func (b1 *BitSet) SymmetricDifference(b2 *BitSet) (b3 *BitSet, err *BitSetError)
 	}
 	return
 }
+
+// Copy, from start to end, a subset of bits from a set
+// returns the copy and a possible error
+func (b *BitSet) Subset(start, end uint) (c *BitSet, err *BitSetError) {
+	if (end - start) < 0 {
+		c = nil
+		e := BitSetError(fmt.Sprintf("Resulting BitSet would be negative in length: %d", end-start-1))
+		return c, &e
+	}
+	if end > b.length {
+		c = nil
+		e := BitSetError(fmt.Sprintf("End index %d exceeds length %d", c, b.length))
+		return c, &e
+	}
+	c = New(end - start)
+	if start&(64-1) == 0 {
+		copy(c.set, b.set[start>>6:(end+63)>>6])
+		return c, nil
+	}
+	ipos := start & (64 - 1)
+	ifirst := start >> 6
+	ilen := (end - start + 64 - 1) >> 6
+	var i uint
+	for ; i < ilen; i++ {
+		c.set[i] = b.set[i+ifirst] >> ipos
+		c.set[i] |= b.set[i+ifirst+1] << (64 - ipos)
+	}
+	return c, nil
+}

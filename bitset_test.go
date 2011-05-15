@@ -10,7 +10,19 @@ import (
 	"testing"
 )
 
-func TestbBitSetNew(t *testing.T) {
+func TestEmptySet(t *testing.T) {
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("A zero-length bitset should be fine")
+	        }
+	    }()
+	b := New(0)
+	if b.Cap() != 0 {
+		t.Errorf("Empty set should have capacity 0, not %d", b.Cap())
+	}
+}
+
+func TestBitSetNew(t *testing.T) {
 	v := New(16)
 	if v.Bit(0) != false {
 		t.Errorf("Unable to make a bit set and read its 0th value.")
@@ -483,3 +495,37 @@ func TestSymmetricDifferenceDifferent (t *testing.T) {
 	}
 }
 
+func TestSubset(t *testing.T) {
+	a := New(64*3)
+	b, err := a.Subset(0,64*3+1)
+	if err == nil {
+		t.Error("End index should be < length")
+	}
+	b, err = a.Subset(0,1)
+	if err != nil {
+		t.Error("Simple subset should create no error")
+	}
+	if b.Cap() != 1 {
+		t.Errorf("capacity should be 1, was %d", b.Cap())
+	}
+	c, err := a.Subset(0,64*3)
+	if err != nil {
+		t.Error("Complete subset should create no error")
+	}
+	if c.Cap() != 64*3 {
+		t.Errorf("capacity should be %d, was %d", 64*3, b.Cap())
+	}
+	a.set[0] = 0x0f0f0f0f0f0f0f0f
+	a.set[1] = 0x0f0f0f0f0f0f0f0f
+	a.set[2] = 0x0f0f0f0f0f0f0f0f
+	d, err := a.Subset(64/2, 64+64/2)
+	if err != nil {
+		t.Error("Overlap subset")
+	}
+	if d.Cap() != 64 {
+		t.Errorf("capacity should be %d, was %d", 64, d.Cap())
+	}
+	if d.set[0] != 0x0f0f0f0f0f0f0f0f {
+		t.Errorf("bitpattern incorrect, was %f", d.set[0])
+	}   
+}
