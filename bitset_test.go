@@ -561,4 +561,41 @@ func TestFlipBit(t *testing.T) {
 	}
 }
 
-// TODO: Tests for None, Any, ALL 
+func TestNone(t *testing.T) {
+	a := New(64*2+1)
+	if !a.None() {
+		t.Errorf("Empty set should be empty")
+	}
+	a.SetBit(100)
+	if a.None() {
+		t.Errorf("Non-Empty set should be non-empty")
+	}
+}
+
+func TestAny(t *testing.T) {
+	a := New(64*2+1)
+	if a.Any() {
+		t.Errorf("empty set should be empty")
+	}
+	a.SetBit(100)
+	if !a.Any() {
+		t.Errorf("Non-Empty set should be non-empty")
+	}
+}
+
+func TestAll(t *testing.T) {
+	a := New(64*2+1)
+	if a.All() {
+		t.Errorf("empty set should be empty")
+	}
+	a.SetBit(100)
+	if a.All() {
+		t.Errorf("One entry should not be all")
+	}
+	a.ClearBit(100)
+	a.FlipAll()
+	if !a.All() {
+		t.Errorf("Full set should be full")
+	}
+}
+
