@@ -332,19 +332,6 @@ func (b *BitSet) All() bool {
 	return b.Count()==b.length
 }
 
-// Return true if any bit is set, false otherwise
-func (b *BitSet) Any() bool {
-	if b != nil {
-		for _,word := range b.set {
-			if word > 0 {
-				return true
-			}
-		}
-		return false
-	}
-	return false
-}
-
 // Return true if no bit is set, false otherwise
 func (b *BitSet) None() bool {
 	if b != nil {
@@ -356,6 +343,13 @@ func (b *BitSet) None() bool {
 		return true
 	}
 	return true
-}	
+}
+
+// Return true if any bit is set, false otherwise
+func (b *BitSet) Any() bool {
+	return !b.None()
+}
+
+	
 
 // TODO: Find First/last set/unset bits
