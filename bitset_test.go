@@ -598,4 +598,3 @@ func TestAll(t *testing.T) {
 		t.Errorf("Full set should be full")
 	}
 }
-

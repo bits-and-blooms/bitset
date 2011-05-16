@@ -39,7 +39,7 @@ type BitSet struct {
 
 type BitSetError string
 
-// Make a BitSet with an upper limit on capacity.
+// Make a BitSet with an upper limit on length.
 func New(length uint) *BitSet {
 	return &BitSet{length, make([]uint64, (length+(64-1))>>6)}
 }
@@ -93,7 +93,7 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 }
 
 
-// Query length of a bit set (which is the same as its capacity,
+// Query length of a bit set (which is the same as its length,
 // by analogy to len and cap functions on Arrays.
 func (b *BitSet) Len() uint {
 	return b.length
