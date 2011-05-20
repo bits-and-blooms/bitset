@@ -20,14 +20,14 @@ a BitSet pointer, which allows for chaining.
 
 Example use:
 
-import "bitset"
-b := bitset.New().b.Set(10).Set(11)
-if b.Test(1000) {
-	b.Clear(1000)
-}
-if B.Intersection(bitset.New().Set(10)).Count() > 1 {
-	fmt.Println("Intersection works.")
-}
+    import "bitset"
+    b := bitset.New().b.Set(10).Set(11)
+    if b.Test(1000) {
+    	b.Clear(1000)
+    }
+    if B.Intersection(bitset.New().Set(10)).Count() > 1 {
+    	fmt.Println("Intersection works.")
+    }
 
 As an alternative to BitSets, one should check out the 'big' package,
 which provides a (less set-theoretical) view of bitsets.
