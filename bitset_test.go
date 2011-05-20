@@ -8,103 +8,40 @@ package bitset
 
 import (
 	"testing"
+    "rand" 
+	"math"
 )
-
-func TestEmptySet(t *testing.T) {
+ 
+func TestEmptyBitSet(t *testing.T) {
 	defer func() {
 	        if r := recover(); r != nil {
 	            t.Error("A zero-length bitset should be fine")
 	        }
 	    }()
 	b := New(0)
-	if b.Cap() != 0 {
+	if b.Len() != 0 {
 		t.Errorf("Empty set should have capacity 0, not %d", b.Cap())
 	}
 }
 
 func TestBitSetNew(t *testing.T) {
 	v := New(16)
-	if v.Bit(0) != false {
+	if v.Test(0) != false {
 		t.Errorf("Unable to make a bit set and read its 0th value.")
 	}
 }
 
-func TestBitSetIsClear(t *testing.T) {
-	v := New(1000)
-	for i := uint(0); i < 1000; i++ {
-		if v.Bit(i) != false {
-			t.Errorf("Bit %d is set, and it shouldn't be.", i)
-		}
+func TestBitSetHuge(t *testing.T) {
+	v := New(uint(math.MaxUint32))
+	if v.Test(0) != false {
+		t.Errorf("Unable to make a huge bit set and read its 0th value.")
 	}
-}
-
-
-func TestBitSetAndGet(t *testing.T) {
-	v := New(1000)
-	v.SetBit(100)
-	if v.Bit(100) != true {
-		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
-	}
-}
-
-func TestLotsOfSetsAndGets(t *testing.T) {
-	tot := uint(100000)
-	v := New(tot)
-	for i := uint(0); i < tot; i+=2 {
-		v.SetBit(i)
-	}
-	for i := uint(0); i < tot; i++ {
-		if i % 2 == 0 {
-			if v.Bit(i) != true {
-				t.Errorf("Bit %d is clear, and it shouldn't be.", i)
-			}
-		} else {
-			if v.Bit(i) != false {
-				t.Errorf("Bit %d is set, and it shouldn't be.", i)
-			}
-		}
-	}
-}
-
-func TestClear(t *testing.T) {
-	tot := uint(1000)
-	v := New(tot)
-	for i := uint(0); i < tot; i++ {
-		v.SetBit(i)
-	}
-	v.Clear()
-	for i := uint(0); i < tot; i++ {
-		if v.Bit(i) != false {
-			t.Errorf("Bit %d is set, and it shouldn't be.", i)
-			break
-		}
-	}
-}
-
-func TestOutOfBoundsBad(t *testing.T) {
-	v := New(64)
-	defer func() {
-	        if r := recover(); r == nil {
-	            t.Error("Long distance out of index error should have caused a panic")
-	        }
-	    }()
-	v.SetBit(1000)
-}
-
-func TestOutOfBoundsOK(t *testing.T) {
-	v := New(65)
-	defer func() {
-	        if r := recover(); r == nil {
-	            t.Error("Local out of index error should have caused a panic")
-	        }
-	    }()
-	v.SetBit(66)   
 }
 
 func TestCap(t *testing.T) {
 	v := New(1000)
-	if v.Cap() != 1000 {
-		t.Errorf("Cap should be 1000, but is %d.", v.Cap())
+	if v.Cap() != uint(math.MaxUint32) {
+		t.Errorf("Cap should be MaxUint32, but is %d.", v.Cap())
 	}
 }
 
@@ -113,6 +50,71 @@ func TestLen(t *testing.T) {
 	if v.Len() != 1000 {
 		t.Errorf("Len should be 1000, but is %d.", v.Cap())
 	}
+}
+
+func TestBitSetIsClear(t *testing.T) {
+	v := New(1000)
+	for i := uint(0); i < 1000; i++ {
+		if v.Test(i) != false {
+			t.Errorf("Bit %d is set, and it shouldn't be.", i)
+		}
+	}
+}
+
+func TestExendOnBoundary(t *testing.T) {
+	v := New(32)
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("Border out of index error should not have caused a panic")
+	        }
+	    }()
+	v.Set(32)
+}
+
+func TestExpand (t *testing.T) {
+	v := New(0)
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("Expansion should not have caused a panic")
+	        }
+	    }()
+	for i := uint(0); i < 1000; i++ {
+		v.Set(i)
+	}
+}
+
+func TestBitSetAndGet(t *testing.T) {
+	v := New(1000)
+	v.Set(100)
+	if v.Test(100) != true {
+		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
+	}
+}
+
+func TestChain(t *testing.T) {
+	if New(1000).Set(100).Set(99).Clear(99).Test(100) != true {
+		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
+	}
+}
+
+func TestOutOfBoundsLong(t *testing.T) {
+	v := New(64)
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("Long distance out of index error should not have caused a panic")
+	        }
+	    }()
+	v.Set(1000)
+}
+
+func TestOutOfBoundsClose(t *testing.T) {
+	v := New(65)
+	defer func() {
+	        if r := recover(); r != nil {
+	            t.Error("Local out of index error should not have caused a panic")
+	        }
+	    }()
+	v.Set(66)   
 }
 
 func TestCount(t *testing.T) {
@@ -126,7 +128,7 @@ func TestCount(t *testing.T) {
 			checkLast = false
 			break
 		} 
-		v.SetBit(i)
+		v.Set(i)
 	}
 	if checkLast {
 		sz := v.Count()
@@ -146,51 +148,42 @@ func TestCount2(t *testing.T) {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			break
 		} 
-		v.SetBit(i)
+		v.Set(i)
 	}
 }
 
 // nil tests
 
-func TestNullBit(t *testing.T) {
+func TestNullTest(t *testing.T) {
 	var v *BitSet = nil
 	defer func() {
 	        if r := recover(); r == nil {
 	            t.Error("Checking bit of null reference should have caused a panic")
 	        }
 	    }()
-	v.Bit(66)   
+	v.Test(66)   
 }
 
-func TestNullSetBit(t *testing.T) {
+func TestNullSet(t *testing.T) {
 	var v *BitSet = nil
 	defer func() {
 	        if r := recover(); r == nil {
 	            t.Error("Setting bit of null reference should have caused a panic")
 	        }
 	    }()
-	v.SetBit(66)   
+	v.Set(66)   
 } 
 
-func TestNullClearBit(t *testing.T) {
+func TestNullClear(t *testing.T) {
 	var v *BitSet = nil
 	defer func() {
 	        if r := recover(); r == nil {
 	            t.Error("Clearning bit of null reference should have caused a panic")
 	        }
 	    }()
-	v.ClearBit(66)   
+	v.Clear(66)   
 }
 
-func TestNullClear(t *testing.T) {
-	var v *BitSet = nil
-	defer func() {
-	        if r := recover(); r != nil {
-	            t.Error("Clearing null reference should not have caused a panic")
-	        }
-	    }()
-	v.Clear()   
-} 
 
 func TestNullCount(t *testing.T) {
 	var v *BitSet = nil
@@ -205,15 +198,134 @@ func TestNullCount(t *testing.T) {
 	}  
 }
 
-func TestMap(t *testing.T) {
-	attended := map[string] bool {
-	    "Ann": true,
-	    "Joe": true,
-	}
-	if there := attended["Ann"]; !there {
-		t.Errorf("John didn't come: %d", there)
-	}
+func TestPanicDifferenceBNil(t *testing.T) {
+	var b *BitSet = nil
+	var compare = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil First should should have caused a panic")
+	        }
+	    }()
+	b.Difference(compare)
 }
+
+func TestPanicDifferenceCompareNil(t *testing.T) {
+	var compare *BitSet = nil
+	var b = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil Second should should have caused a panic")
+	        }
+	    }()
+	b.Difference(compare)
+}
+
+func TestPanicUnionBNil(t *testing.T) {
+	var b *BitSet = nil
+	var compare = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil First should should have caused a panic")
+	        }
+	    }()
+	b.Union(compare)
+}
+
+func TestPanicUnionCompareNil(t *testing.T) {
+	var compare *BitSet = nil
+	var b = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil Second should should have caused a panic")
+	        }
+	    }()
+	b.Union(compare)
+} 
+
+func TestPanicIntersectionBNil(t *testing.T) {
+	var b *BitSet = nil
+	var compare = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil First should should have caused a panic")
+	        }
+	    }()
+	b.Intersection(compare)
+}
+
+func TestPanicIntersectionCompareNil(t *testing.T) {
+	var compare *BitSet = nil
+	var b = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil Second should should have caused a panic")
+	        }
+	    }()
+	b.Intersection(compare)
+}    
+
+func TestPanicSymmetricDifferenceBNil(t *testing.T) {
+	var b *BitSet = nil
+	var compare = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil First should should have caused a panic")
+	        }
+	    }()
+	b.SymmetricDifference(compare)
+}
+
+func TestPanicSymmetricDifferenceCompareNil(t *testing.T) {
+	var compare *BitSet = nil
+	var b = New(10)
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil Second should should have caused a panic")
+	        }
+	    }()
+	b.SymmetricDifference(compare)
+} 
+
+func TestPanicComplementBNil(t *testing.T) {
+	var b *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil should should have caused a panic")
+	        }
+	    }()
+	b.Complement()
+}
+
+func TestPanicAnytBNil(t *testing.T) {
+	var b *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil should should have caused a panic")
+	        }
+	    }()
+	b.Any()
+} 
+
+func TestPanicNonetBNil(t *testing.T) {
+	var b *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil should should have caused a panic")
+	        }
+	    }()
+	b.None()
+}
+
+func TestPanicAlltBNil(t *testing.T) {
+	var b *BitSet = nil
+	defer func() {
+	        if r := recover(); r == nil {
+	            t.Error("Nil should should have caused a panic")
+	        }
+	    }()
+	b.All()
+} 
+
 
 func TestEqual(t *testing.T) {
 	a := New(100)
@@ -225,376 +337,152 @@ func TestEqual(t *testing.T) {
 	if !a.Equal(c){
         t.Error("Two empty sets of the same size should be equal")
     }
- 	a.SetBit(99)
- 	c.SetBit(0)
+ 	a.Set(99)
+ 	c.Set(0)
     if a.Equal(c){
         t.Error("Two sets with differences should not be equal")
     }
-	c.SetBit(99)
- 	a.SetBit(0)
+	c.Set(99)
+ 	a.Set(0)
     if !a.Equal(c){
         t.Error("Two sets with the same bits set should be equal")
     }
-}
+} 
 
-
-// NOTE: These following tests rely on understanding the
-// the internal structure of bitsets. It's a little easier
-// to test that way.
-
-
-func TestDifferenceSimple (t *testing.T) {
-	a := New(64)
-	b := New(64)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	c,e := a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
+func TestUnion(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i  := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i-1)
 	}
-	if c.set[0] != 0 {
-		t.Errorf("Set difference of exact sets should be 0, but was %x", c.set[0])
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
 	}
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0
-	c,e = a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
+	c := a.Union(b)
+	d := b.Union(a)
+	if c.Count()!=200 {
+		t.Errorf("Union should have 200 bits set, but had %d", c.Count())
 	}
-	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
-		t.Error("Set difference of set with bits set less one all clear should be original set")
-	}
-	a.set[0] = 0
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	c,e = a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.set[0] != 0 {
-		t.Error("Set difference of set with no bits set less one with bits should be zero")
-	}
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0xffffffffffffffff
-	c,e = a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.set[0] != 0 {
-		t.Error("Set diff of set to all bits set should be zero")
-	}
-	a.set[0] = 0xffffffffffffffff
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	c,e = a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.set[0] != 0xf0f0f0f0f0f0f0f0 {
-		t.Error("Set diff from all bits should remove bits in 2nd set")
-	}	
-}
-
-func TestSetDifferenceDifferentSizes (t *testing.T) {
-	a := New(642)
-	b := New(1011)
-	c,e := a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.Count() != 0 {
-		t.Errorf("Set difference of empty sets should be empty.")
-	}
-	c,e = b.Difference(a)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.Count() != 0 {
-		t.Errorf("Set difference of empty sets should be empty.")
-	}
-	a.SetBit(450)
-	b.SetBit(999)
-	c,e = a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.Count() != 1 || !c.Bit(450) {
-		t.Errorf("Set difference a-b should be a, basically")
-	}
-	a.Clear()
-	b.Clear()
-	a.SetBit(450)
-	b.SetBit(450)
-	b.SetBit(999)
-	c,e = a.Difference(b)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.Count() != 0 || c.Bit(450) {
-		t.Errorf("Set difference a-b should now be empty, but count is %d", c.Count())
-	}
-	c,e = b.Difference(a)
-	if e!= nil {
-		t.Errorf("Set difference returned error: %d", e)
-	}
-	if c.Count() != 1 || !c.Bit(999) {
-		t.Errorf("Set difference b-a should be b, basically")
+	if !c.Equal(d) {
+		t.Errorf("Union should be symmetric")
 	}
 }
 
-func TestUnionSimple (t *testing.T) {
-	a := New(64)
-	b := New(64)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0xf0f0f0f0f0f0f0f0
-	c,e := a.Union(b)
-	if e!= nil {
-		t.Errorf("Set union returned error: %d", e)
+func TestIntersection(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i  := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i-1).Set(i)
 	}
-	if c.Count() != 64 {
-		t.Error("Union should be of size 64")
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
 	}
-}
-
-func TestUnionDifferent (t *testing.T) {
-	a := New(64)
-	b := New(64*2+5)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[1] = 0xf0f0f0f0f0f0f0f0
-	b.SetBit(64*2)
-	c,e := a.Union(b)
-	if e!= nil {
-		t.Errorf("Set union returned error: %d", e)
+	c := a.Intersection(b)
+	d := b.Intersection(a)
+	if c.Count()!=50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", c.Count())
 	}
-	if c.Count() != 65 {
-		t.Error("Union should be of size 65")
-	}
-	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
-		t.Error("First word is wrong in union")
-	}
-	if c.set[1] != 0xf0f0f0f0f0f0f0f0 {
-		t.Error("Second word is wrong in union")
-	}
-	if c.set[2] != 1 {
-		t.Errorf("c.set[0]: %x, c.set[1]: %x, c.set[2]: %x", c.set[0],c.set[1],c.set[2])
+	if !c.Equal(d) {
+		t.Errorf("Intersection should be symmetric")
 	}
 }
 
-func TestIntersectionSimple (t *testing.T) {
-	a := New(64)
-	b := New(64)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0xf0f0f0f0f0f0f0f0
-	c,e := a.Intersection(b)
-	if e!= nil {
-		t.Errorf("Set intersection returned error: %d", e)
+func TestDifference(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i  := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i-1)
 	}
-	if c.Count() != 0 {
-		t.Error("Intersection should be empty")
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
 	}
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	c,e = a.Intersection(b)
-	if e!= nil {
-		t.Errorf("Set intersection returned error: %d", e)
+	c := a.Difference(b)
+	d := b.Difference(a)
+	if c.Count()!=50 {
+		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
 	}
-	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
-		t.Error("Intersection should be the same")
+	if d.Count()!=150 {
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", c.Count())
 	}
-}
-
-func TestIntersectionDifferent (t *testing.T) {
-	a := New(64)
-	b := New(64*2+5)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[1] = 0xf0f0f0f0f0f0f0f0
-	b.SetBit(64*2+2)
-	c,e := a.Intersection(b)
-	if e!= nil {
-		t.Errorf("Set union returned error: %d", e)
-	}
-	if c.Count() != 0 {
-		t.Error("Union should be of size 0")
-	}
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[1] = 0x0f0f0f0f0f0f0f0f
-	b.SetBit(64*2+2)
-	c,e = a.Intersection(b)
-	if e!= nil {
-		t.Errorf("Set union returned error: %d", e)
-	}
-	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
-		t.Error("Intersection should be of similar word")
-	}	
-}
-
-func TestSymmetricDifferenceSimple (t *testing.T) {
-	a := New(64)
-	b := New(64)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0xf0f0f0f0f0f0f0f0
-	c,e := a.SymmetricDifference(b)
-	if e!= nil {
-		t.Errorf("Set symmetric difference returned error: %d", e)
-	}
-	if c.Count() != 64 {
-		t.Error("Symmetric difference should be of size 64")
-	}
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	c,e = a.SymmetricDifference(b)
-	if e!= nil {
-		t.Errorf("Set symmetric difference returned error: %d", e)
-	}
-	if c.Count() != 0 {
-		t.Error("Symmetric difference should be of size 0")
+	if c.Equal(d) {
+		t.Errorf("Difference, here, should not be symmetric")
 	}
 }
 
-func TestSymmetricDifferenceDifferent (t *testing.T) {
-	a := New(64)
-	b := New(64*2+5)
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[1] = 0xf0f0f0f0f0f0f0f0
-	b.SetBit(64*2)
-	c,e := a.SymmetricDifference(b)
-	if e!= nil {
-		t.Errorf("Set SymmetricDifference returned error: %d", e)
+func TestSymmetricDifference(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i  := uint(1); i < 100; i += 2 {
+		a.Set(i)           // 01010101010 ... 0000000
+		b.Set(i-1).Set(i)  // 11111111111111111000000
 	}
-	if c.Count() != 65 {
-		t.Error("SymmetricDifference should be of size 65")
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
 	}
-	if c.set[0] != 0x0f0f0f0f0f0f0f0f {
-		t.Error("First word is wrong in SymmetricDifference")
+	c := a.SymmetricDifference(b)
+	d := b.SymmetricDifference(a)
+	if c.Count()!=150 {
+		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
 	}
-	if c.set[1] != 0xf0f0f0f0f0f0f0f0 {
-		t.Error("Second word is wrong in SymmetricDifference")
+	if d.Count()!=150 {
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", c.Count())
 	}
-	if c.set[2] != 1 {
-		t.Errorf("c.set[0]: %x, c.set[1]: %x, c.set[2]: %x", c.set[0],c.set[1],c.set[2])
-	}
-	a.Clear()
-	b.Clear()
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.set[0] = 0x0f0f0f0f0f0f0f0f
-	b.SetBit(64*2)
-	c,e = a.SymmetricDifference(b)
-	if e!= nil {
-		t.Errorf("Set SymmetricDifference returned error: %d", e)
-	}
-	if c.Count() != 1 {
-		t.Errorf("SymmetricDifference should be of size 1, but is %d", c.Count())
-	}
-	if c.set[0] != 0 {
-		t.Error("First word is wrong in SymmetricDifference")
-	}
-	if c.set[1] != 0 {
-		t.Error("Second word is wrong in SymmetricDifference")
-	}
-	if c.set[2] != 1 {
-		t.Errorf("c.set[0]: %x, c.set[1]: %x, c.set[2]: %x", c.set[0],c.set[1],c.set[2])
+	if !c.Equal(d) {
+		t.Errorf("SymmetricDifference should be symmetric")
 	}
 }
 
-func TestSubset(t *testing.T) {
-	a := New(64*3)
-	b, err := a.Subset(0,64*3+1)
-	if err == nil {
-		t.Error("End index should be < length")
+func TestComplement(t *testing.T) {
+	a := New(50)
+	b := a.Complement()
+	if b.Count()!= 50 {
+		t.Errorf("Complement failed, size should be 50, but was %d", b.Count())
 	}
-	b, err = a.Subset(0,1)
-	if err != nil {
-		t.Error("Simple subset should create no error")
-	}
-	if b.Cap() != 1 {
-		t.Errorf("capacity should be 1, was %d", b.Cap())
-	}
-	c, err := a.Subset(0,64*3)
-	if err != nil {
-		t.Error("Complete subset should create no error")
-	}
-	if c.Cap() != 64*3 {
-		t.Errorf("capacity should be %d, was %d", 64*3, b.Cap())
-	}
-	a.set[0] = 0x0f0f0f0f0f0f0f0f
-	a.set[1] = 0x0f0f0f0f0f0f0f0f
-	a.set[2] = 0x0f0f0f0f0f0f0f0f
-	d, err := a.Subset(64/2, 64+64/2)
-	if err != nil {
-		t.Error("Overlap subset")
-	}
-	if d.Cap() != 64 {
-		t.Errorf("capacity should be %d, was %d", 64, d.Cap())
-	}
-	if d.set[0] != 0x0f0f0f0f0f0f0f0f {
-		t.Errorf("bitpattern incorrect, was %f", d.set[0])
-	}   
-}
-
-func TestFlipAll(t *testing.T) {
-	a := New(64*2)
-	a.FlipAll()
-	if a.Count() != 64*2 {
-		t.Errorf("After flipping all, count should be %d, but is %d", 64*2, a.Count())
-	}
-	a = New(64*11+10)
-	a.FlipAll()
-	if a.Count() != 64*11+10 {
-		t.Errorf("After flipping all, count should be %d, but is %d", 64*11+10, a.Count())
+	a = New(50)
+	a.Set(10).Set(20).Set(42)
+	b = a.Complement()
+	if b.Count()!= 47 {
+		 t.Errorf("Complement failed, size should be 47, but was %d", b.Count())
 	}
 }
 
-func TestFlipBit(t *testing.T) {
-	a := New(64*2)
-	a.FlipBit(100)
-	if a.Count() != 1 {
-		t.Errorf("After flipping all, count should be %d, but is %d", 1, a.Count())
-	}
-	if !a.Bit(100) {
-		t.Errorf("After flipping a clear bit, the bit should be set, but is not")
-	}
-	a.FlipBit(100)
-	if a.Count() != 0 {
-		t.Errorf("After flipping all, count should be %d, but is %d", 1, a.Count())
-	}
-	if a.Bit(100) {
-		t.Errorf("After flipping a set bit, the bit should be clear, but is not")
-	}
+
+// BENCHMARKS
+
+
+func BenchmarkSet(b *testing.B) {
+	b.StopTimer()
+	r := rand.New(rand.NewSource(0))
+	sz := 100000
+	s := New(uint(sz))
+	b.StartTimer()
+    for i := 0; i < b.N; i++ {
+        s.Set(uint(r.Int31n(int32(sz))))
+    }
+} 
+
+func BenchmarkGetTest(b *testing.B) {
+	b.StopTimer()
+	r := rand.New(rand.NewSource(0))
+	sz := 100000
+	s := New(uint(sz))
+	b.StartTimer()
+    for i := 0; i < b.N; i++ {
+        s.Test(uint(r.Int31n(int32(sz))))
+    }
 }
 
-func TestNone(t *testing.T) {
-	a := New(64*2+1)
-	if !a.None() {
-		t.Errorf("Empty set should be empty")
+func BenchmarkSetExpand(b *testing.B) {
+	b.StopTimer()
+	sz := uint(100000)
+	b.StartTimer()
+    for i := 0; i < b.N; i++ {
+		s := New()
+		s.Set(sz)
 	}
-	a.SetBit(100)
-	if a.None() {
-		t.Errorf("Non-Empty set should be non-empty")
-	}
-}
+} 
 
-func TestAny(t *testing.T) {
-	a := New(64*2+1)
-	if a.Any() {
-		t.Errorf("empty set should be empty")
-	}
-	a.SetBit(100)
-	if !a.Any() {
-		t.Errorf("Non-Empty set should be non-empty")
-	}
-}
-
-func TestAll(t *testing.T) {
-	a := New(64*2+1)
-	if a.All() {
-		t.Errorf("empty set should be empty")
-	}
-	a.SetBit(100)
-	if a.All() {
-		t.Errorf("One entry should not be all")
-	}
-	a.ClearBit(100)
-	a.FlipAll()
-	if !a.All() {
-		t.Errorf("Full set should be full")
-	}
-}
+       
