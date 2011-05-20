@@ -27,7 +27,7 @@
 	Example use:
     
 	import "bitset"
-	b := bitset.New().b.Set(10).Set(11)
+	b := bitset.New().Set(10).Set(11)
 	if b.Test(1000) {
 		b.Clear(1000)
 	}
