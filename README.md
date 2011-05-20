@@ -31,6 +31,9 @@ Example use:
 
 As an alternative to BitSets, one should check out the 'big' package,
 which provides a (less set-theoretical) view of bitsets.
-    
-Discussion at: [golang-nuts Google Group](https://groups.google.com/d/topic/golang-nuts/7n1VkRTlBf4/discussion)
+
+Discussions goland-nuts Google Group:
+
+* [Revised BitSet](https://groups.google.com/forum/#!topic/golang-nuts/5i3l0CXDiBg)
+* [simple bitset?](https://groups.google.com/d/topic/golang-nuts/7n1VkRTlBf4/discussion)
 
