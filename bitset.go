@@ -133,6 +133,14 @@ func (b *BitSet) Clear(i uint) (*BitSet) {
 	return b
 }
 
+// Set bit i to value
+func (b *BitSet) SetTo(i uint, value bool) *BitSet {
+	if value {
+		return b.Set(i)
+	}
+	return b.Clear(i)
+}
+
 // Flip bit at i
 func (b *BitSet) Flip(i uint) (*BitSet) {
 	if (i >= b.length) {

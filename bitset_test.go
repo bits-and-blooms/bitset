@@ -8,7 +8,7 @@ package bitset
 
 import (
 	"testing"
-    "rand" 
+    "math/rand" 
 	"math"
 )
  
@@ -88,6 +88,18 @@ func TestBitSetAndGet(t *testing.T) {
 	v.Set(100)
 	if v.Test(100) != true {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
+	}
+}
+
+func TestSetTo(t *testing.T) {
+	v := New(1000)
+	v.SetTo(100, true)
+	if v.Test(100) != true {
+		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
+	}
+	v.SetTo(100, false)
+	if v.Test(100) != false {
+		t.Errorf("Bit %d is set, and it shouldn't be.", 100)
 	}
 }
 
