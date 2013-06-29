@@ -27,11 +27,12 @@
 	Example use:
 
 	import "bitset"
-	b := bitset.New().Set(10).Set(11)
+	var b BitSet
+	b.Set(10).Set(11)
 	if b.Test(1000) {
 		b.Clear(1000)
 	}
-	if B.Intersection(bitset.New().Set(10)).Count() > 1 {
+	if B.Intersection(bitset.New(100).Set(10)).Count() > 1 {
 		fmt.Println("Intersection works.")
 	}
 
@@ -56,13 +57,21 @@ const allBits uint32 = 0xffffffff
 // for laster arith.
 const log2WordSize = uint(5)
 
-// BitSet internal details 
+// The zero value of a BitSet is an empty set of length 0.
 type BitSet struct {
 	length uint
 	set    []uint32
 }
 
 type BitSetError string
+
+// fixup b.set to be non-nil and return the field value
+func (b *BitSet) safeSet() []uint32 {
+	if b.set == nil {
+		b.set = make([]uint32, wordsNeeded(0))
+	}
+	return b.set
+}
 
 func wordsNeeded(i uint) uint {
 	if i == math.MaxUint32 {
@@ -73,17 +82,8 @@ func wordsNeeded(i uint) uint {
 	return (i + (wordSize - 1)) >> log2WordSize
 }
 
-func New(length ...uint) *BitSet {
-	if len(length) > 1 {
-		panic(BitSetError(fmt.Sprintf("invalid number of parameters: %v", len(length))))
-	}
-	var l uint
-	if len(length) > 0 {
-		l = length[0]
-	} else {
-		l = wordSize * 10
-	}
-	return &BitSet{l, make([]uint32, wordsNeeded(l))}
+func New(length uint) *BitSet {
+	return &BitSet{length, make([]uint32, wordsNeeded(length))}
 }
 
 func (b *BitSet) Cap() uint {
@@ -98,7 +98,9 @@ func (b *BitSet) Len() uint {
 func (b *BitSet) extendSetMaybe(i uint) {
 	if i >= b.length { // if we need more bits, make 'em
 		nsize := wordsNeeded(i + 1)
-		if uint(len(b.set)) < nsize {
+		if b.set == nil {
+			b.set = make([]uint32, nsize)
+		} else if uint(len(b.set)) < nsize {
 			newset := make([]uint32, nsize)
 			copy(newset, b.set)
 			b.set = newset
@@ -151,7 +153,7 @@ func (b *BitSet) Flip(i uint) *BitSet {
 
 // Clear entire BitSet
 func (b *BitSet) ClearAll() *BitSet {
-	if b != nil {
+	if b != nil && b.set != nil {
 		for i := range b.set {
 			b.set[i] = 0
 		}
@@ -167,7 +169,7 @@ func (b *BitSet) wordCount() uint {
 // Clone this BitSet
 func (b *BitSet) Clone() *BitSet {
 	c := New(b.length)
-	copy(c.set, b.set)
+	copy(c.set, b.safeSet())
 	return c
 }
 
@@ -178,7 +180,7 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
 	}
-	copy(c.set, b.set)
+	copy(c.set, b.safeSet())
 	count = c.length
 	if b.length < c.length {
 		count = b.length
@@ -205,7 +207,7 @@ func popCountUint32(x uint32) uint32 {
 
 // Count (number of set bits)
 func (b *BitSet) Count() uint {
-	if b != nil {
+	if b != nil && b.set != nil {
 		cnt := uint32(0)
 		for _, word := range b.set {
 			cnt += popCountUint32(word)
@@ -225,7 +227,7 @@ func (b *BitSet) Equal(c *BitSet) bool {
 	if b.length != c.length {
 		return false
 	}
-	for p, v := range b.set {
+	for p, v := range b.safeSet() {
 		if c.set[p] != v {
 			return false
 		}
@@ -246,7 +248,7 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	panicIfNull(compare)
 	result = b.Clone() // clone b (in case b is bigger than compare)
 	szl := compare.wordCount()
-	for i, word := range b.set {
+	for i, word := range b.safeSet() {
 		if uint(i) >= szl {
 			break
 		}
@@ -273,7 +275,7 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
 	result = New(b.length)
-	for i, word := range b.set {
+	for i, word := range b.safeSet() {
 		result.set[i] = word & compare.set[i]
 	}
 	return
@@ -287,7 +289,7 @@ func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 	b, compare = sortByLength(b, compare)
 	result = compare.Clone()
 	szl := compare.wordCount()
-	for i, word := range b.set {
+	for i, word := range b.safeSet() {
 		if uint(i) >= szl {
 			break
 		}
@@ -305,7 +307,7 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	// compare is bigger, so clone it
 	result = compare.Clone()
 	szl := b.wordCount()
-	for i, word := range b.set {
+	for i, word := range b.safeSet() {
 		if uint(i) >= szl {
 			break
 		}
@@ -331,7 +333,7 @@ func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
 	b.DumpAsBits()
 	result = New(b.length)
-	for i, word := range b.set {
+	for i, word := range b.safeSet() {
 		result.set[i] = ^(word)
 	}
 	result.cleanLastWord()
@@ -347,7 +349,7 @@ func (b *BitSet) All() bool {
 // Return true if no bit is set, false otherwise
 func (b *BitSet) None() bool {
 	panicIfNull(b)
-	if b != nil {
+	if b != nil && b.set != nil {
 		for _, word := range b.set {
 			if word > 0 {
 				return false
@@ -367,6 +369,7 @@ func (b *BitSet) Any() bool {
 // Dump as bits
 func (b *BitSet) DumpAsBits() string {
 	buffer := bytes.NewBufferString("")
+	b.safeSet()
 	i := int(wordsNeeded(b.length) - 1)
 	for ; i >= 0; i-- {
 		fmt.Fprintf(buffer, "%032b.", b.set[i])
