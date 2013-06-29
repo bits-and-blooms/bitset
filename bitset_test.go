@@ -24,6 +24,18 @@ func TestEmptyBitSet(t *testing.T) {
 	}
 }
 
+func TestZeroValueBitSet(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error("A zero-length bitset should be fine")
+		}
+	}()
+	var b BitSet
+	if b.Len() != 0 {
+		t.Errorf("Empty set should have capacity 0, not %d", b.Cap())
+	}
+}
+
 func TestBitSetNew(t *testing.T) {
 	v := New(16)
 	if v.Test(0) != false {
@@ -459,6 +471,19 @@ func TestComplement(t *testing.T) {
 	}
 }
 
+func TestDumpAsBits(t *testing.T) {
+	a := New(10).Set(10)
+	astr := "00000000000000000000010000000000."
+	if a.DumpAsBits() != astr {
+		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", astr, a.DumpAsBits())
+	}
+	var b BitSet // zero value (b.set == nil)
+	bstr := "00000000000000000000000000000000."
+	if b.DumpAsBits() != bstr {
+		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
+	}
+}
+
 // BENCHMARKS
 
 func BenchmarkSet(b *testing.B) {
@@ -488,7 +513,7 @@ func BenchmarkSetExpand(b *testing.B) {
 	sz := uint(100000)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		s := New()
+		var s BitSet
 		s.Set(sz)
 	}
 }
