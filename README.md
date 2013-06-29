@@ -15,17 +15,18 @@ memory allocation is approximately Max bits, where Max is
 the largest set bit. BitSets are never shrunk. On creation,
 a hint can be given for the number of bits that will be used.
 
-Many of the methods, including Set,Clear, and Flip, return 
+Many of the methods, including Set, Clear, and Flip, return 
 a BitSet pointer, which allows for chaining.
 
 Example use:
 
     import "bitset"
-    b := bitset.New().Set(10).Set(11)
+    var b BitSet
+    b.Set(10).Set(11)
     if b.Test(1000) {
     	b.Clear(1000)
     }
-    if B.Intersection(bitset.New().Set(10)).Count() > 1 {
+    if B.Intersection(bitset.New(100).Set(10)).Count() > 1 {
     	fmt.Println("Intersection works.")
     }
 
