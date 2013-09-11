@@ -105,7 +105,7 @@ func (b *BitSet) extendSetMaybe(i uint) {
 			copy(newset, b.set)
 			b.set = newset
 		}
-		b.length = i
+		b.length = i+1
 	}
 }
 
