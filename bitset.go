@@ -331,7 +331,6 @@ func (b *BitSet) cleanLastWord() {
 // Return the (local) Complement of a biset (up to length bits)
 func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
-	b.DumpAsBits()
 	result = New(b.length)
 	for i, word := range b.safeSet() {
 		result.set[i] = ^(word)
