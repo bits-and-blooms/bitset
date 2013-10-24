@@ -12,16 +12,16 @@
 	individual integers.
 
 	But it also provides set intersection, union, difference,
-	complement, and symmetric operations, as well as tests to 
-	check whether any, all, or no bits are set, and querying a 
+	complement, and symmetric operations, as well as tests to
+	check whether any, all, or no bits are set, and querying a
 	bitset's current length and number of postive bits.
 
 	BitSets are expanded to the size of the largest set bit; the
-	memory allocation is approximately Max bits, where Max is 
+	memory allocation is approximately Max bits, where Max is
 	the largest set bit. BitSets are never shrunk. On creation,
 	a hint can be given for the number of bits that will be used.
 
-    Many of the methods, including Set,Clear, and Flip, return 
+    Many of the methods, including Set,Clear, and Flip, return
 	a BitSet pointer, which allows for chaining.
 
 	Example use:
@@ -48,7 +48,7 @@ import (
 	"math"
 )
 
-// Word size of a bit set 
+// Word size of a bit set
 const wordSize = uint(32)
 
 // Mask for cleaning last word
@@ -94,7 +94,7 @@ func (b *BitSet) Len() uint {
 	return b.length
 }
 
-// 
+//
 func (b *BitSet) extendSetMaybe(i uint) {
 	if i >= b.length { // if we need more bits, make 'em
 		nsize := wordsNeeded(i + 1)
@@ -105,23 +105,23 @@ func (b *BitSet) extendSetMaybe(i uint) {
 			copy(newset, b.set)
 			b.set = newset
 		}
-		b.length = i+1
+		b.length = i + 1
 	}
 }
 
-/// Test whether bit i is set. 
+/// Test whether bit i is set.
 func (b *BitSet) Test(i uint) bool {
 	if i >= b.length {
 		return false
 	}
-	return ((b.set[i>>log2WordSize] & (1 << (i & (wordSize - 1)))) != 0)
+	return b.set[i>>log2WordSize]&(1<<(i&(wordSize-1))) != 0
 }
 
 // Set bit i to 1
 func (b *BitSet) Set(i uint) *BitSet {
 	b.extendSetMaybe(i)
 	//fmt.Printf("length in bits: %d, real size of sets: %d, bits: %d, index: %d\n", b.length, len(b.set), i, i>>log2WordSize)
-	b.set[i>>log2WordSize] |= (1 << (i & (wordSize - 1)))
+	b.set[i>>log2WordSize] |= 1 << (i & (wordSize - 1))
 	return b
 }
 
@@ -188,19 +188,19 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	return
 }
 
-// From Wikipedia: http://en.wikipedia.org/wiki/Hamming_weight                                     
+// From Wikipedia: http://en.wikipedia.org/wiki/Hamming_weight
 const m1 uint32 = 0x55555555 //binary: 0101...
 const m2 uint32 = 0x33333333 //binary: 00110011..
 const m4 uint32 = 0x0f0f0f0f //binary:  4 zeros,  4 ones ...
 
-// From Wikipedia: count number of set bits. 
+// From Wikipedia: count number of set bits.
 // This is algorithm popcount_2 in the article retrieved May 9, 2011
 func popCountUint32(x uint32) uint32 {
-	x -= (x >> 1) & m1             //put count of each 2 bits into those 2 bits
-	x = (x & m2) + ((x >> 2) & m2) //put count of each 4 bits into those 4 bits 
-	x = (x + (x >> 4)) & m4        //put count of each 8 bits into those 8 bits 
-	x += x >> 8                    //put count of each 16 bits into their lowest 8 bits
-	x += x >> 16                   //put count of each 32 bits into their lowest 8 bits
+	x -= x >> 1 & m1    //put count of each 2 bits into those 2 bits
+	x = x&m2 + x>>2&m2  //put count of each 4 bits into those 4 bits
+	x = (x + x>>4) & m4 //put count of each 8 bits into those 8 bits
+	x += x >> 8         //put count of each 16 bits into their lowest 8 bits
+	x += x >> 16        //put count of each 32 bits into their lowest 8 bits
 	//x += x >> 32;  //put count of each 64 bits into their lowest 8 bits
 	return x & 0x7f
 }
@@ -217,7 +217,7 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
-// Test the equvalence of two BitSets. 
+// Test the equvalence of two BitSets.
 // False if they are of different sizes, otherwise true
 // only if all the same bits are set
 func (b *BitSet) Equal(c *BitSet) bool {
@@ -257,7 +257,7 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	return
 }
 
-// Convenience function: return two bitsets ordered by 
+// Convenience function: return two bitsets ordered by
 // increasing length. Note: neither can be nil
 func sortByLength(a *BitSet, b *BitSet) (ap *BitSet, bp *BitSet) {
 	if a.length <= b.length {
@@ -318,13 +318,13 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 
 // Is the length an exact multiple of word sizes?
 func (b *BitSet) isEven() bool {
-	return (b.length % wordSize) == 0
+	return b.length%wordSize == 0
 }
 
 // Clean last word by setting unused bits to 0
 func (b *BitSet) cleanLastWord() {
 	if !b.isEven() {
-		b.set[wordsNeeded(b.length)-1] &= (allBits >> (wordSize - (b.length % wordSize)))
+		b.set[wordsNeeded(b.length)-1] &= allBits >> (wordSize - b.length%wordSize)
 	}
 }
 
@@ -333,7 +333,7 @@ func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
 	result = New(b.length)
 	for i, word := range b.safeSet() {
-		result.set[i] = ^(word)
+		result.set[i] = ^word
 	}
 	result.cleanLastWord()
 	return
