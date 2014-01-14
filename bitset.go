@@ -44,6 +44,9 @@ package bitset
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"math"
 )
@@ -374,4 +377,62 @@ func (b *BitSet) DumpAsBits() string {
 		fmt.Fprintf(buffer, "%032b.", b.set[i])
 	}
 	return string(buffer.Bytes())
+}
+
+func (b *BitSet) MarshalJSON() ([]byte, error) {
+	// Put the bitset length in front of the string
+	length := uint64(b.length)
+	dataCap := binary.Size(length) + binary.Size(b.set)
+	buffer := bytes.NewBuffer(make([]byte, 0, dataCap))
+
+	// Write length
+	err := binary.Write(buffer, binary.BigEndian, length)
+	if err != nil {
+		return nil, err
+	}
+
+	// Write set
+	err = binary.Write(buffer, binary.BigEndian, b.set)
+	if err != nil {
+		return nil, err
+	}
+
+	// URLEncode all bytes
+	return json.Marshal(base64.URLEncoding.EncodeToString(buffer.Bytes()))
+}
+
+func (b *BitSet) UnmarshalJSON(data []byte) error {
+	// Unmarshal as string
+	var s string
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return err
+	}
+
+	// URLDecode string
+	buf, err := base64.URLEncoding.DecodeString(s)
+	if err != nil {
+		return err
+	}
+
+	reader := bytes.NewReader(buf)
+	newset := New(0)
+	var length uint64
+
+	// Read length first
+	err = binary.Read(reader, binary.BigEndian, &length)
+	if err != nil {
+		return err
+	}
+
+	newset.length = uint(length)
+
+	// Read remaining bytes as set
+	err = binary.Read(reader, binary.BigEndian, newset.set)
+	if err != nil {
+		return err
+	}
+
+	*b = *newset
+	return nil
 }
