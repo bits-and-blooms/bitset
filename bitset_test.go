@@ -7,6 +7,7 @@
 package bitset
 
 import (
+	"encoding/json"
 	"math"
 	"math/rand"
 	"testing"
@@ -481,6 +482,28 @@ func TestDumpAsBits(t *testing.T) {
 	bstr := "00000000000000000000000000000000."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
+	}
+}
+
+func TestMarshalUnmarshalJSON(t *testing.T) {
+	a := New(10).Set(10)
+	data, err := json.Marshal(a)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	b := new(BitSet)
+	err = json.Unmarshal(data, b)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	// Bitsets must be equal after marshalling and unmarshalling
+	if !a.Equal(b) {
+		t.Error("Bitsets are not equal")
+		return
 	}
 }
 
