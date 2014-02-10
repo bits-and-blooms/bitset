@@ -154,6 +154,30 @@ func (b *BitSet) Flip(i uint) *BitSet {
 	return b
 }
 
+// return the next bit set from the specified index, including possibly the current index
+// returns -1 if none is found
+// inspired by the Java API: for i:=int64(0); i>=0; i = NextSet(i) {...} 
+func  (b *BitSet)  NextSet(i int64)  int64 {
+     x := uint(i) >> log2WordSize
+     if x >= b.length {
+		  return -1
+	 }
+     w := b.set[x]
+     w = w >> (uint(i) & (wordSize - 1))
+     if w != 0 {
+          return int64(i) + int64(trailingZeroes32(w));
+     }
+     x = x + 1
+     for x < wordsNeeded(b.length) {
+         if b.set[x] != 0 {
+              return int64(x * wordSize) + int64(trailingZeroes32(b.set[x]));
+         }
+         x = x + 1
+
+     }
+     return -1
+}
+
 // Clear entire BitSet
 func (b *BitSet) ClearAll() *BitSet {
 	if b != nil && b.set != nil {
@@ -206,6 +230,32 @@ func popCountUint32(x uint32) uint32 {
 	x += x >> 16        //put count of each 32 bits into their lowest 8 bits
 	//x += x >> 32;  //put count of each 64 bits into their lowest 8 bits
 	return x & 0x7f
+}
+// Stolen from http://graphics.stanford.edu/~seander/bithacks.html
+func trailingZeroes32(v uint32) uint32 {
+	// NOTE: if 0 == v, then c = 31.
+	  if  v & 0x1 != 0 {
+	    return 0
+	  }
+	  c := uint32(1)
+	  if (v & 0xffff) == 0 {  
+	    v >>= 16  
+	    c += 16
+	  }
+	  if (v & 0xff) == 0 {  
+	    v >>= 8  
+	    c += 8
+	  }
+	  if (v & 0xf) == 0 {  
+	    v >>= 4
+	    c += 4
+	  }
+	  if (v & 0x3) == 0 {  
+	    v >>= 2
+	    c += 2
+	  }
+	  c -= v & 0x1
+	  return c
 }
 
 // Count (number of set bits)

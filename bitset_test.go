@@ -104,6 +104,52 @@ func TestBitSetAndGet(t *testing.T) {
 	}
 }
 
+func TestIterate(t *testing.T) {
+	v := New(10000)
+	v.Set(0)
+	v.Set(1)
+	v.Set(2)
+	data := make([]uint, 3)
+    c := 0
+    for i:=v.NextSet(int64(0)); i>=0; i = v.NextSet(i + 1) {
+    	data[c] = uint(i)
+    	c++
+    }
+    if data[0] != 0 {
+		t.Errorf("bug 0")
+    }
+    if data[1] != 1 {
+		t.Errorf("bug 1")
+    }
+    if data[2] != 2 {
+		t.Errorf("bug 2")
+    }
+	v.Set(10)
+	v.Set(2000)
+	data = make([]uint, 5)
+    c = 0
+    for i:=v.NextSet(int64(0)); i>=0; i = v.NextSet(i + 1) {
+    	data[c] = uint(i)
+    	c++
+    }
+    if data[0] != 0 {
+		t.Errorf("bug 0")
+    }
+    if data[1] != 1 {
+		t.Errorf("bug 1")
+    }
+    if data[2] != 2 {
+		t.Errorf("bug 2")
+    }
+    if data[3] != 10 {
+		t.Errorf("bug 3")
+    }
+    if data[4] != 2000 {
+		t.Errorf("bug 4")
+    }
+    
+}
+
 func TestSetTo(t *testing.T) {
 	v := New(1000)
 	v.SetTo(100, true)
@@ -540,3 +586,16 @@ func BenchmarkSetExpand(b *testing.B) {
 		s.Set(sz)
 	}
 }
+
+func BenchmarkCount(b *testing.B) {
+	b.StopTimer()
+	s := New(100000)
+	for i := 0; i < 100000; i+=100 {
+		s.Set(uint(i))
+	}
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		s.Count()
+	}
+}
+
