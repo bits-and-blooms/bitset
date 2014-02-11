@@ -77,7 +77,8 @@ func (b *BitSet) safeSet() []uint64 {
 }
 
 func wordsNeeded(i uint) uint {
-	if i == math.MaxUint64 {
+	if i > (math.MaxUint64 - wordSize + 1 ) { // safer?
+	// if i == math.MaxUint64 {
 		return math.MaxUint64 >> log2WordSize
 	} else if i == 0 {
 		return 1
@@ -157,25 +158,25 @@ func (b *BitSet) Flip(i uint) *BitSet {
 // return the next bit set from the specified index, including possibly the current index
 // returns -1 if none is found
 // inspired by the Java API: for i:=int64(0); i>=0; i = NextSet(i) {...}
-func (b *BitSet) NextSet(i int64) int64 {
-	x := uint(i) >> log2WordSize
+func (b *BitSet) NextSet(i uint) (uint,bool) {
+	x := i >> log2WordSize
 	if x >= b.length {
-		return -1
+		return 0, false
 	}
 	w := b.set[x]
-	w = w >> (uint(i) & (wordSize - 1))
+	w = w >> (i & (wordSize - 1))
 	if w != 0 {
-		return int64(i) + int64(trailingZeroes64(w))
+		return i + trailingZeroes64(w),true
 	}
 	x = x + 1
 	for x < wordsNeeded(b.length) {
 		if b.set[x] != 0 {
-			return int64(x*wordSize) + int64(trailingZeroes64(b.set[x]))
+			return x * wordSize + trailingZeroes64(b.set[x]),true
 		}
 		x = x + 1
 
 	}
-	return -1
+	return 0, false
 }
 
 // Clear entire BitSet
@@ -250,12 +251,13 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
-func trailingZeroes64(v uint64) uint64 {
+// computes the number of trailing zeroes on the assumption that v is non-zero
+func trailingZeroes64(v uint64) uint {
 	// NOTE: if 0 == v, then c = 63.
 	if v&0x1 != 0 {
 		return 0
 	}
-	c := uint64(1)
+	c := uint(1)
 	if (v & 0xffffffff) == 0 {
 		v >>= 32
 		c += 32
@@ -276,7 +278,7 @@ func trailingZeroes64(v uint64) uint64 {
 		v >>= 2
 		c += 2
 	}
-	c -= v & 0x1
+	c -= uint(v & 0x1)
 	return c
 }
 

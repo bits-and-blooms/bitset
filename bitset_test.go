@@ -111,8 +111,8 @@ func TestIterate(t *testing.T) {
 	v.Set(2)
 	data := make([]uint, 3)
 	c := 0
-	for i := v.NextSet(int64(0)); i >= 0; i = v.NextSet(i + 1) {
-		data[c] = uint(i)
+	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+		data[c] = i
 		c++
 	}
 	if data[0] != 0 {
@@ -128,8 +128,8 @@ func TestIterate(t *testing.T) {
 	v.Set(2000)
 	data = make([]uint, 5)
 	c = 0
-	for i := v.NextSet(int64(0)); i >= 0; i = v.NextSet(i + 1) {
-		data[c] = uint(i)
+	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+		data[c] = i
 		c++
 	}
 	if data[0] != 0 {
