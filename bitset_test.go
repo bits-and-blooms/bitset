@@ -438,6 +438,32 @@ func TestUnion(t *testing.T) {
 	}
 }
 
+func TestInPlaceUnion(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i - 1)
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceUnion(b)
+	d := b.Clone()
+	d.InPlaceUnion(a)
+	if c.Count() != 200 {
+		t.Errorf("Union should have 200 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 200 {
+		t.Errorf("Union should have 200 bits set, but had %d", d.Count())
+	}
+	if !c.Equal(d) {
+		t.Errorf("Union should be symmetric")
+	}
+}
+
+
 func TestIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -458,6 +484,33 @@ func TestIntersection(t *testing.T) {
 	}
 }
 
+
+func TestInplaceIntersection(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i - 1).Set(i)
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceIntersection(b)
+	d := b.Clone()
+	d.InPlaceIntersection(a)
+	if c.Count() != 50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", d.Count())
+	}
+	if !c.Equal(d) {
+		t.Errorf("Intersection should be symmetric")
+	}
+}
+
+
 func TestDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -474,7 +527,33 @@ func TestDifference(t *testing.T) {
 		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
 	}
 	if d.Count() != 150 {
-		t.Errorf("b-a Difference should have 150 bits set, but had %d", c.Count())
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", d.Count())
+	}
+	if c.Equal(d) {
+		t.Errorf("Difference, here, should not be symmetric")
+	}
+}
+
+
+func TestInPlaceDifference(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i - 1)
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceDifference(b)
+	d := b.Clone()
+	d.InPlaceDifference(a)
+	if c.Count() != 50 {
+		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 150 {
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", d.Count())
 	}
 	if c.Equal(d) {
 		t.Errorf("Difference, here, should not be symmetric")
@@ -497,7 +576,32 @@ func TestSymmetricDifference(t *testing.T) {
 		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
 	}
 	if d.Count() != 150 {
-		t.Errorf("b^a Difference should have 150 bits set, but had %d", c.Count())
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", d.Count())
+	}
+	if !c.Equal(d) {
+		t.Errorf("SymmetricDifference should be symmetric")
+	}
+}
+
+func TestInPlaceSymmetricDifference(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)            // 01010101010 ... 0000000
+		b.Set(i - 1).Set(i) // 11111111111111111000000
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceSymmetricDifference(b)
+	d := b.Clone()
+	d.InPlaceSymmetricDifference(a)
+	if c.Count() != 150 {
+		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 150 {
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", d.Count())
 	}
 	if !c.Equal(d) {
 		t.Errorf("SymmetricDifference should be symmetric")

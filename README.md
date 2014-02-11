@@ -26,7 +26,7 @@ Example use:
     if b.Test(1000) {
     	b.Clear(1000)
     }
-    for i := b.NextSet(int64(0)); i >= 0; i = b.NextSet(i + 1) {
+    for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
        frmt.Println("The following bit is set:",i);
     }
     if B.Intersection(bitset.New(100).Set(10)).Count() > 1 {
