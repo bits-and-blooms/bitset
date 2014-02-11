@@ -1,4 +1,4 @@
-// Copyright 2013 Will Fitzgerald. All rights reserved.
+// Copyright 2014 Will Fitzgerald. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -53,8 +53,8 @@ func TestBitSetHuge(t *testing.T) {
 
 func TestCap(t *testing.T) {
 	v := New(1000)
-	if v.Cap() != uint(math.MaxUint32) {
-		t.Errorf("Cap should be MaxUint32, but is %d.", v.Cap())
+	if v.Cap() != uint(math.MaxUint64) {
+		t.Errorf("Cap should be MaxUint64, but is %d.", v.Cap())
 	}
 }
 
@@ -110,44 +110,44 @@ func TestIterate(t *testing.T) {
 	v.Set(1)
 	v.Set(2)
 	data := make([]uint, 3)
-    c := 0
-    for i:=v.NextSet(int64(0)); i>=0; i = v.NextSet(i + 1) {
-    	data[c] = uint(i)
-    	c++
-    }
-    if data[0] != 0 {
+	c := 0
+	for i := v.NextSet(int64(0)); i >= 0; i = v.NextSet(i + 1) {
+		data[c] = uint(i)
+		c++
+	}
+	if data[0] != 0 {
 		t.Errorf("bug 0")
-    }
-    if data[1] != 1 {
+	}
+	if data[1] != 1 {
 		t.Errorf("bug 1")
-    }
-    if data[2] != 2 {
+	}
+	if data[2] != 2 {
 		t.Errorf("bug 2")
-    }
+	}
 	v.Set(10)
 	v.Set(2000)
 	data = make([]uint, 5)
-    c = 0
-    for i:=v.NextSet(int64(0)); i>=0; i = v.NextSet(i + 1) {
-    	data[c] = uint(i)
-    	c++
-    }
-    if data[0] != 0 {
+	c = 0
+	for i := v.NextSet(int64(0)); i >= 0; i = v.NextSet(i + 1) {
+		data[c] = uint(i)
+		c++
+	}
+	if data[0] != 0 {
 		t.Errorf("bug 0")
-    }
-    if data[1] != 1 {
+	}
+	if data[1] != 1 {
 		t.Errorf("bug 1")
-    }
-    if data[2] != 2 {
+	}
+	if data[2] != 2 {
 		t.Errorf("bug 2")
-    }
-    if data[3] != 10 {
+	}
+	if data[3] != 10 {
 		t.Errorf("bug 3")
-    }
-    if data[4] != 2000 {
+	}
+	if data[4] != 2000 {
 		t.Errorf("bug 4")
-    }
-    
+	}
+
 }
 
 func TestSetTo(t *testing.T) {
@@ -520,12 +520,12 @@ func TestComplement(t *testing.T) {
 
 func TestDumpAsBits(t *testing.T) {
 	a := New(10).Set(10)
-	astr := "00000000000000000000010000000000."
+	astr := "0000000000000000000000000000000000000000000000000000010000000000."
 	if a.DumpAsBits() != astr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", astr, a.DumpAsBits())
 	}
 	var b BitSet // zero value (b.set == nil)
-	bstr := "00000000000000000000000000000000."
+	bstr := "0000000000000000000000000000000000000000000000000000000000000000."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
 	}
@@ -548,7 +548,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 
 	// Bitsets must be equal after marshalling and unmarshalling
 	if !a.Equal(b) {
-		t.Error("Bitsets are not equal")
+		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 		return
 	}
 }
@@ -590,7 +590,7 @@ func BenchmarkSetExpand(b *testing.B) {
 func BenchmarkCount(b *testing.B) {
 	b.StopTimer()
 	s := New(100000)
-	for i := 0; i < 100000; i+=100 {
+	for i := 0; i < 100000; i += 100 {
 		s.Set(uint(i))
 	}
 	b.StartTimer()
@@ -598,4 +598,3 @@ func BenchmarkCount(b *testing.B) {
 		s.Count()
 	}
 }
-

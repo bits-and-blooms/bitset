@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors. All rights reserved.
+/// Copyright 2014 Will Fitzgerald. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -52,33 +52,33 @@ import (
 )
 
 // Word size of a bit set
-const wordSize = uint(32)
+const wordSize = uint(64)
 
 // Mask for cleaning last word
-const allBits uint32 = 0xffffffff
+const allBits uint64 = 0xffffffffffffffff
 
 // for laster arith.
-const log2WordSize = uint(5)
+const log2WordSize = uint(6)
 
 // The zero value of a BitSet is an empty set of length 0.
 type BitSet struct {
 	length uint
-	set    []uint32
+	set    []uint64
 }
 
 type BitSetError string
 
 // fixup b.set to be non-nil and return the field value
-func (b *BitSet) safeSet() []uint32 {
+func (b *BitSet) safeSet() []uint64 {
 	if b.set == nil {
-		b.set = make([]uint32, wordsNeeded(0))
+		b.set = make([]uint64, wordsNeeded(0))
 	}
 	return b.set
 }
 
 func wordsNeeded(i uint) uint {
-	if i == math.MaxUint32 {
-		return math.MaxUint32 >> log2WordSize
+	if i == math.MaxUint64 {
+		return math.MaxUint64 >> log2WordSize
 	} else if i == 0 {
 		return 1
 	}
@@ -86,11 +86,11 @@ func wordsNeeded(i uint) uint {
 }
 
 func New(length uint) *BitSet {
-	return &BitSet{length, make([]uint32, wordsNeeded(length))}
+	return &BitSet{length, make([]uint64, wordsNeeded(length))}
 }
 
 func (b *BitSet) Cap() uint {
-	return uint(math.MaxUint32)
+	return uint(math.MaxUint64)
 }
 
 func (b *BitSet) Len() uint {
@@ -102,9 +102,9 @@ func (b *BitSet) extendSetMaybe(i uint) {
 	if i >= b.length { // if we need more bits, make 'em
 		nsize := wordsNeeded(i + 1)
 		if b.set == nil {
-			b.set = make([]uint32, nsize)
+			b.set = make([]uint64, nsize)
 		} else if uint(len(b.set)) < nsize {
-			newset := make([]uint32, nsize)
+			newset := make([]uint64, nsize)
 			copy(newset, b.set)
 			b.set = newset
 		}
@@ -156,26 +156,26 @@ func (b *BitSet) Flip(i uint) *BitSet {
 
 // return the next bit set from the specified index, including possibly the current index
 // returns -1 if none is found
-// inspired by the Java API: for i:=int64(0); i>=0; i = NextSet(i) {...} 
-func  (b *BitSet)  NextSet(i int64)  int64 {
-     x := uint(i) >> log2WordSize
-     if x >= b.length {
-		  return -1
-	 }
-     w := b.set[x]
-     w = w >> (uint(i) & (wordSize - 1))
-     if w != 0 {
-          return int64(i) + int64(trailingZeroes32(w));
-     }
-     x = x + 1
-     for x < wordsNeeded(b.length) {
-         if b.set[x] != 0 {
-              return int64(x * wordSize) + int64(trailingZeroes32(b.set[x]));
-         }
-         x = x + 1
+// inspired by the Java API: for i:=int64(0); i>=0; i = NextSet(i) {...}
+func (b *BitSet) NextSet(i int64) int64 {
+	x := uint(i) >> log2WordSize
+	if x >= b.length {
+		return -1
+	}
+	w := b.set[x]
+	w = w >> (uint(i) & (wordSize - 1))
+	if w != 0 {
+		return int64(i) + int64(trailingZeroes64(w))
+	}
+	x = x + 1
+	for x < wordsNeeded(b.length) {
+		if b.set[x] != 0 {
+			return int64(x*wordSize) + int64(trailingZeroes64(b.set[x]))
+		}
+		x = x + 1
 
-     }
-     return -1
+	}
+	return -1
 }
 
 // Clear entire BitSet
@@ -216,58 +216,68 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 }
 
 // From Wikipedia: http://en.wikipedia.org/wiki/Hamming_weight
-const m1 uint32 = 0x55555555 //binary: 0101...
-const m2 uint32 = 0x33333333 //binary: 00110011..
-const m4 uint32 = 0x0f0f0f0f //binary:  4 zeros,  4 ones ...
+const m1 uint64 = 0x5555555555555555  //binary: 0101...
+const m2 uint64 = 0x3333333333333333  //binary: 00110011..
+const m4 uint64 = 0x0f0f0f0f0f0f0f0f  //binary:  4 zeros,  4 ones ...
+const m8 uint64 = 0x00ff00ff00ff00ff  //binary:  8 zeros,  8 ones ...
+const m16 uint64 = 0x0000ffff0000ffff //binary: 16 zeros, 16 ones ...
+const m32 uint64 = 0x00000000ffffffff //binary: 32 zeros, 32 ones
+const hff uint64 = 0xffffffffffffffff //binary: all ones
+const h01 uint64 = 0x0101010101010101 //the sum of 256 to the power of 0,1,2,3...
 
 // From Wikipedia: count number of set bits.
 // This is algorithm popcount_2 in the article retrieved May 9, 2011
-func popCountUint32(x uint32) uint32 {
-	x -= x >> 1 & m1    //put count of each 2 bits into those 2 bits
-	x = x&m2 + x>>2&m2  //put count of each 4 bits into those 4 bits
-	x = (x + x>>4) & m4 //put count of each 8 bits into those 8 bits
-	x += x >> 8         //put count of each 16 bits into their lowest 8 bits
-	x += x >> 16        //put count of each 32 bits into their lowest 8 bits
-	//x += x >> 32;  //put count of each 64 bits into their lowest 8 bits
+
+func popcount_2(x uint64) uint64 {
+	x -= (x >> 1) & m1             //put count of each 2 bits into those 2 bits
+	x = (x & m2) + ((x >> 2) & m2) //put count of each 4 bits into those 4 bits
+	x = (x + (x >> 4)) & m4        //put count of each 8 bits into those 8 bits
+	x += x >> 8                    //put count of each 16 bits into their lowest 8 bits
+	x += x >> 16                   //put count of each 32 bits into their lowest 8 bits
+	x += x >> 32                   //put count of each 64 bits into their lowest 8 bits
 	return x & 0x7f
-}
-// Stolen from http://graphics.stanford.edu/~seander/bithacks.html
-func trailingZeroes32(v uint32) uint32 {
-	// NOTE: if 0 == v, then c = 31.
-	  if  v & 0x1 != 0 {
-	    return 0
-	  }
-	  c := uint32(1)
-	  if (v & 0xffff) == 0 {  
-	    v >>= 16  
-	    c += 16
-	  }
-	  if (v & 0xff) == 0 {  
-	    v >>= 8  
-	    c += 8
-	  }
-	  if (v & 0xf) == 0 {  
-	    v >>= 4
-	    c += 4
-	  }
-	  if (v & 0x3) == 0 {  
-	    v >>= 2
-	    c += 2
-	  }
-	  c -= v & 0x1
-	  return c
 }
 
 // Count (number of set bits)
 func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
-		cnt := uint32(0)
+		cnt := uint64(0)
 		for _, word := range b.set {
-			cnt += popCountUint32(word)
+			cnt += popcount_2(word)
 		}
 		return uint(cnt)
 	}
 	return 0
+}
+
+func trailingZeroes64(v uint64) uint64 {
+	// NOTE: if 0 == v, then c = 63.
+	if v&0x1 != 0 {
+		return 0
+	}
+	c := uint64(1)
+	if (v & 0xffffffff) == 0 {
+		v >>= 32
+		c += 32
+	}
+	if (v & 0xffff) == 0 {
+		v >>= 16
+		c += 16
+	}
+	if (v & 0xff) == 0 {
+		v >>= 8
+		c += 8
+	}
+	if (v & 0xf) == 0 {
+		v >>= 4
+		c += 4
+	}
+	if (v & 0x3) == 0 {
+		v >>= 2
+		c += 2
+	}
+	c -= v & 0x1
+	return c
 }
 
 // Test the equvalence of two BitSets.
@@ -424,7 +434,7 @@ func (b *BitSet) DumpAsBits() string {
 	b.safeSet()
 	i := int(wordsNeeded(b.length) - 1)
 	for ; i >= 0; i-- {
-		fmt.Fprintf(buffer, "%032b.", b.set[i])
+		fmt.Fprintf(buffer, "%064b.", b.set[i])
 	}
 	return string(buffer.Bytes())
 }
