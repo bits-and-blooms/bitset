@@ -1,4 +1,4 @@
-// Copyright 2013 Will Fitzgerald. All rights reserved.
+// Copyright 2014 Will Fitzgerald. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -53,8 +53,8 @@ func TestBitSetHuge(t *testing.T) {
 
 func TestCap(t *testing.T) {
 	v := New(1000)
-	if v.Cap() != uint(math.MaxUint32) {
-		t.Errorf("Cap should be MaxUint32, but is %d.", v.Cap())
+	if v.Cap() != uint(math.MaxUint64) {
+		t.Errorf("Cap should be MaxUint64, but is %d.", v.Cap())
 	}
 }
 
@@ -110,44 +110,44 @@ func TestIterate(t *testing.T) {
 	v.Set(1)
 	v.Set(2)
 	data := make([]uint, 3)
-    c := 0
-    for i:=v.NextSet(int64(0)); i>=0; i = v.NextSet(i + 1) {
-    	data[c] = uint(i)
-    	c++
-    }
-    if data[0] != 0 {
+	c := 0
+	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+		data[c] = i
+		c++
+	}
+	if data[0] != 0 {
 		t.Errorf("bug 0")
-    }
-    if data[1] != 1 {
+	}
+	if data[1] != 1 {
 		t.Errorf("bug 1")
-    }
-    if data[2] != 2 {
+	}
+	if data[2] != 2 {
 		t.Errorf("bug 2")
-    }
+	}
 	v.Set(10)
 	v.Set(2000)
 	data = make([]uint, 5)
-    c = 0
-    for i:=v.NextSet(int64(0)); i>=0; i = v.NextSet(i + 1) {
-    	data[c] = uint(i)
-    	c++
-    }
-    if data[0] != 0 {
+	c = 0
+	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+		data[c] = i
+		c++
+	}
+	if data[0] != 0 {
 		t.Errorf("bug 0")
-    }
-    if data[1] != 1 {
+	}
+	if data[1] != 1 {
 		t.Errorf("bug 1")
-    }
-    if data[2] != 2 {
+	}
+	if data[2] != 2 {
 		t.Errorf("bug 2")
-    }
-    if data[3] != 10 {
+	}
+	if data[3] != 10 {
 		t.Errorf("bug 3")
-    }
-    if data[4] != 2000 {
+	}
+	if data[4] != 2000 {
 		t.Errorf("bug 4")
-    }
-    
+	}
+
 }
 
 func TestSetTo(t *testing.T) {
@@ -438,6 +438,32 @@ func TestUnion(t *testing.T) {
 	}
 }
 
+func TestInPlaceUnion(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i - 1)
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceUnion(b)
+	d := b.Clone()
+	d.InPlaceUnion(a)
+	if c.Count() != 200 {
+		t.Errorf("Union should have 200 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 200 {
+		t.Errorf("Union should have 200 bits set, but had %d", d.Count())
+	}
+	if !c.Equal(d) {
+		t.Errorf("Union should be symmetric")
+	}
+}
+
+
 func TestIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -458,6 +484,33 @@ func TestIntersection(t *testing.T) {
 	}
 }
 
+
+func TestInplaceIntersection(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i - 1).Set(i)
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceIntersection(b)
+	d := b.Clone()
+	d.InPlaceIntersection(a)
+	if c.Count() != 50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", d.Count())
+	}
+	if !c.Equal(d) {
+		t.Errorf("Intersection should be symmetric")
+	}
+}
+
+
 func TestDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -474,7 +527,33 @@ func TestDifference(t *testing.T) {
 		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
 	}
 	if d.Count() != 150 {
-		t.Errorf("b-a Difference should have 150 bits set, but had %d", c.Count())
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", d.Count())
+	}
+	if c.Equal(d) {
+		t.Errorf("Difference, here, should not be symmetric")
+	}
+}
+
+
+func TestInPlaceDifference(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i - 1)
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceDifference(b)
+	d := b.Clone()
+	d.InPlaceDifference(a)
+	if c.Count() != 50 {
+		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 150 {
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", d.Count())
 	}
 	if c.Equal(d) {
 		t.Errorf("Difference, here, should not be symmetric")
@@ -497,7 +576,32 @@ func TestSymmetricDifference(t *testing.T) {
 		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
 	}
 	if d.Count() != 150 {
-		t.Errorf("b^a Difference should have 150 bits set, but had %d", c.Count())
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", d.Count())
+	}
+	if !c.Equal(d) {
+		t.Errorf("SymmetricDifference should be symmetric")
+	}
+}
+
+func TestInPlaceSymmetricDifference(t *testing.T) {
+	a := New(100)
+	b := New(200)
+	for i := uint(1); i < 100; i += 2 {
+		a.Set(i)            // 01010101010 ... 0000000
+		b.Set(i - 1).Set(i) // 11111111111111111000000
+	}
+	for i := uint(100); i < 200; i++ {
+		b.Set(i)
+	}
+	c := a.Clone()
+	c.InPlaceSymmetricDifference(b)
+	d := b.Clone()
+	d.InPlaceSymmetricDifference(a)
+	if c.Count() != 150 {
+		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
+	}
+	if d.Count() != 150 {
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", d.Count())
 	}
 	if !c.Equal(d) {
 		t.Errorf("SymmetricDifference should be symmetric")
@@ -520,12 +624,12 @@ func TestComplement(t *testing.T) {
 
 func TestDumpAsBits(t *testing.T) {
 	a := New(10).Set(10)
-	astr := "00000000000000000000010000000000."
+	astr := "0000000000000000000000000000000000000000000000000000010000000000."
 	if a.DumpAsBits() != astr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", astr, a.DumpAsBits())
 	}
 	var b BitSet // zero value (b.set == nil)
-	bstr := "00000000000000000000000000000000."
+	bstr := "0000000000000000000000000000000000000000000000000000000000000000."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
 	}
@@ -548,7 +652,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 
 	// Bitsets must be equal after marshalling and unmarshalling
 	if !a.Equal(b) {
-		t.Error("Bitsets are not equal")
+		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 		return
 	}
 }
@@ -590,7 +694,7 @@ func BenchmarkSetExpand(b *testing.B) {
 func BenchmarkCount(b *testing.B) {
 	b.StopTimer()
 	s := New(100000)
-	for i := 0; i < 100000; i+=100 {
+	for i := 0; i < 100000; i += 100 {
 		s.Set(uint(i))
 	}
 	b.StartTimer()
@@ -598,4 +702,3 @@ func BenchmarkCount(b *testing.B) {
 		s.Count()
 	}
 }
-
