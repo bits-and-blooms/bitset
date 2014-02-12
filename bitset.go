@@ -51,6 +51,15 @@ import (
 	"math"
 )
 
+
+
+/////////////
+// Design issue: I think that a slice/array in Go has a length of type int
+// as per the spec http://golang.org/ref/spec#Length_and_capacity
+// yet this code assumes that the length is uint. I think that this is wrong
+//////////
+
+
 // Word size of a bit set
 const wordSize = uint(64)
 
@@ -71,13 +80,15 @@ type BitSetError string
 // fixup b.set to be non-nil and return the field value
 func (b *BitSet) safeSet() []uint64 {
 	if b.set == nil {
-		b.set = make([]uint64, wordsNeeded(0))
+		b.set = make([]uint64, wordsNeeded(0)) 
 	}
 	return b.set
 }
 
+// Daniel: I think this should return an int since this is the type used for array lengths in Go
 func wordsNeeded(i uint) uint {
-	if i == math.MaxUint64 {
+	if i > (math.MaxUint64 - wordSize + 1 ) { // safer?
+	// if i == math.MaxUint64 {
 		return math.MaxUint64 >> log2WordSize
 	} else if i == 0 {
 		return 1
@@ -155,27 +166,27 @@ func (b *BitSet) Flip(i uint) *BitSet {
 }
 
 // return the next bit set from the specified index, including possibly the current index
-// returns -1 if none is found
-// inspired by the Java API: for i:=int64(0); i>=0; i = NextSet(i) {...}
-func (b *BitSet) NextSet(i int64) int64 {
-	x := uint(i) >> log2WordSize
+// along with an error code (true = valid, false = no set bit found)
+// for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {...}
+func (b *BitSet) NextSet(i uint) (uint,bool) {
+	x := i >> log2WordSize
 	if x >= b.length {
-		return -1
+		return 0, false
 	}
 	w := b.set[x]
-	w = w >> (uint(i) & (wordSize - 1))
+	w = w >> (i & (wordSize - 1))
 	if w != 0 {
-		return int64(i) + int64(trailingZeroes64(w))
+		return i + trailingZeroes64(w),true
 	}
 	x = x + 1
-	for x < wordsNeeded(b.length) {
+	for x < uint(len(b.set)) {
 		if b.set[x] != 0 {
-			return int64(x*wordSize) + int64(trailingZeroes64(b.set[x]))
+			return x * wordSize + trailingZeroes64(b.set[x]),true
 		}
 		x = x + 1
 
 	}
-	return -1
+	return 0, false
 }
 
 // Clear entire BitSet
@@ -188,6 +199,7 @@ func (b *BitSet) ClearAll() *BitSet {
 	return b
 }
 
+// Daniel: should return an int
 // Query words used in a bit set
 func (b *BitSet) wordCount() uint {
 	return wordsNeeded(b.length)
@@ -196,7 +208,9 @@ func (b *BitSet) wordCount() uint {
 // Clone this BitSet
 func (b *BitSet) Clone() *BitSet {
 	c := New(b.length)
-	copy(c.set, b.safeSet())
+	if b.set != nil {// Clone should not modify current object
+ 	  copy(c.set, b.set)
+	}
 	return c
 }
 
@@ -207,7 +221,9 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
 	}
-	copy(c.set, b.safeSet())
+	if b.set != nil {// Copy should not modify current object
+	  copy(c.set, b.set)
+	}
 	count = c.length
 	if b.length < c.length {
 		count = b.length
@@ -250,12 +266,13 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
-func trailingZeroes64(v uint64) uint64 {
+// computes the number of trailing zeroes on the assumption that v is non-zero
+func trailingZeroes64(v uint64) uint {
 	// NOTE: if 0 == v, then c = 63.
 	if v&0x1 != 0 {
 		return 0
 	}
-	c := uint64(1)
+	c := uint(1)
 	if (v & 0xffffffff) == 0 {
 		v >>= 32
 		c += 32
@@ -276,7 +293,7 @@ func trailingZeroes64(v uint64) uint64 {
 		v >>= 2
 		c += 2
 	}
-	c -= v & 0x1
+	c -= uint(v & 0x1)
 	return c
 }
 
@@ -290,7 +307,11 @@ func (b *BitSet) Equal(c *BitSet) bool {
 	if b.length != c.length {
 		return false
 	}
-	for p, v := range b.safeSet() {
+	if b.length == 0 { // if they have both length == 0, then could have nil set
+		return true
+	}
+	// testing for equality shoud not transform the bitset (no call to safeSet)
+	for p, v := range b.set {
 		if c.set[p] != v {
 			return false
 		}
@@ -310,15 +331,31 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
 	result = b.Clone() // clone b (in case b is bigger than compare)
-	szl := compare.wordCount()
-	for i, word := range b.safeSet() {
-		if uint(i) >= szl {
-			break
-		}
-		result.set[i] = word &^ compare.set[i]
+	l := int(compare.wordCount()) 
+	if l > int(b.wordCount()) {
+		 l = int(b.wordCount())  
+	}
+	for i := 0; i < l ; i++ {
+	    result.set[i] = b.set[i] &^ compare.set[i]
 	}
 	return
 }
+
+// Difference of base set and other set
+// This is the BitSet equivalent of &^ (and not)
+func (b *BitSet) InPlaceDifference(compare *BitSet)  {
+	panicIfNull(b)
+	panicIfNull(compare)
+	l := int(compare.wordCount()) 
+	if l > int(b.wordCount()) {
+		 l = int(b.wordCount())  
+	}
+	for i := 0; i < l ; i++ {
+	    b.set[i] &^= compare.set[i]
+	}
+}
+
+
 
 // Convenience function: return two bitsets ordered by
 // increasing length. Note: neither can be nil
@@ -338,11 +375,34 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
 	result = New(b.length)
-	for i, word := range b.safeSet() {
+	for i, word := range b.set {
 		result.set[i] = word & compare.set[i]
 	}
 	return
 }
+
+// Intersection of base set and other set
+// This is the BitSet equivalent of & (and)
+func (b *BitSet) InPlaceIntersection(compare *BitSet)  {
+	panicIfNull(b)
+	panicIfNull(compare)
+	l := int(compare.wordCount()) 
+	if l > int(b.wordCount()) {
+		 l = int(b.wordCount())  
+	}
+	for i := 0; i < l ; i++ {
+		b.set[i] &= compare.set[i]
+	}
+	for i := l; i < len(b.set) ; i++ {
+		b.set[i] = 0
+	}
+	if compare.length > 0 { 
+	  b.extendSetMaybe(compare.length - 1)
+	}
+	return
+}
+
+
 
 // Union of base set and other set
 // This is the BitSet equivalent of | (or)
@@ -351,14 +411,33 @@ func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
 	result = compare.Clone()
-	szl := compare.wordCount()
-	for i, word := range b.safeSet() {
-		if uint(i) >= szl {
-			break
-		}
+	for i, word := range b.set {
 		result.set[i] = word | compare.set[i]
 	}
 	return
+}
+
+
+// Union of base set and other set
+// This is the BitSet equivalent of | (or)
+func (b *BitSet) InPlaceUnion(compare *BitSet)  {
+	panicIfNull(b)
+	panicIfNull(compare)
+	l := int(compare.wordCount()) 
+	if l > int(b.wordCount()) {
+		 l = int(b.wordCount())  
+	}
+	if compare.length > 0 { 
+	  b.extendSetMaybe(compare.length - 1)
+	}
+	for i := 0; i < l ; i++ {
+		b.set[i] |= compare.set[i]
+	}
+	if len(compare.set) > l  {
+	  for i := l; i < len(compare.set) ; i++ {
+		b.set[i] = compare.set[i]
+	  }
+	}
 }
 
 // SymmetricDifference of base set and other set
@@ -369,14 +448,32 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	b, compare = sortByLength(b, compare)
 	// compare is bigger, so clone it
 	result = compare.Clone()
-	szl := b.wordCount()
-	for i, word := range b.safeSet() {
-		if uint(i) >= szl {
-			break
-		}
+	for i, word := range b.set {
 		result.set[i] = word ^ compare.set[i]
 	}
 	return
+}
+
+// SymmetricDifference of base set and other set
+// This is the BitSet equivalent of ^ (xor)
+func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet)  {
+	panicIfNull(b)
+	panicIfNull(compare)
+	l := int(compare.wordCount()) 
+	if l > int(b.wordCount()) {
+		 l = int(b.wordCount())  
+	}
+	if compare.length > 0 { 
+	  b.extendSetMaybe(compare.length - 1)
+	}
+	for i := 0; i < l ; i++ {
+		b.set[i] ^= compare.set[i]
+	}
+	if len(compare.set) > l  {
+	  for i := l; i < len(compare.set) ; i++ {
+		b.set[i] = compare.set[i]
+	  }
+	}
 }
 
 // Is the length an exact multiple of word sizes?
@@ -395,7 +492,7 @@ func (b *BitSet) cleanLastWord() {
 func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
 	result = New(b.length)
-	for i, word := range b.safeSet() {
+	for i, word := range b.set {
 		result.set[i] = ^word
 	}
 	result.cleanLastWord()
@@ -429,9 +526,10 @@ func (b *BitSet) Any() bool {
 }
 
 // Dump as bits
+// if the bitset is empty, one word is automatically allocated
 func (b *BitSet) DumpAsBits() string {
 	buffer := bytes.NewBufferString("")
-	b.safeSet()
+	b.safeSet() // it is a bit odd that dumping as bits should modify the bitset!
 	i := int(wordsNeeded(b.length) - 1)
 	for ; i >= 0; i-- {
 		fmt.Fprintf(buffer, "%064b.", b.set[i])
