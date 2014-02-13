@@ -474,7 +474,7 @@ func (b *BitSet) isEven() bool {
 func (b *BitSet) cleanLastWord() {
 	if !b.isEven() {
 		// Mask for cleaning last word
-        const allBits uint64 = 0xffffffffffffffff
+		const allBits uint64 = 0xffffffffffffffff
 		b.set[wordsNeeded(b.length)-1] &= allBits >> (wordSize - b.length%wordSize)
 	}
 }
