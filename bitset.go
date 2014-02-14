@@ -289,32 +289,15 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
-// computes the number of trailing zeroes on the assumption that v is non-zero
+var deBruijn = [...]byte{
+	0, 1, 56, 2, 57, 49, 28, 3, 61, 58, 42, 50, 38, 29, 17, 4,
+	62, 47, 59, 36, 45, 43, 51, 22, 53, 39, 33, 30, 24, 18, 12, 5,
+	63, 55, 48, 27, 60, 41, 37, 16, 46, 35, 44, 21, 52, 32, 23, 11,
+	54, 26, 40, 15, 34, 20, 31, 10, 25, 14, 19, 9, 13, 8, 7, 6,
+}
+
 func trailingZeroes64(v uint64) uint {
-	// NOTE: if 0 == v, then c = 63.
-	c := uint(1)
-	if (v & 0xffffffff) == 0 {
-		v >>= 32
-		c += 32
-	}
-	if (v & 0xffff) == 0 {
-		v >>= 16
-		c += 16
-	}
-	if (v & 0xff) == 0 {
-		v >>= 8
-		c += 8
-	}
-	if (v & 0xf) == 0 {
-		v >>= 4
-		c += 4
-	}
-	if (v & 0x3) == 0 {
-		v >>= 2
-		c += 2
-	}
-	c -= uint(v & 0x1)
-	return c
+	return uint(deBruijn[((v&-v)*0x03f79d71b4ca8b09)>>58])
 }
 
 // Test the equvalence of two BitSets.
