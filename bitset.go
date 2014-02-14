@@ -371,6 +371,25 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	return
 }
 
+// computes the cardinality of the differnce
+func (b *BitSet) DifferenceCardinality(compare *BitSet) (uint) {	
+	panicIfNull(b)
+	panicIfNull(compare)
+	l := int(compare.wordCount()) 
+	if l > int(b.wordCount()) {
+		 l = int(b.wordCount())  
+	}
+	cnt := uint64(0)
+	for i := 0; i < l ; i++ {
+	    cnt += popcount_2(b.set[i] &^ compare.set[i])
+	}
+	for i := l; i < len(b.set) ; i++ {
+		cnt += popcount_2(b.set[i])
+	}
+	return uint(cnt)
+}
+
+
 // Difference of base set and other set
 // This is the BitSet equivalent of &^ (and not)
 func (b *BitSet) InPlaceDifference(compare *BitSet)  {
@@ -411,6 +430,20 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	return
 }
 
+
+// Computes the cardinality of the union
+func (b *BitSet) IntersectionCardinality(compare *BitSet) (uint) {
+	panicIfNull(b)
+	panicIfNull(compare)
+	b, compare = sortByLength(b, compare)
+	cnt := uint64(0)
+	for i, word := range b.set {
+		cnt += popcount_2(word & compare.set[i]) 
+	}
+	return uint(cnt)
+}
+
+
 // Intersection of base set and other set
 // This is the BitSet equivalent of & (and)
 func (b *BitSet) InPlaceIntersection(compare *BitSet)  {
@@ -445,6 +478,21 @@ func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 		result.set[i] = word | compare.set[i]
 	}
 	return
+}
+
+func (b *BitSet) UnionCardinality(compare *BitSet) (uint) {
+	panicIfNull(b)
+	panicIfNull(compare)
+	b, compare = sortByLength(b, compare)
+	cnt := uint64(0)
+	for i, word := range b.set {
+		cnt += popcount_2(word | compare.set[i])
+	}
+	for i := len(b.set); i < len(compare.set) ; i++ {
+		cnt += popcount_2(compare.set[i])
+	}
+
+	return uint(cnt)
 }
 
 
@@ -483,6 +531,23 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	}
 	return
 }
+
+// computes the cardinality of the symmetric difference
+func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) (uint) {
+	panicIfNull(b)
+	panicIfNull(compare)
+	b, compare = sortByLength(b, compare)
+	cnt := uint64(0)
+	for i, word := range b.set {
+		cnt += popcount_2(word ^ compare.set[i])
+	}
+	for i := len(b.set); i < len(compare.set) ; i++ {
+		cnt += popcount_2(compare.set[i])
+	}
+
+	return uint(cnt)
+}
+
 
 // SymmetricDifference of base set and other set
 // This is the BitSet equivalent of ^ (xor)

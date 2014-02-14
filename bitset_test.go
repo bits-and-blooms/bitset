@@ -188,7 +188,7 @@ func TestCount(t *testing.T) {
 	v := New(tot)
 	checkLast := true
 	for i := uint(0); i < tot; i++ {
-		sz := v.Count()
+		sz := uint(v.Count())
 		if sz != i {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			checkLast = false
@@ -197,7 +197,7 @@ func TestCount(t *testing.T) {
 		v.Set(i)
 	}
 	if checkLast {
-		sz := v.Count()
+		sz := uint(v.Count())
 		if sz != tot {
 			t.Errorf("After all bits set, size reported as %d, but it should be %d", sz, tot)
 		}
@@ -209,7 +209,7 @@ func TestCount2(t *testing.T) {
 	tot := uint(64*4 + 11) // just some multi unit64 number
 	v := New(tot)
 	for i := uint(0); i < tot; i += 3 {
-		sz := v.Count()
+		sz := uint(v.Count())
 		if sz != i/3 {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			break
@@ -422,6 +422,13 @@ func TestUnion(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.UnionCardinality(b) != 200 {
+		t.Errorf("Union should have 200 bits set, but had %d", a.UnionCardinality(b))
+	}
+	if a.UnionCardinality(b) != b.UnionCardinality(a) {
+		t.Errorf("Union should be symmetric")
+	}
+
 	c := a.Union(b)
 	d := b.Union(a)
 	if c.Count() != 200 {
@@ -467,6 +474,12 @@ func TestIntersection(t *testing.T) {
 	}
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
+	}
+	if a.IntersectionCardinality(b) != 50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", a.IntersectionCardinality(b))
+	}
+	if a.IntersectionCardinality(b) != b.IntersectionCardinality(a) {
+		t.Errorf("Intersection should be symmetric")
 	}
 	c := a.Intersection(b)
 	d := b.Intersection(a)
@@ -515,6 +528,13 @@ func TestDifference(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.DifferenceCardinality(b) != 50 {
+		t.Errorf("a-b Difference should have 50 bits set, but had %d", a.DifferenceCardinality(b))
+	}
+	if b.DifferenceCardinality(a) != 150 {
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", b.DifferenceCardinality(a))
+	}
+
 	c := a.Difference(b)
 	d := b.Difference(a)
 	if c.Count() != 50 {
@@ -564,6 +584,13 @@ func TestSymmetricDifference(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.SymmetricDifferenceCardinality(b) != 150 {
+		t.Errorf("a^b Difference should have 150 bits set, but had %d", a.SymmetricDifferenceCardinality(b))
+	}
+	if b.SymmetricDifferenceCardinality(a) != 150 {
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", b.SymmetricDifferenceCardinality(a))
+	}
+
 	c := a.SymmetricDifference(b)
 	d := b.SymmetricDifference(a)
 	if c.Count() != 150 {
