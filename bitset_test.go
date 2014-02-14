@@ -13,6 +13,7 @@ import (
 	"testing"
 )
 
+
 func TestEmptyBitSet(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -684,6 +685,7 @@ func BenchmarkSetExpand(b *testing.B) {
 	}
 }
 
+// go test -bench=Count
 func BenchmarkCount(b *testing.B) {
 	b.StopTimer()
 	s := New(100000)
@@ -693,5 +695,39 @@ func BenchmarkCount(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		s.Count()
+	}
+}
+
+
+
+// go test -bench=Iterate
+func BenchmarkIterate(b *testing.B) {
+	b.StopTimer()
+	s := New(10000)
+	for i := 0; i < 10000; i += 3 {
+		s.Set(uint(i))
+	}
+	b.StartTimer()
+	for j := 0; j < b.N; j++ {
+	  c := uint(0)
+	  for i,e := s.NextSet(0); e; i,e = s.NextSet(i + 1) {
+	  	  c++
+	  }
+	}
+}
+
+// go test -bench=SparseIterate
+func BenchmarkSparseIterate(b *testing.B) {
+	b.StopTimer()
+	s := New(100000)
+	for i := 0; i < 100000; i += 30 {
+		s.Set(uint(i))
+	}
+	b.StartTimer()
+	for j := 0; j < b.N; j++ {
+	  c := uint(0)
+	  for i,e := s.NextSet(0); e; i,e = s.NextSet(i + 1) {
+	  	  c++
+	  }
 	}
 }
