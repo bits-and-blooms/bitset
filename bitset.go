@@ -43,7 +43,7 @@
 package bitset
 
 /*
-#cgo CFLAGS:  
+#cgo CFLAGS:
 
 // function to compute the number of set bits in a long integer
 #if defined(__GNUC__)
@@ -81,20 +81,16 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"errors"
-    "unsafe"
+	"fmt"
+	"unsafe"
 )
-
-
 
 // we use the C code only if longs in C are 64-bit integers, otherwise fall back on pure Go
 const useC = (unsafe.Sizeof(uint64(0)) == unsafe.Sizeof(C.ulong(0)))
 
 // Word size of a bit set
 const wordSize = uint(64)
-
-
 
 // for laster arith.
 const log2WordSize = uint(6)
@@ -110,15 +106,15 @@ type BitSetError string
 // fixup b.set to be non-nil and return the field value
 func (b *BitSet) safeSet() []uint64 {
 	if b.set == nil {
-		b.set = make([]uint64, wordsNeeded(0)) 
+		b.set = make([]uint64, wordsNeeded(0))
 	}
 	return b.set
 }
 
 func wordsNeeded(i uint) int {
-	if i > ((^uint(0)) - wordSize + 1 ) { 
+	if i > ((^uint(0)) - wordSize + 1) {
 		return int((^uint(0)) >> log2WordSize)
-	} 
+	}
 	return int((i + (wordSize - 1)) >> log2WordSize)
 }
 
@@ -126,7 +122,7 @@ func New(length uint) *BitSet {
 	return &BitSet{length, make([]uint64, wordsNeeded(length))}
 }
 
-func  Cap() uint {
+func Cap() uint {
 	return ^uint(0)
 }
 
@@ -154,7 +150,7 @@ func (b *BitSet) Test(i uint) bool {
 	if i >= b.length {
 		return false
 	}
-	return b.set[i>>log2WordSize] & (1<<(i&(wordSize-1))) != 0
+	return b.set[i>>log2WordSize]&(1<<(i&(wordSize-1))) != 0
 }
 
 // Set bit i to 1
@@ -193,7 +189,7 @@ func (b *BitSet) Flip(i uint) *BitSet {
 // return the next bit set from the specified index, including possibly the current index
 // along with an error code (true = valid, false = no set bit found)
 // for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {...}
-func (b *BitSet) NextSet(i uint) (uint,bool) {
+func (b *BitSet) NextSet(i uint) (uint, bool) {
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
@@ -201,19 +197,18 @@ func (b *BitSet) NextSet(i uint) (uint,bool) {
 	w := b.set[x]
 	w = w >> (i & (wordSize - 1))
 	if w != 0 {
-		return i + trailingZeroes64(w),true
+		return i + trailingZeroes64(w), true
 	}
 	x = x + 1
 	for x < len(b.set) {
 		if b.set[x] != 0 {
-			return uint(x) * wordSize + trailingZeroes64(b.set[x]),true
+			return uint(x)*wordSize + trailingZeroes64(b.set[x]), true
 		}
 		x = x + 1
 
 	}
 	return 0, false
 }
-
 
 // Clear entire BitSet
 func (b *BitSet) ClearAll() *BitSet {
@@ -233,8 +228,8 @@ func (b *BitSet) wordCount() int {
 // Clone this BitSet
 func (b *BitSet) Clone() *BitSet {
 	c := New(b.length)
-	if b.set != nil {// Clone should not modify current object
- 	  copy(c.set, b.set)
+	if b.set != nil { // Clone should not modify current object
+		copy(c.set, b.set)
 	}
 	return c
 }
@@ -246,8 +241,8 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
 	}
-	if b.set != nil {// Copy should not modify current object
-	  copy(c.set, b.set)
+	if b.set != nil { // Copy should not modify current object
+		copy(c.set, b.set)
 	}
 	count = c.length
 	if b.length < c.length {
@@ -278,12 +273,12 @@ func popcount_2(x uint64) uint64 {
 	x += x >> 32                   //put count of each 64 bits into their lowest 8 bits
 	return x & 0x7f
 }
- 
+
 // Count (number of set bits)
 func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
 		if useC {
-			return uint(C.totalpop(unsafe.Pointer(&b.set[0]),C.int(len(b.set))))
+			return uint(C.totalpop(unsafe.Pointer(&b.set[0]), C.int(len(b.set))))
 		}
 		cnt := uint64(0)
 		for _, word := range b.set {
@@ -293,8 +288,6 @@ func (b *BitSet) Count() uint {
 	}
 	return 0
 }
-
-
 
 // computes the number of trailing zeroes on the assumption that v is non-zero
 func trailingZeroes64(v uint64) uint {
@@ -324,8 +317,6 @@ func trailingZeroes64(v uint64) uint {
 	return c
 }
 
-
-
 // Test the equvalence of two BitSets.
 // False if they are of different sizes, otherwise true
 // only if all the same bits are set
@@ -341,7 +332,7 @@ func (b *BitSet) Equal(c *BitSet) bool {
 	}
 	// testing for equality shoud not transform the bitset (no call to safeSet)
 
-    for p, v := range b.set {
+	for p, v := range b.set {
 		if c.set[p] != v {
 			return false
 		}
@@ -361,50 +352,47 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
 	result = b.Clone() // clone b (in case b is bigger than compare)
-	l := int(compare.wordCount()) 
+	l := int(compare.wordCount())
 	if l > int(b.wordCount()) {
-		 l = int(b.wordCount())  
+		l = int(b.wordCount())
 	}
-	for i := 0; i < l ; i++ {
-	    result.set[i] = b.set[i] &^ compare.set[i]
+	for i := 0; i < l; i++ {
+		result.set[i] = b.set[i] &^ compare.set[i]
 	}
 	return
 }
 
 // computes the cardinality of the differnce
-func (b *BitSet) DifferenceCardinality(compare *BitSet) (uint) {	
+func (b *BitSet) DifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
-	l := int(compare.wordCount()) 
+	l := int(compare.wordCount())
 	if l > int(b.wordCount()) {
-		 l = int(b.wordCount())  
+		l = int(b.wordCount())
 	}
 	cnt := uint64(0)
-	for i := 0; i < l ; i++ {
-	    cnt += popcount_2(b.set[i] &^ compare.set[i])
+	for i := 0; i < l; i++ {
+		cnt += popcount_2(b.set[i] &^ compare.set[i])
 	}
-	for i := l; i < len(b.set) ; i++ {
+	for i := l; i < len(b.set); i++ {
 		cnt += popcount_2(b.set[i])
 	}
 	return uint(cnt)
 }
 
-
 // Difference of base set and other set
 // This is the BitSet equivalent of &^ (and not)
-func (b *BitSet) InPlaceDifference(compare *BitSet)  {
+func (b *BitSet) InPlaceDifference(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
-	l := int(compare.wordCount()) 
+	l := int(compare.wordCount())
 	if l > int(b.wordCount()) {
-		 l = int(b.wordCount())  
+		l = int(b.wordCount())
 	}
-	for i := 0; i < l ; i++ {
-	    b.set[i] &^= compare.set[i]
+	for i := 0; i < l; i++ {
+		b.set[i] &^= compare.set[i]
 	}
 }
-
-
 
 // Convenience function: return two bitsets ordered by
 // increasing length. Note: neither can be nil
@@ -430,42 +418,38 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	return
 }
 
-
 // Computes the cardinality of the union
-func (b *BitSet) IntersectionCardinality(compare *BitSet) (uint) {
+func (b *BitSet) IntersectionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
 	cnt := uint64(0)
 	for i, word := range b.set {
-		cnt += popcount_2(word & compare.set[i]) 
+		cnt += popcount_2(word & compare.set[i])
 	}
 	return uint(cnt)
 }
 
-
 // Intersection of base set and other set
 // This is the BitSet equivalent of & (and)
-func (b *BitSet) InPlaceIntersection(compare *BitSet)  {
+func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
-	l := int(compare.wordCount()) 
+	l := int(compare.wordCount())
 	if l > int(b.wordCount()) {
-		 l = int(b.wordCount())  
+		l = int(b.wordCount())
 	}
-	for i := 0; i < l ; i++ {
+	for i := 0; i < l; i++ {
 		b.set[i] &= compare.set[i]
 	}
-	for i := l; i < len(b.set) ; i++ {
+	for i := l; i < len(b.set); i++ {
 		b.set[i] = 0
 	}
-	if compare.length > 0 { 
-	  b.extendSetMaybe(compare.length - 1)
+	if compare.length > 0 {
+		b.extendSetMaybe(compare.length - 1)
 	}
 	return
 }
-
-
 
 // Union of base set and other set
 // This is the BitSet equivalent of | (or)
@@ -480,7 +464,7 @@ func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 	return
 }
 
-func (b *BitSet) UnionCardinality(compare *BitSet) (uint) {
+func (b *BitSet) UnionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
@@ -488,33 +472,32 @@ func (b *BitSet) UnionCardinality(compare *BitSet) (uint) {
 	for i, word := range b.set {
 		cnt += popcount_2(word | compare.set[i])
 	}
-	for i := len(b.set); i < len(compare.set) ; i++ {
+	for i := len(b.set); i < len(compare.set); i++ {
 		cnt += popcount_2(compare.set[i])
 	}
 
 	return uint(cnt)
 }
 
-
 // Union of base set and other set
 // This is the BitSet equivalent of | (or)
-func (b *BitSet) InPlaceUnion(compare *BitSet)  {
+func (b *BitSet) InPlaceUnion(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
-	l := int(compare.wordCount()) 
+	l := int(compare.wordCount())
 	if l > int(b.wordCount()) {
-		 l = int(b.wordCount())  
+		l = int(b.wordCount())
 	}
-	if compare.length > 0 { 
-	  b.extendSetMaybe(compare.length - 1)
+	if compare.length > 0 {
+		b.extendSetMaybe(compare.length - 1)
 	}
-	for i := 0; i < l ; i++ {
+	for i := 0; i < l; i++ {
 		b.set[i] |= compare.set[i]
 	}
-	if len(compare.set) > l  {
-	  for i := l; i < len(compare.set) ; i++ {
-		b.set[i] = compare.set[i]
-	  }
+	if len(compare.set) > l {
+		for i := l; i < len(compare.set); i++ {
+			b.set[i] = compare.set[i]
+		}
 	}
 }
 
@@ -533,7 +516,7 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 }
 
 // computes the cardinality of the symmetric difference
-func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) (uint) {
+func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
@@ -541,33 +524,32 @@ func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) (uint) {
 	for i, word := range b.set {
 		cnt += popcount_2(word ^ compare.set[i])
 	}
-	for i := len(b.set); i < len(compare.set) ; i++ {
+	for i := len(b.set); i < len(compare.set); i++ {
 		cnt += popcount_2(compare.set[i])
 	}
 
 	return uint(cnt)
 }
 
-
 // SymmetricDifference of base set and other set
 // This is the BitSet equivalent of ^ (xor)
-func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet)  {
+func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
-	l := int(compare.wordCount()) 
+	l := int(compare.wordCount())
 	if l > int(b.wordCount()) {
-		 l = int(b.wordCount())  
+		l = int(b.wordCount())
 	}
-	if compare.length > 0 { 
-	  b.extendSetMaybe(compare.length - 1)
+	if compare.length > 0 {
+		b.extendSetMaybe(compare.length - 1)
 	}
-	for i := 0; i < l ; i++ {
+	for i := 0; i < l; i++ {
 		b.set[i] ^= compare.set[i]
 	}
-	if len(compare.set) > l  {
-	  for i := l; i < len(compare.set) ; i++ {
-		b.set[i] = compare.set[i]
-	  }
+	if len(compare.set) > l {
+		for i := l; i < len(compare.set); i++ {
+			b.set[i] = compare.set[i]
+		}
 	}
 }
 
@@ -680,9 +662,9 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	newset := New(uint(length))
-	
-	if uint64(newset.length) !=  length {
-		 return errors.New("Unmarshalling error: type mismatch")
+
+	if uint64(newset.length) != length {
+		return errors.New("Unmarshalling error: type mismatch")
 	}
 
 	// Read remaining bytes as set

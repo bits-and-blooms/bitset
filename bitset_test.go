@@ -13,7 +13,6 @@ import (
 	"testing"
 )
 
-
 func TestEmptyBitSet(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -51,7 +50,6 @@ func TestBitSetHuge(t *testing.T) {
 		t.Errorf("Unable to make a huge bit set and read its 0th value.")
 	}
 }
-
 
 func TestLen(t *testing.T) {
 	v := New(1000)
@@ -106,7 +104,7 @@ func TestIterate(t *testing.T) {
 	v.Set(2)
 	data := make([]uint, 3)
 	c := 0
-	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
@@ -123,7 +121,7 @@ func TestIterate(t *testing.T) {
 	v.Set(2000)
 	data = make([]uint, 5)
 	c = 0
-	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
@@ -464,7 +462,6 @@ func TestInPlaceUnion(t *testing.T) {
 	}
 }
 
-
 func TestIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -491,7 +488,6 @@ func TestIntersection(t *testing.T) {
 	}
 }
 
-
 func TestInplaceIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -516,7 +512,6 @@ func TestInplaceIntersection(t *testing.T) {
 		t.Errorf("Intersection should be symmetric")
 	}
 }
-
 
 func TestDifference(t *testing.T) {
 	a := New(100)
@@ -547,7 +542,6 @@ func TestDifference(t *testing.T) {
 		t.Errorf("Difference, here, should not be symmetric")
 	}
 }
-
 
 func TestInPlaceDifference(t *testing.T) {
 	a := New(100)
@@ -725,8 +719,6 @@ func BenchmarkCount(b *testing.B) {
 	}
 }
 
-
-
 // go test -bench=Iterate
 func BenchmarkIterate(b *testing.B) {
 	b.StopTimer()
@@ -736,10 +728,10 @@ func BenchmarkIterate(b *testing.B) {
 	}
 	b.StartTimer()
 	for j := 0; j < b.N; j++ {
-	  c := uint(0)
-	  for i,e := s.NextSet(0); e; i,e = s.NextSet(i + 1) {
-	  	  c++
-	  }
+		c := uint(0)
+		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
+			c++
+		}
 	}
 }
 
@@ -752,9 +744,9 @@ func BenchmarkSparseIterate(b *testing.B) {
 	}
 	b.StartTimer()
 	for j := 0; j < b.N; j++ {
-	  c := uint(0)
-	  for i,e := s.NextSet(0); e; i,e = s.NextSet(i + 1) {
-	  	  c++
-	  }
+		c := uint(0)
+		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
+			c++
+		}
 	}
 }
