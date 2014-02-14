@@ -56,7 +56,7 @@ int pop(unsigned long x) {
 int pop(unsigned long v) {
     v = v - ((v >> 1) & 0x5555555555555555);
     v = (v & 0x3333333333333333) +
-        ((v >> 2) & 0x3333333333333333);
+	((v >> 2) & 0x3333333333333333);
     v = ((v + (v >> 4)) & 0x0F0F0F0F0F0F0F0F);
     return (int)((v*(0x0101010101010101))>>56);
 }
@@ -270,13 +270,13 @@ const h01 uint64 = 0x0101010101010101 //the sum of 256 to the power of 0,1,2,3..
 // This is algorithm popcount_2 in the article retrieved May 9, 2011
 
 func popcount_2(x uint64) uint64 {
-        x -= (x >> 1) & m1             //put count of each 2 bits into those 2 bits
-        x = (x & m2) + ((x >> 2) & m2) //put count of each 4 bits into those 4 bits
-        x = (x + (x >> 4)) & m4        //put count of each 8 bits into those 8 bits
-        x += x >> 8                    //put count of each 16 bits into their lowest 8 bits
-        x += x >> 16                   //put count of each 32 bits into their lowest 8 bits
-        x += x >> 32                   //put count of each 64 bits into their lowest 8 bits
-        return x & 0x7f
+	x -= (x >> 1) & m1	           //put count of each 2 bits into those 2 bits
+	x = (x & m2) + ((x >> 2) & m2) //put count of each 4 bits into those 4 bits
+	x = (x + (x >> 4)) & m4	       //put count of each 8 bits into those 8 bits
+	x += x >> 8		               //put count of each 16 bits into their lowest 8 bits
+	x += x >> 16		           //put count of each 32 bits into their lowest 8 bits
+	x += x >> 32		           //put count of each 64 bits into their lowest 8 bits
+	return x & 0x7f
 }
  
 // Count (number of set bits)
@@ -287,7 +287,7 @@ func (b *BitSet) Count() uint {
 		}
 		cnt := uint64(0)
 		for _, word := range b.set {
-			cnt += uint64(C.pop(C.ulong(word)))
+			cnt += popcount_2(word)
 		}
 		return uint(cnt)
 	}
@@ -298,33 +298,30 @@ func (b *BitSet) Count() uint {
 
 // computes the number of trailing zeroes on the assumption that v is non-zero
 func trailingZeroes64(v uint64) uint {
-        // NOTE: if 0 == v, then c = 63.
-        //if v&0x1 != 0 {
-          //      return 0
-        //}
-        c := uint(1)
-        if (v & 0xffffffff) == 0 {
-                v >>= 32
-                c += 32
-        }
-        if (v & 0xffff) == 0 {
-                v >>= 16
-                c += 16
-        }
-        if (v & 0xff) == 0 {
-                v >>= 8
-                c += 8
-        }
-        if (v & 0xf) == 0 {
-                v >>= 4
-                c += 4
-        }
-        if (v & 0x3) == 0 {
-                v >>= 2
-                c += 2
-        }
-        c -= uint(v & 0x1)
-        return c
+	// NOTE: if 0 == v, then c = 63.
+	c := uint(1)
+	if (v & 0xffffffff) == 0 {
+		v >>= 32
+		c += 32
+	}
+	if (v & 0xffff) == 0 {
+		v >>= 16
+		c += 16
+	}
+	if (v & 0xff) == 0 {
+		v >>= 8
+		c += 8
+	}
+	if (v & 0xf) == 0 {
+		v >>= 4
+		c += 4
+	}
+	if (v & 0x3) == 0 {
+		v >>= 2
+		c += 2
+	}
+	c -= uint(v & 0x1)
+	return c
 }
 
 
