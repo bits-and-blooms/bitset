@@ -51,7 +51,6 @@ func TestBitSetHuge(t *testing.T) {
 	}
 }
 
-
 func TestLen(t *testing.T) {
 	v := New(1000)
 	if v.Len() != 1000 {
@@ -105,7 +104,7 @@ func TestIterate(t *testing.T) {
 	v.Set(2)
 	data := make([]uint, 3)
 	c := 0
-	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
@@ -122,7 +121,7 @@ func TestIterate(t *testing.T) {
 	v.Set(2000)
 	data = make([]uint, 5)
 	c = 0
-	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
@@ -187,7 +186,7 @@ func TestCount(t *testing.T) {
 	v := New(tot)
 	checkLast := true
 	for i := uint(0); i < tot; i++ {
-		sz := v.Count()
+		sz := uint(v.Count())
 		if sz != i {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			checkLast = false
@@ -196,7 +195,7 @@ func TestCount(t *testing.T) {
 		v.Set(i)
 	}
 	if checkLast {
-		sz := v.Count()
+		sz := uint(v.Count())
 		if sz != tot {
 			t.Errorf("After all bits set, size reported as %d, but it should be %d", sz, tot)
 		}
@@ -208,7 +207,7 @@ func TestCount2(t *testing.T) {
 	tot := uint(64*4 + 11) // just some multi unit64 number
 	v := New(tot)
 	for i := uint(0); i < tot; i += 3 {
-		sz := v.Count()
+		sz := uint(v.Count())
 		if sz != i/3 {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			break
@@ -421,6 +420,13 @@ func TestUnion(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.UnionCardinality(b) != 200 {
+		t.Errorf("Union should have 200 bits set, but had %d", a.UnionCardinality(b))
+	}
+	if a.UnionCardinality(b) != b.UnionCardinality(a) {
+		t.Errorf("Union should be symmetric")
+	}
+
 	c := a.Union(b)
 	d := b.Union(a)
 	if c.Count() != 200 {
@@ -456,7 +462,6 @@ func TestInPlaceUnion(t *testing.T) {
 	}
 }
 
-
 func TestIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -467,6 +472,12 @@ func TestIntersection(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.IntersectionCardinality(b) != 50 {
+		t.Errorf("Intersection should have 50 bits set, but had %d", a.IntersectionCardinality(b))
+	}
+	if a.IntersectionCardinality(b) != b.IntersectionCardinality(a) {
+		t.Errorf("Intersection should be symmetric")
+	}
 	c := a.Intersection(b)
 	d := b.Intersection(a)
 	if c.Count() != 50 {
@@ -476,7 +487,6 @@ func TestIntersection(t *testing.T) {
 		t.Errorf("Intersection should be symmetric")
 	}
 }
-
 
 func TestInplaceIntersection(t *testing.T) {
 	a := New(100)
@@ -503,7 +513,6 @@ func TestInplaceIntersection(t *testing.T) {
 	}
 }
 
-
 func TestDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -514,6 +523,13 @@ func TestDifference(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.DifferenceCardinality(b) != 50 {
+		t.Errorf("a-b Difference should have 50 bits set, but had %d", a.DifferenceCardinality(b))
+	}
+	if b.DifferenceCardinality(a) != 150 {
+		t.Errorf("b-a Difference should have 150 bits set, but had %d", b.DifferenceCardinality(a))
+	}
+
 	c := a.Difference(b)
 	d := b.Difference(a)
 	if c.Count() != 50 {
@@ -526,7 +542,6 @@ func TestDifference(t *testing.T) {
 		t.Errorf("Difference, here, should not be symmetric")
 	}
 }
-
 
 func TestInPlaceDifference(t *testing.T) {
 	a := New(100)
@@ -563,6 +578,13 @@ func TestSymmetricDifference(t *testing.T) {
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+	if a.SymmetricDifferenceCardinality(b) != 150 {
+		t.Errorf("a^b Difference should have 150 bits set, but had %d", a.SymmetricDifferenceCardinality(b))
+	}
+	if b.SymmetricDifferenceCardinality(a) != 150 {
+		t.Errorf("b^a Difference should have 150 bits set, but had %d", b.SymmetricDifferenceCardinality(a))
+	}
+
 	c := a.SymmetricDifference(b)
 	d := b.SymmetricDifference(a)
 	if c.Count() != 150 {
@@ -684,6 +706,7 @@ func BenchmarkSetExpand(b *testing.B) {
 	}
 }
 
+// go test -bench=Count
 func BenchmarkCount(b *testing.B) {
 	b.StopTimer()
 	s := New(100000)
@@ -693,5 +716,37 @@ func BenchmarkCount(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		s.Count()
+	}
+}
+
+// go test -bench=Iterate
+func BenchmarkIterate(b *testing.B) {
+	b.StopTimer()
+	s := New(10000)
+	for i := 0; i < 10000; i += 3 {
+		s.Set(uint(i))
+	}
+	b.StartTimer()
+	for j := 0; j < b.N; j++ {
+		c := uint(0)
+		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
+			c++
+		}
+	}
+}
+
+// go test -bench=SparseIterate
+func BenchmarkSparseIterate(b *testing.B) {
+	b.StopTimer()
+	s := New(100000)
+	for i := 0; i < 100000; i += 30 {
+		s.Set(uint(i))
+	}
+	b.StartTimer()
+	for j := 0; j < b.N; j++ {
+		c := uint(0)
+		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
+			c++
+		}
 	}
 }
