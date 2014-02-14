@@ -48,23 +48,17 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"math"
+	"errors"
 )
 
 
 
-/////////////
-// Design issue: I think that a slice/array in Go has a length of type int
-// as per the spec http://golang.org/ref/spec#Length_and_capacity
-// yet this code assumes that the length is uint. I think that this is wrong
-//////////
 
 
 // Word size of a bit set
 const wordSize = uint(64)
 
-// Mask for cleaning last word
-const allBits uint64 = 0xffffffffffffffff
+
 
 // for laster arith.
 const log2WordSize = uint(6)
@@ -85,23 +79,19 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
-// Daniel: I think this should return an int since this is the type used for array lengths in Go
-func wordsNeeded(i uint) uint {
-	if i > (math.MaxUint64 - wordSize + 1 ) { // safer?
-	// if i == math.MaxUint64 {
-		return math.MaxUint64 >> log2WordSize
-	} else if i == 0 {
-		return 1
-	}
-	return (i + (wordSize - 1)) >> log2WordSize
+func wordsNeeded(i uint) int {
+	if i > ((^uint(0)) - wordSize + 1 ) { 
+		return int((^uint(0)) >> log2WordSize)
+	} 
+	return int((i + (wordSize - 1)) >> log2WordSize)
 }
 
 func New(length uint) *BitSet {
 	return &BitSet{length, make([]uint64, wordsNeeded(length))}
 }
 
-func (b *BitSet) Cap() uint {
-	return uint(math.MaxUint64)
+func  Cap() uint {
+	return ^uint(0)
 }
 
 func (b *BitSet) Len() uint {
@@ -114,7 +104,7 @@ func (b *BitSet) extendSetMaybe(i uint) {
 		nsize := wordsNeeded(i + 1)
 		if b.set == nil {
 			b.set = make([]uint64, nsize)
-		} else if uint(len(b.set)) < nsize {
+		} else if len(b.set) < nsize {
 			newset := make([]uint64, nsize)
 			copy(newset, b.set)
 			b.set = newset
@@ -128,13 +118,12 @@ func (b *BitSet) Test(i uint) bool {
 	if i >= b.length {
 		return false
 	}
-	return b.set[i>>log2WordSize]&(1<<(i&(wordSize-1))) != 0
+	return b.set[i>>log2WordSize] & (1<<(i&(wordSize-1))) != 0
 }
 
 // Set bit i to 1
 func (b *BitSet) Set(i uint) *BitSet {
 	b.extendSetMaybe(i)
-	//fmt.Printf("length in bits: %d, real size of sets: %d, bits: %d, index: %d\n", b.length, len(b.set), i, i>>log2WordSize)
 	b.set[i>>log2WordSize] |= 1 << (i & (wordSize - 1))
 	return b
 }
@@ -199,9 +188,8 @@ func (b *BitSet) ClearAll() *BitSet {
 	return b
 }
 
-// Daniel: should return an int
 // Query words used in a bit set
-func (b *BitSet) wordCount() uint {
+func (b *BitSet) wordCount() int {
 	return wordsNeeded(b.length)
 }
 
@@ -311,7 +299,8 @@ func (b *BitSet) Equal(c *BitSet) bool {
 		return true
 	}
 	// testing for equality shoud not transform the bitset (no call to safeSet)
-	for p, v := range b.set {
+
+    for p, v := range b.set {
 		if c.set[p] != v {
 			return false
 		}
@@ -484,6 +473,8 @@ func (b *BitSet) isEven() bool {
 // Clean last word by setting unused bits to 0
 func (b *BitSet) cleanLastWord() {
 	if !b.isEven() {
+		// Mask for cleaning last word
+		const allBits uint64 = 0xffffffffffffffff
 		b.set[wordsNeeded(b.length)-1] &= allBits >> (wordSize - b.length%wordSize)
 	}
 }
@@ -526,11 +517,12 @@ func (b *BitSet) Any() bool {
 }
 
 // Dump as bits
-// if the bitset is empty, one word is automatically allocated
 func (b *BitSet) DumpAsBits() string {
+	if b.set == nil {
+		return "."
+	}
 	buffer := bytes.NewBufferString("")
-	b.safeSet() // it is a bit odd that dumping as bits should modify the bitset!
-	i := int(wordsNeeded(b.length) - 1)
+	i := len(b.set) - 1
 	for ; i >= 0; i-- {
 		fmt.Fprintf(buffer, "%064b.", b.set[i])
 	}
@@ -574,7 +566,6 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 	}
 
 	reader := bytes.NewReader(buf)
-	newset := New(0)
 	var length uint64
 
 	// Read length first
@@ -582,11 +573,15 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-
-	newset.length = uint(length)
+	newset := New(uint(length))
+	
+	if uint64(newset.length) !=  length {
+		 return errors.New("Unmarshalling error: type mismatch")
+	}
 
 	// Read remaining bytes as set
 	err = binary.Read(reader, binary.BigEndian, newset.set)
+
 	if err != nil {
 		return err
 	}

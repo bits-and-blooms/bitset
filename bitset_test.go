@@ -21,7 +21,7 @@ func TestEmptyBitSet(t *testing.T) {
 	}()
 	b := New(0)
 	if b.Len() != 0 {
-		t.Errorf("Empty set should have capacity 0, not %d", b.Cap())
+		t.Errorf("Empty set should have capacity 0, not %d", b.Len())
 	}
 }
 
@@ -33,7 +33,7 @@ func TestZeroValueBitSet(t *testing.T) {
 	}()
 	var b BitSet
 	if b.Len() != 0 {
-		t.Errorf("Empty set should have capacity 0, not %d", b.Cap())
+		t.Errorf("Empty set should have capacity 0, not %d", b.Len())
 	}
 }
 
@@ -51,17 +51,11 @@ func TestBitSetHuge(t *testing.T) {
 	}
 }
 
-func TestCap(t *testing.T) {
-	v := New(1000)
-	if v.Cap() != uint(math.MaxUint64) {
-		t.Errorf("Cap should be MaxUint64, but is %d.", v.Cap())
-	}
-}
 
 func TestLen(t *testing.T) {
 	v := New(1000)
 	if v.Len() != 1000 {
-		t.Errorf("Len should be 1000, but is %d.", v.Cap())
+		t.Errorf("Len should be 1000, but is %d.", v.Len())
 	}
 }
 
@@ -224,7 +218,6 @@ func TestCount2(t *testing.T) {
 }
 
 // nil tests
-
 func TestNullTest(t *testing.T) {
 	var v *BitSet = nil
 	defer func() {
@@ -629,14 +622,14 @@ func TestDumpAsBits(t *testing.T) {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", astr, a.DumpAsBits())
 	}
 	var b BitSet // zero value (b.set == nil)
-	bstr := "0000000000000000000000000000000000000000000000000000000000000000."
+	bstr := "."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
 	}
 }
 
 func TestMarshalUnmarshalJSON(t *testing.T) {
-	a := New(10).Set(10)
+	a := New(1010).Set(10).Set(1001)
 	data, err := json.Marshal(a)
 	if err != nil {
 		t.Errorf(err.Error())
