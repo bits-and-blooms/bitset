@@ -43,13 +43,16 @@
 package bitset
 
 /*
-#cgo CFLAGS: 
+#cgo CFLAGS:  
 
+// function to compute the number of set bits in a long integer
 #if defined(__GNUC__)
+// when a GCC-like compiler is used, call the intrinsic
 int pop(unsigned long x) {
 	return __builtin_popcountl(x);
 }
 #else
+// otherwise use pure C
 int pop(unsigned long v) {
     v = v - ((v >> 1) & 0x5555555555555555);
     v = (v & 0x3333333333333333) +
@@ -60,41 +63,16 @@ int pop(unsigned long v) {
 #endif
 
 
-
-#if defined(__GNUC__) 
-int ctz(unsigned long  n) {
-	return __builtin_ctzl(n);
+// computes the total number of set bits
+unsigned int totalpop(void * v, int n) {
+    unsigned long * x = (unsigned long *) v;
+    unsigned int a = 0;
+    int k = 0;
+    for(; k < n ; ++k) a+= pop(x[k]);
+    return a;
 }
-#else
-int ctz(unsigned long  n) {
-	uint32_t i = 1;
-	if ((n & 4294967295UL) == 0) {
-		n >>= 32;
-		i += 32;
-	}
-	if ((n & 0x0000FFFF) == 0) {
-		n >>= 16;
-		i += 16;
-	}
 
-	if ((n & 0x000000FFUL) == 0) {
-		n >>= 8;
-		i += 8;
-	}
 
-	if ((n & 0x0000000FUL) == 0) {
-		n >>= 4;
-		i += 4;
-	}
-
-	if ((n & 0x00000003UL) == 0) {
-		n >>= 2;
-		i += 2;
-	}
-    i -= (n & 0x1);
-	return i;
-}
-#endif
 */
 import "C"
 
@@ -105,11 +83,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"errors"
+    "unsafe"
 )
 
 
 
-
+// we use the C code only if longs in C are 64-bit integers, otherwise fall back on pure Go
+const useC = (unsafe.Sizeof(uint64(0)) == unsafe.Sizeof(C.ulong(0)))
 
 // Word size of a bit set
 const wordSize = uint(64)
@@ -276,10 +256,35 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	return
 }
 
+// From Wikipedia: http://en.wikipedia.org/wiki/Hamming_weight
+const m1 uint64 = 0x5555555555555555  //binary: 0101...
+const m2 uint64 = 0x3333333333333333  //binary: 00110011..
+const m4 uint64 = 0x0f0f0f0f0f0f0f0f  //binary:  4 zeros,  4 ones ...
+const m8 uint64 = 0x00ff00ff00ff00ff  //binary:  8 zeros,  8 ones ...
+const m16 uint64 = 0x0000ffff0000ffff //binary: 16 zeros, 16 ones ...
+const m32 uint64 = 0x00000000ffffffff //binary: 32 zeros, 32 ones
+const hff uint64 = 0xffffffffffffffff //binary: all ones
+const h01 uint64 = 0x0101010101010101 //the sum of 256 to the power of 0,1,2,3...
+
+// From Wikipedia: count number of set bits.
+// This is algorithm popcount_2 in the article retrieved May 9, 2011
+
+func popcount_2(x uint64) uint64 {
+        x -= (x >> 1) & m1             //put count of each 2 bits into those 2 bits
+        x = (x & m2) + ((x >> 2) & m2) //put count of each 4 bits into those 4 bits
+        x = (x + (x >> 4)) & m4        //put count of each 8 bits into those 8 bits
+        x += x >> 8                    //put count of each 16 bits into their lowest 8 bits
+        x += x >> 16                   //put count of each 32 bits into their lowest 8 bits
+        x += x >> 32                   //put count of each 64 bits into their lowest 8 bits
+        return x & 0x7f
+}
  
 // Count (number of set bits)
 func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
+		if useC {
+			return uint(C.totalpop(unsafe.Pointer(&b.set[0]),C.int(len(b.set))))
+		}
 		cnt := uint64(0)
 		for _, word := range b.set {
 			cnt += uint64(C.pop(C.ulong(word)))
@@ -289,10 +294,40 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
+
+
 // computes the number of trailing zeroes on the assumption that v is non-zero
 func trailingZeroes64(v uint64) uint {
-	return uint(C.ctz(C.ulong(v)))
+        // NOTE: if 0 == v, then c = 63.
+        //if v&0x1 != 0 {
+          //      return 0
+        //}
+        c := uint(1)
+        if (v & 0xffffffff) == 0 {
+                v >>= 32
+                c += 32
+        }
+        if (v & 0xffff) == 0 {
+                v >>= 16
+                c += 16
+        }
+        if (v & 0xff) == 0 {
+                v >>= 8
+                c += 8
+        }
+        if (v & 0xf) == 0 {
+                v >>= 4
+                c += 4
+        }
+        if (v & 0x3) == 0 {
+                v >>= 2
+                c += 2
+        }
+        c -= uint(v & 0x1)
+        return c
 }
+
+
 
 // Test the equvalence of two BitSets.
 // False if they are of different sizes, otherwise true
