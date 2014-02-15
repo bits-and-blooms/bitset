@@ -42,40 +42,6 @@
 */
 package bitset
 
-/*
-#cgo CFLAGS:
-
-// function to compute the number of set bits in a long integer
-#if defined(__GNUC__)
-// when a GCC-like compiler is used, call the intrinsic
-int pop(unsigned long x) {
-	return __builtin_popcountl(x);
-}
-#else
-// otherwise use pure C
-int pop(unsigned long v) {
-    v = v - ((v >> 1) & 0x5555555555555555);
-    v = (v & 0x3333333333333333) +
-	((v >> 2) & 0x3333333333333333);
-    v = ((v + (v >> 4)) & 0x0F0F0F0F0F0F0F0F);
-    return (int)((v*(0x0101010101010101))>>56);
-}
-#endif
-
-
-// computes the total number of set bits
-unsigned int totalpop(void * v, int n) {
-    unsigned long * x = (unsigned long *) v;
-    unsigned int a = 0;
-    int k = 0;
-    for(; k < n ; ++k) a+= pop(x[k]);
-    return a;
-}
-
-
-*/
-import "C"
-
 import (
 	"bytes"
 	"encoding/base64"
@@ -83,11 +49,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"unsafe"
 )
-
-// we use the C code only if longs in C are 64-bit integers, otherwise fall back on pure Go
-const useC = (unsafe.Sizeof(uint64(0)) == unsafe.Sizeof(C.ulong(0)))
 
 // Word size of a bit set
 const wordSize = uint(64)
@@ -277,9 +239,6 @@ func popcount_2(x uint64) uint64 {
 // Count (number of set bits)
 func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
-		if useC {
-			return uint(C.totalpop(unsafe.Pointer(&b.set[0]), C.int(len(b.set))))
-		}
 		cnt := uint64(0)
 		for _, word := range b.set {
 			cnt += popcount_2(word)
