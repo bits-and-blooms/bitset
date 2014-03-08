@@ -19,5 +19,5 @@ func popcntOrSlice(s, m []uint64) uint64 {
 }
 
 func popcntXorSlice(s, m []uint64) uint64 {
-	return popcntSliceGo(s, m)
+	return popcntXorSliceGo(s, m)
 }
