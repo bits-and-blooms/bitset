@@ -49,6 +49,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 )
 
 // Word size of a bit set
@@ -517,20 +518,51 @@ func (b *BitSet) DumpAsBits() string {
 	return string(buffer.Bytes())
 }
 
-func (b *BitSet) MarshalJSON() ([]byte, error) {
-	// Put the bitset length in front of the string
+func (b *BitSet) BinaryStorageSize() int {
+	return binary.Size(uint64(0)) + binary.Size(b.set)
+}
+
+func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	length := uint64(b.length)
-	dataCap := binary.Size(length) + binary.Size(b.set)
-	buffer := bytes.NewBuffer(make([]byte, 0, dataCap))
 
 	// Write length
-	err := binary.Write(buffer, binary.BigEndian, length)
+	err := binary.Write(stream, binary.BigEndian, length)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	// Write set
-	err = binary.Write(buffer, binary.BigEndian, b.set)
+	err = binary.Write(stream, binary.BigEndian, b.set)
+	return int64(b.BinaryStorageSize()), err
+}
+
+func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
+	var length uint64
+
+	// Read length first
+	err := binary.Read(stream, binary.BigEndian, &length)
+	if err != nil {
+		return 0, err
+	}
+	newset := New(uint(length))
+
+	if uint64(newset.length) != length {
+		return 0, errors.New("Unmarshalling error: type mismatch")
+	}
+
+	// Read remaining bytes as set
+	err = binary.Read(stream, binary.BigEndian, newset.set)
+	if err != nil {
+		return 0, err
+	}
+
+	*b = *newset
+	return int64(b.BinaryStorageSize()), nil
+}
+
+func (b *BitSet) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBuffer(make([]byte, 0, b.BinaryStorageSize()))
+	_, err := b.WriteTo(buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -553,27 +585,6 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	reader := bytes.NewReader(buf)
-	var length uint64
-
-	// Read length first
-	err = binary.Read(reader, binary.BigEndian, &length)
-	if err != nil {
-		return err
-	}
-	newset := New(uint(length))
-
-	if uint64(newset.length) != length {
-		return errors.New("Unmarshalling error: type mismatch")
-	}
-
-	// Read remaining bytes as set
-	err = binary.Read(reader, binary.BigEndian, newset.set)
-
-	if err != nil {
-		return err
-	}
-
-	*b = *newset
-	return nil
+	_, err = b.ReadFrom(bytes.NewReader(buf))
+	return err
 }
