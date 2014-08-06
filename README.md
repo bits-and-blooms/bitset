@@ -41,3 +41,4 @@ Discussions golang-nuts Google Group:
 * [Revised BitSet](https://groups.google.com/forum/#!topic/golang-nuts/5i3l0CXDiBg)
 * [simple bitset?](https://groups.google.com/d/topic/golang-nuts/7n1VkRTlBf4/discussion)
 
+Godoc documentation is at: https://godoc.org/github.com/willf/bitset
