@@ -505,6 +505,21 @@ func (b *BitSet) Any() bool {
 	return !b.None()
 }
 
+// Return true if this is a superset of the other set
+func (b *BitSet) IsSuperSet(other *BitSet) bool {
+	for i, e := b.NextSet(0); e; i, e = b.NextSet(i + 1) {
+		if !other.Test(i) {
+			return false
+		}
+	}
+	return true
+}
+
+// Return true if this is a strict superset of the other set
+func (b *BitSet) IsStrictSuperSet(other *BitSet) bool {
+	return b.Count() > other.Count() && b.IsSuperSet(other)
+}
+
 // Dump as bits
 func (b *BitSet) DumpAsBits() string {
 	if b.set == nil {

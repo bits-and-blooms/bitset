@@ -637,6 +637,21 @@ func TestComplement(t *testing.T) {
 	}
 }
 
+func TestIsSuperSet(t *testing.T) {
+	a := New(500)
+	b := New(300)
+	for i := uint(0); i < 200; i++ {
+		a.Set(i)
+		b.Set(i)
+	}
+	if a.IsSuperSet(b) != true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if a.IsStrictSuperSet(b) != false {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+}
+
 func TestDumpAsBits(t *testing.T) {
 	a := New(10).Set(10)
 	astr := "0000000000000000000000000000000000000000000000000000010000000000."
