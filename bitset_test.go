@@ -111,7 +111,7 @@ func TestIterate(t *testing.T) {
 	v.Set(2)
 	data := make([]uint, 3)
 	c := 0
-	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
@@ -128,7 +128,7 @@ func TestIterate(t *testing.T) {
 	v.Set(2000)
 	data = make([]uint, 5)
 	c = 0
-	for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
+	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
@@ -463,7 +463,6 @@ func TestInPlaceUnion(t *testing.T) {
 	}
 }
 
-
 func TestIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -483,7 +482,6 @@ func TestIntersection(t *testing.T) {
 		t.Errorf("Intersection should be symmetric")
 	}
 }
-
 
 func TestInplaceIntersection(t *testing.T) {
 	a := New(100)
@@ -510,7 +508,6 @@ func TestInplaceIntersection(t *testing.T) {
 	}
 }
 
-
 func TestDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -533,7 +530,6 @@ func TestDifference(t *testing.T) {
 		t.Errorf("Difference, here, should not be symmetric")
 	}
 }
-
 
 func TestInPlaceDifference(t *testing.T) {
 	a := New(100)
@@ -619,6 +615,21 @@ func TestComplement(t *testing.T) {
 	b = a.Complement()
 	if b.Count() != 47 {
 		t.Errorf("Complement failed, size should be 47, but was %d", b.Count())
+	}
+}
+
+func TestIsSuperSet(t *testing.T) {
+	a := New(500)
+	b := New(300)
+	for i := uint(0); i < 200; i++ {
+		a.Set(i)
+		b.Set(i)
+	}
+	if a.IsSuperSet(b) != true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if a.IsStrictSuperSet(b) != false {
+		t.Errorf("IsStrictSuperSet fails")
 	}
 }
 
