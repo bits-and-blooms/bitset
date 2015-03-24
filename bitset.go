@@ -51,12 +51,6 @@ import (
 	"math"
 )
 
-/////////////
-// Design issue: I think that a slice/array in Go has a length of type int
-// as per the spec http://golang.org/ref/spec#Length_and_capacity
-// yet this code assumes that the length is uint. I think that this is wrong
-//////////
-
 // Word size of a bit set
 const wordSize = uint(64)
 
@@ -82,7 +76,6 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
-// Daniel: I think this should return an int since this is the type used for array lengths in Go
 func wordsNeeded(i uint) uint {
 	if i > (math.MaxUint64 - wordSize + 1) { // safer?
 		// if i == math.MaxUint64 {
