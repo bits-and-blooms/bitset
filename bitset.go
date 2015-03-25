@@ -1,30 +1,25 @@
-/// Copyright 2014 Will Fitzgerald. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 /*
+Package bitset implements bitsets, a mapping
+between non-negative integers and boolean values. It should be more
+efficient than map[uint] bool.
 
-	Package bitset implements bitsets, a mapping
-	between non-negative integers and boolean values. It should be more
-	efficient than map[uint] bool.
+It provides methods for setting, clearing, flipping, and testing
+individual integers.
 
-	It provides methods for setting, clearing, flipping, and testing
-	individual integers.
+But it also provides set intersection, union, difference,
+complement, and symmetric operations, as well as tests to
+check whether any, all, or no bits are set, and querying a
+bitset's current length and number of postive bits.
 
-	But it also provides set intersection, union, difference,
-	complement, and symmetric operations, as well as tests to
-	check whether any, all, or no bits are set, and querying a
-	bitset's current length and number of postive bits.
+BitSets are expanded to the size of the largest set bit; the
+memory allocation is approximately Max bits, where Max is
+the largest set bit. BitSets are never shrunk. On creation,
+a hint can be given for the number of bits that will be used.
 
-	BitSets are expanded to the size of the largest set bit; the
-	memory allocation is approximately Max bits, where Max is
-	the largest set bit. BitSets are never shrunk. On creation,
-	a hint can be given for the number of bits that will be used.
+Many of the methods, including Set,Clear, and Flip, return
+a BitSet pointer, which allows for chaining.
 
-    Many of the methods, including Set,Clear, and Flip, return
-	a BitSet pointer, which allows for chaining.
-
-	Example use:
+Example use:
 
 	import "bitset"
 	var b BitSet
@@ -36,8 +31,8 @@
 		fmt.Println("Intersection works.")
 	}
 
-	As an alternative to BitSets, one should check out the 'big' package,
-	which provides a (less set-theoretical) view of bitsets.
+As an alternative to BitSets, one should check out the 'big' package,
+which provides a (less set-theoretical) view of bitsets.
 
 */
 package bitset
@@ -52,21 +47,22 @@ import (
 	"io"
 )
 
-// Word size of a bit set
+// the wordSize of a bit set
 const wordSize = uint(64)
 
-// for laster arith.
+// log2WordSize is lg(wordSize)
 const log2WordSize = uint(6)
 
-// The zero value of a BitSet is an empty set of length 0.
+// A BitSet is a set of bits. The zero value of a BitSet is an empty set of length 0.
 type BitSet struct {
 	length uint
 	set    []uint64
 }
 
+// A BitSetError is used to distinguish errors (panics) generated in this package.
 type BitSetError string
 
-// fixup b.set to be non-nil and return the field value
+// safeSet will fixup b.set to be non-nil and return the field value
 func (b *BitSet) safeSet() []uint64 {
 	if b.set == nil {
 		b.set = make([]uint64, wordsNeeded(0))
@@ -74,6 +70,7 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
+// wordsNeeded calculates the number of words needed for i bits
 func wordsNeeded(i uint) int {
 	if i > ((^uint(0)) - wordSize + 1) {
 		return int((^uint(0)) >> log2WordSize)
@@ -81,19 +78,22 @@ func wordsNeeded(i uint) int {
 	return int((i + (wordSize - 1)) >> log2WordSize)
 }
 
+// New creates a new BitSet with a hint that length bits will be required
 func New(length uint) *BitSet {
 	return &BitSet{length, make([]uint64, wordsNeeded(length))}
 }
 
+// Cap returns the total possible capicity, or number of bits
 func Cap() uint {
 	return ^uint(0)
 }
 
+// Len returns the length of the BitSet in words
 func (b *BitSet) Len() uint {
 	return b.length
 }
 
-//
+// extendSetMaybe adds additional words to incorporate new bits if needed
 func (b *BitSet) extendSetMaybe(i uint) {
 	if i >= b.length { // if we need more bits, make 'em
 		nsize := wordsNeeded(i + 1)
@@ -108,7 +108,7 @@ func (b *BitSet) extendSetMaybe(i uint) {
 	}
 }
 
-/// Test whether bit i is set.
+// Test whether bit i is set.
 func (b *BitSet) Test(i uint) bool {
 	if i >= b.length {
 		return false
@@ -132,7 +132,7 @@ func (b *BitSet) Clear(i uint) *BitSet {
 	return b
 }
 
-// Set bit i to value
+// SetTo sets bit i to value
 func (b *BitSet) SetTo(i uint, value bool) *BitSet {
 	if value {
 		return b.Set(i)
@@ -149,7 +149,8 @@ func (b *BitSet) Flip(i uint) *BitSet {
 	return b
 }
 
-// return the next bit set from the specified index, including possibly the current index
+// NextSet returns the next bit set from the specified index,
+// including possibly the current index
 // along with an error code (true = valid, false = no set bit found)
 // for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {...}
 func (b *BitSet) NextSet(i uint) (uint, bool) {
@@ -173,7 +174,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 	return 0, false
 }
 
-// Clear entire BitSet
+// ClearAll clears the entire BitSet
 func (b *BitSet) ClearAll() *BitSet {
 	if b != nil && b.set != nil {
 		for i := range b.set {
@@ -183,7 +184,7 @@ func (b *BitSet) ClearAll() *BitSet {
 	return b
 }
 
-// Query words used in a bit set
+// wordCount returns the number of words used in a bit set
 func (b *BitSet) wordCount() int {
 	return wordsNeeded(b.length)
 }
@@ -233,7 +234,7 @@ func trailingZeroes64(v uint64) uint {
 	return uint(deBruijn[((v&-v)*0x03f79d71b4ca8b09)>>58])
 }
 
-// Test the equvalence of two BitSets.
+// Equal tests the equvalence of two BitSets.
 // False if they are of different sizes, otherwise true
 // only if all the same bits are set
 func (b *BitSet) Equal(c *BitSet) bool {
@@ -278,7 +279,7 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	return
 }
 
-// computes the cardinality of the differnce
+// DifferenceCardinality computes the cardinality of the differnce
 func (b *BitSet) DifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -292,7 +293,7 @@ func (b *BitSet) DifferenceCardinality(compare *BitSet) uint {
 	return uint(cnt)
 }
 
-// Difference of base set and other set
+// InPlaceDifference computes the difference of base set and other set
 // This is the BitSet equivalent of &^ (and not)
 func (b *BitSet) InPlaceDifference(compare *BitSet) {
 	panicIfNull(b)
@@ -330,7 +331,7 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	return
 }
 
-// Computes the cardinality of the union
+// IntersectionCardinality computes the cardinality of the union
 func (b *BitSet) IntersectionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -339,7 +340,8 @@ func (b *BitSet) IntersectionCardinality(compare *BitSet) uint {
 	return uint(cnt)
 }
 
-// Intersection of base set and other set
+// InPlaceIntersection destructively computes the intersection of
+// base set and the compare set.
 // This is the BitSet equivalent of & (and)
 func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 	panicIfNull(b)
@@ -373,6 +375,8 @@ func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 	return
 }
 
+// UnionCardinality computes the cardinality of the uniton of the base set
+// and the compare set.
 func (b *BitSet) UnionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -384,8 +388,8 @@ func (b *BitSet) UnionCardinality(compare *BitSet) uint {
 	return uint(cnt)
 }
 
-// Union of base set and other set
-// This is the BitSet equivalent of | (or)
+// InPlaceUnion creates the destructive union of base set and compare set.
+// This is the BitSet equivalent of | (or).
 func (b *BitSet) InPlaceUnion(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -420,7 +424,7 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	return
 }
 
-// computes the cardinality of the symmetric difference
+// SymmetricDifferenceCardinality computes the cardinality of the symmetric difference
 func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -432,7 +436,7 @@ func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) uint {
 	return uint(cnt)
 }
 
-// SymmetricDifference of base set and other set
+// InPlaceSymmetricDifference creates the destructive SymmetricDifference of base set and other set
 // This is the BitSet equivalent of ^ (xor)
 func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 	panicIfNull(b)
@@ -468,7 +472,7 @@ func (b *BitSet) cleanLastWord() {
 	}
 }
 
-// Return the (local) Complement of a biset (up to length bits)
+// Complement computes the (local) complement of a biset (up to length bits)
 func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
 	result = New(b.length)
@@ -479,13 +483,13 @@ func (b *BitSet) Complement() (result *BitSet) {
 	return
 }
 
-// Returns true if all bits are set, false otherwise
+// All returns true if all bits are set, false otherwise
 func (b *BitSet) All() bool {
 	panicIfNull(b)
 	return b.Count() == b.length
 }
 
-// Return true if no bit is set, false otherwise
+// None returns true if no bit is set, false otherwise
 func (b *BitSet) None() bool {
 	panicIfNull(b)
 	if b != nil && b.set != nil {
@@ -499,13 +503,13 @@ func (b *BitSet) None() bool {
 	return true
 }
 
-// Return true if any bit is set, false otherwise
+// Any returns true if any bit is set, false otherwise
 func (b *BitSet) Any() bool {
 	panicIfNull(b)
 	return !b.None()
 }
 
-// Return true if this is a superset of the other set
+// IsSuperSet returns true if this is a superset of the other set
 func (b *BitSet) IsSuperSet(other *BitSet) bool {
 	for i, e := b.NextSet(0); e; i, e = b.NextSet(i + 1) {
 		if !other.Test(i) {
@@ -515,12 +519,12 @@ func (b *BitSet) IsSuperSet(other *BitSet) bool {
 	return true
 }
 
-// Return true if this is a strict superset of the other set
+// IsStrictSuperSet returns true if this is a strict superset of the other set
 func (b *BitSet) IsStrictSuperSet(other *BitSet) bool {
 	return b.Count() > other.Count() && b.IsSuperSet(other)
 }
 
-// Dump as bits
+// DumpAsBits dumps a bit set as a string of bits
 func (b *BitSet) DumpAsBits() string {
 	if b.set == nil {
 		return "."
@@ -533,10 +537,12 @@ func (b *BitSet) DumpAsBits() string {
 	return string(buffer.Bytes())
 }
 
+// BinaryStorageSize returns the binary storage requirements
 func (b *BitSet) BinaryStorageSize() int {
 	return binary.Size(uint64(0)) + binary.Size(b.set)
 }
 
+// WriteTo writes a BitSet to a stream
 func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	length := uint64(b.length)
 
@@ -551,6 +557,7 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	return int64(b.BinaryStorageSize()), err
 }
 
+// ReadFrom reads a BitSet from a stream written using WriteTo
 func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	var length uint64
 
@@ -575,6 +582,7 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	return int64(b.BinaryStorageSize()), nil
 }
 
+// MarshalJSON marshals a BitSet as a JSON structure
 func (b *BitSet) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBuffer(make([]byte, 0, b.BinaryStorageSize()))
 	_, err := b.WriteTo(buffer)
@@ -586,6 +594,7 @@ func (b *BitSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(base64.URLEncoding.EncodeToString(buffer.Bytes()))
 }
 
+// UnmarshalJSON unmarshals a BitSet from JSON created using MarshalJSON
 func (b *BitSet) UnmarshalJSON(data []byte) error {
 	// Unmarshal as string
 	var s string
