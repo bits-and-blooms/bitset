@@ -511,8 +511,8 @@ func (b *BitSet) Any() bool {
 
 // IsSuperSet returns true if this is a superset of the other set
 func (b *BitSet) IsSuperSet(other *BitSet) bool {
-	for i, e := b.NextSet(0); e; i, e = b.NextSet(i + 1) {
-		if !other.Test(i) {
+	for i, e := other.NextSet(0); e; i, e = other.NextSet(i + 1) {
+		if !b.Test(i) {
 			return false
 		}
 	}
