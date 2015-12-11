@@ -71,6 +71,14 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
+func BitSetFrom(buf []uint64) *BitSet {
+	return &BitSet{uint(len(buf)), buf}
+}
+
+func (b *BitSet) Bytes() []uint64 {
+	return b.set
+}
+
 // wordsNeeded calculates the number of words needed for i bits
 func wordsNeeded(i uint) int {
 	if i > ((^uint(0)) - wordSize + 1) {
