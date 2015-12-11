@@ -71,8 +71,8 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
-func BitSetFrom(buf []uint64) *BitSet {
-	return &BitSet{uint(len(buf)), buf}
+func From(buf []uint64) *BitSet {
+	return &BitSet{uint(len(buf))*8, buf}
 }
 
 func (b *BitSet) Bytes() []uint64 {
