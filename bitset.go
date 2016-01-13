@@ -199,7 +199,7 @@ func (b *BitSet) Clone() *BitSet {
 	return c
 }
 
-// Copy this BitSet into a destination BitSet
+// Copy into a destination BitSet
 // Returning the size of the destination BitSet
 // like array copy
 func (b *BitSet) Copy(c *BitSet) (count uint) {
