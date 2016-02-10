@@ -7,6 +7,7 @@
 package bitset
 
 import (
+	"encoding"
 	"encoding/json"
 	"math"
 	"math/rand"
@@ -640,14 +641,56 @@ func TestComplement(t *testing.T) {
 func TestIsSuperSet(t *testing.T) {
 	a := New(500)
 	b := New(300)
-	for i := uint(0); i < 200; i++ {
+	c := New(200)
+
+	// Setup bitsets
+	// a and b overlap
+	// only c is (strict) super set
+	for i := uint(0); i < 100; i++ {
 		a.Set(i)
+	}
+	for i := uint(50); i < 150; i++ {
 		b.Set(i)
 	}
-	if a.IsSuperSet(b) != true {
+	for i := uint(0); i < 200; i++ {
+		c.Set(i)
+	}
+
+	if a.IsSuperSet(b) == true {
 		t.Errorf("IsSuperSet fails")
 	}
-	if a.IsStrictSuperSet(b) != false {
+	if a.IsSuperSet(c) == true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if b.IsSuperSet(a) == true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if b.IsSuperSet(c) == true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if c.IsSuperSet(a) != true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if c.IsSuperSet(b) != true {
+		t.Errorf("IsSuperSet fails")
+	}
+
+	if a.IsStrictSuperSet(b) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if a.IsStrictSuperSet(c) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if b.IsStrictSuperSet(a) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if b.IsStrictSuperSet(c) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if c.IsStrictSuperSet(a) != true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if c.IsStrictSuperSet(b) != true {
 		t.Errorf("IsStrictSuperSet fails")
 	}
 }
@@ -662,6 +705,33 @@ func TestDumpAsBits(t *testing.T) {
 	bstr := "."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
+	}
+}
+
+func TestMarshalUnmarshalBinary(t *testing.T) {
+	a := New(1010).Set(10).Set(1001)
+	b := new(BitSet)
+
+	copyBinary(t, a, b)
+
+	// BitSets must be equal after marshalling and unmarshalling
+	if !a.Equal(b) {
+		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+		return
+	}
+}
+
+func copyBinary(t *testing.T, from encoding.BinaryMarshaler, to encoding.BinaryUnmarshaler) {
+	data, err := from.MarshalBinary()
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	err = to.UnmarshalBinary(data)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
 	}
 }
 
