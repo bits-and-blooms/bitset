@@ -7,6 +7,7 @@
 package bitset
 
 import (
+	"encoding"
 	"encoding/json"
 	"math"
 	"math/rand"
@@ -218,7 +219,7 @@ func TestCount2(t *testing.T) {
 
 // nil tests
 func TestNullTest(t *testing.T) {
-	var v *BitSet = nil
+	var v *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Checking bit of null reference should have caused a panic")
@@ -228,7 +229,7 @@ func TestNullTest(t *testing.T) {
 }
 
 func TestNullSet(t *testing.T) {
-	var v *BitSet = nil
+	var v *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Setting bit of null reference should have caused a panic")
@@ -238,7 +239,7 @@ func TestNullSet(t *testing.T) {
 }
 
 func TestNullClear(t *testing.T) {
-	var v *BitSet = nil
+	var v *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Clearning bit of null reference should have caused a panic")
@@ -248,7 +249,7 @@ func TestNullClear(t *testing.T) {
 }
 
 func TestNullCount(t *testing.T) {
-	var v *BitSet = nil
+	var v *BitSet
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Counting null reference should not have caused a panic")
@@ -261,7 +262,7 @@ func TestNullCount(t *testing.T) {
 }
 
 func TestPanicDifferenceBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	var compare = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -272,7 +273,7 @@ func TestPanicDifferenceBNil(t *testing.T) {
 }
 
 func TestPanicDifferenceCompareNil(t *testing.T) {
-	var compare *BitSet = nil
+	var compare *BitSet
 	var b = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -283,7 +284,7 @@ func TestPanicDifferenceCompareNil(t *testing.T) {
 }
 
 func TestPanicUnionBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	var compare = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -294,7 +295,7 @@ func TestPanicUnionBNil(t *testing.T) {
 }
 
 func TestPanicUnionCompareNil(t *testing.T) {
-	var compare *BitSet = nil
+	var compare *BitSet
 	var b = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -305,7 +306,7 @@ func TestPanicUnionCompareNil(t *testing.T) {
 }
 
 func TestPanicIntersectionBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	var compare = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -316,7 +317,7 @@ func TestPanicIntersectionBNil(t *testing.T) {
 }
 
 func TestPanicIntersectionCompareNil(t *testing.T) {
-	var compare *BitSet = nil
+	var compare *BitSet
 	var b = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -327,7 +328,7 @@ func TestPanicIntersectionCompareNil(t *testing.T) {
 }
 
 func TestPanicSymmetricDifferenceBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	var compare = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -338,7 +339,7 @@ func TestPanicSymmetricDifferenceBNil(t *testing.T) {
 }
 
 func TestPanicSymmetricDifferenceCompareNil(t *testing.T) {
-	var compare *BitSet = nil
+	var compare *BitSet
 	var b = New(10)
 	defer func() {
 		if r := recover(); r == nil {
@@ -349,7 +350,7 @@ func TestPanicSymmetricDifferenceCompareNil(t *testing.T) {
 }
 
 func TestPanicComplementBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil should should have caused a panic")
@@ -359,7 +360,7 @@ func TestPanicComplementBNil(t *testing.T) {
 }
 
 func TestPanicAnytBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil should should have caused a panic")
@@ -369,7 +370,7 @@ func TestPanicAnytBNil(t *testing.T) {
 }
 
 func TestPanicNonetBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil should should have caused a panic")
@@ -379,7 +380,7 @@ func TestPanicNonetBNil(t *testing.T) {
 }
 
 func TestPanicAlltBNil(t *testing.T) {
-	var b *BitSet = nil
+	var b *BitSet
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil should should have caused a panic")
@@ -640,14 +641,56 @@ func TestComplement(t *testing.T) {
 func TestIsSuperSet(t *testing.T) {
 	a := New(500)
 	b := New(300)
-	for i := uint(0); i < 200; i++ {
+	c := New(200)
+
+	// Setup bitsets
+	// a and b overlap
+	// only c is (strict) super set
+	for i := uint(0); i < 100; i++ {
 		a.Set(i)
+	}
+	for i := uint(50); i < 150; i++ {
 		b.Set(i)
 	}
-	if a.IsSuperSet(b) != true {
+	for i := uint(0); i < 200; i++ {
+		c.Set(i)
+	}
+
+	if a.IsSuperSet(b) == true {
 		t.Errorf("IsSuperSet fails")
 	}
-	if a.IsStrictSuperSet(b) != false {
+	if a.IsSuperSet(c) == true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if b.IsSuperSet(a) == true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if b.IsSuperSet(c) == true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if c.IsSuperSet(a) != true {
+		t.Errorf("IsSuperSet fails")
+	}
+	if c.IsSuperSet(b) != true {
+		t.Errorf("IsSuperSet fails")
+	}
+
+	if a.IsStrictSuperSet(b) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if a.IsStrictSuperSet(c) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if b.IsStrictSuperSet(a) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if b.IsStrictSuperSet(c) == true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if c.IsStrictSuperSet(a) != true {
+		t.Errorf("IsStrictSuperSet fails")
+	}
+	if c.IsStrictSuperSet(b) != true {
 		t.Errorf("IsStrictSuperSet fails")
 	}
 }
@@ -662,6 +705,33 @@ func TestDumpAsBits(t *testing.T) {
 	bstr := "."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
+	}
+}
+
+func TestMarshalUnmarshalBinary(t *testing.T) {
+	a := New(1010).Set(10).Set(1001)
+	b := new(BitSet)
+
+	copyBinary(t, a, b)
+
+	// BitSets must be equal after marshalling and unmarshalling
+	if !a.Equal(b) {
+		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+		return
+	}
+}
+
+func copyBinary(t *testing.T, from encoding.BinaryMarshaler, to encoding.BinaryUnmarshaler) {
+	data, err := from.MarshalBinary()
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	err = to.UnmarshalBinary(data)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
 	}
 }
 
