@@ -12,10 +12,7 @@ func popcount(x uint64) (n uint64) {
 	return x >> 56
 }
 
-func popcntSlice(s []uint64) uint64 {
-	if useAsm {
-		return popcntSliceAsm(s)
-	}
+func popcntSliceGo(s []uint64) uint64 {
 	cnt := uint64(0)
 	for _, x := range s {
 		cnt += popcount(x)
@@ -23,10 +20,7 @@ func popcntSlice(s []uint64) uint64 {
 	return cnt
 }
 
-func popcntMaskSlice(s, m []uint64) uint64 {
-	if useAsm {
-		return popcntMaskSliceAsm(s, m)
-	}
+func popcntMaskSliceGo(s, m []uint64) uint64 {
 	cnt := uint64(0)
 	for i := range s {
 		cnt += popcount(s[i] &^ m[i])
@@ -34,10 +28,7 @@ func popcntMaskSlice(s, m []uint64) uint64 {
 	return cnt
 }
 
-func popcntAndSlice(s, m []uint64) uint64 {
-	if useAsm {
-		return popcntAndSliceAsm(s, m)
-	}
+func popcntAndSliceGo(s, m []uint64) uint64 {
 	cnt := uint64(0)
 	for i := range s {
 		cnt += popcount(s[i] & m[i])
@@ -45,10 +36,7 @@ func popcntAndSlice(s, m []uint64) uint64 {
 	return cnt
 }
 
-func popcntOrSlice(s, m []uint64) uint64 {
-	if useAsm {
-		return popcntOrSliceAsm(s, m)
-	}
+func popcntOrSliceGo(s, m []uint64) uint64 {
 	cnt := uint64(0)
 	for i := range s {
 		cnt += popcount(s[i] | m[i])
@@ -56,10 +44,7 @@ func popcntOrSlice(s, m []uint64) uint64 {
 	return cnt
 }
 
-func popcntXorSlice(s, m []uint64) uint64 {
-	if useAsm {
-		return popcntXorSliceAsm(s, m)
-	}
+func popcntXorSliceGo(s, m []uint64) uint64 {
 	cnt := uint64(0)
 	for i := range s {
 		cnt += popcount(s[i] ^ m[i])
