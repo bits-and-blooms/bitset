@@ -19,8 +19,8 @@ PROJECT=bitset
 # Name of RPM or DEB package
 PKGNAME=${OWNER}-${PROJECT}
 
-# Go lang path. Set if necessary
-# GOPATH=$(shell readlink -f $(shell pwd)/../../../../)
+# Go lang path. Set for travis ci
+GOPATH=$(shell readlink -f $(shell pwd)/../../../../)
 
 # Current directory
 CURRENTDIR=$(shell pwd)
