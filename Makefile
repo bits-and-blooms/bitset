@@ -1,7 +1,7 @@
 # MAKEFILE
 #
 # @author      Nicola Asuni <nicola@cognitivelogic.com>
-# @link        https://github.com/cognitivelogic/bitset
+# @link        https://github.com/willf/bitset
 # ------------------------------------------------------------------------------
 
 # List special make targets that are not associated with files
@@ -11,7 +11,7 @@
 SHELL=/bin/bash
 
 # Project owner
-OWNER=cognitivelogic
+OWNER=willf
 
 # Project name
 PROJECT=bitset
@@ -19,8 +19,8 @@ PROJECT=bitset
 # Name of RPM or DEB package
 PKGNAME=${OWNER}-${PROJECT}
 
-# Go lang path
-GOPATH=$(shell readlink -f $(shell pwd)/../../../../)
+# Go lang path. Set if necessary
+# GOPATH=$(shell readlink -f $(shell pwd)/../../../../)
 
 # Current directory
 CURRENTDIR=$(shell pwd)
@@ -30,7 +30,7 @@ CURRENTDIR=$(shell pwd)
 # Display general help about this command
 help:
 	@echo ""
-	@echo "Welcome to $(PROJECT) make."
+	@echo "$(PROJECT) Makefile."
 	@echo "The following commands are available:"
 	@echo ""
 	@echo "    make qa         : Run all the tests"

@@ -2,13 +2,13 @@
 
 *Go language library to map between non-negative integers and boolean values*
 
-[![Master Branch](https://img.shields.io/badge/-master:-gray.svg)](https://github.com/cognitivelogic/bitset/tree/master)
-[![Master Build Status](https://secure.travis-ci.org/cognitivelogic/bitset.png?branch=master)](https://travis-ci.org/cognitivelogic/bitset?branch=master)
-[![Master Coverage Status](https://coveralls.io/repos/cognitivelogic/bitset/badge.svg?branch=master&service=github)](https://coveralls.io/github/cognitivelogic/bitset?branch=master)
+[![Master Branch](https://img.shields.io/badge/-master:-gray.svg)](https://github.com/willf/bitset/tree/master)
+[![Master Build Status](https://secure.travis-ci.org/willf/bitset.png?branch=master)](https://travis-ci.org/willf/bitset?branch=master)
+[![Master Coverage Status](https://coveralls.io/repos/willf/bitset/badge.svg?branch=master&service=github)](https://coveralls.io/github/willf/bitset?branch=master)
 *
-[![Develop Branch](https://img.shields.io/badge/-develop:-gray.svg)](https://github.com/cognitivelogic/bitset/tree/develop)
-[![Develop Build Status](https://secure.travis-ci.org/cognitivelogic/bitset.png?branch=develop)](https://travis-ci.org/cognitivelogic/bitset?branch=develop)
-[![Develop Coverage Status](https://coveralls.io/repos/cognitivelogic/bitset/badge.svg?branch=develop&service=github)](https://coveralls.io/github/cognitivelogic/bitset?branch=develop)
+[![Develop Branch](https://img.shields.io/badge/-develop:-gray.svg)](https://github.com/willf/bitset/tree/develop)
+[![Develop Build Status](https://secure.travis-ci.org/willf/bitset.png?branch=develop)](https://travis-ci.org/willf/bitset?branch=develop)
+[![Develop Coverage Status](https://coveralls.io/repos/willf/bitset/badge.svg?branch=develop&service=github)](https://coveralls.io/github/willf/bitset?branch=develop)
 
 
 ## Description
@@ -51,7 +51,7 @@ Godoc documentation is at: https://godoc.org/github.com/willf/bitset
 
 ## Getting started
 
-This application is written in GO language, please refere to the guides in https://golang.org for getting started.
+This application is written in the go language, please refer to the guides in https://golang.org for getting started.
 
 This project include a Makefile that allows you to test and build the project with simple commands.
 To see all available options:
