@@ -71,10 +71,12 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
+// From is a constructor used to create a BitSet from an array of integers
 func From(buf []uint64) *BitSet {
 	return &BitSet{uint(len(buf)) * 64, buf}
 }
 
+// Bytes returns the bitset as array of integers
 func (b *BitSet) Bytes() []uint64 {
 	return b.set
 }
