@@ -6,7 +6,7 @@
 [![Master Build Status](https://travis-ci.org/willf/bitset.svg?branch=master)](https://travis-ci.org/willf/bitset)
 
 [![Develop Branch](https://img.shields.io/badge/-develop:-gray.svg)](https://github.com/willf/bitset/tree/develop)
-[![Develop Build Status](https://secure.travis-ci.org/willf/bitset.png?branch=develop)](https://travis-ci.org/willf/bitset?branch=develop)
+[![Develop Build Status](https://secure.travis-ci.org/willf/bitset.svg?branch=develop)](https://travis-ci.org/willf/bitset?branch=develop)
 
 
 
