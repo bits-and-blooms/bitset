@@ -14,6 +14,16 @@ import (
 	"testing"
 )
 
+func TestStringer(t *testing.T) {
+	v := New(0)
+	for i := uint(0); i < 10; i++ {
+		v.Set(i)
+	}
+	if v.String() != "{0,1,2,3,4,5,6,7,8,9}" {
+		t.Error("bad string output")
+	}
+}
+
 func TestEmptyBitSet(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
