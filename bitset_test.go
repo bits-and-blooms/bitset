@@ -9,6 +9,7 @@ package bitset
 import (
 	"encoding"
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -22,6 +23,7 @@ func TestStringer(t *testing.T) {
 	if v.String() != "{0,1,2,3,4,5,6,7,8,9}" {
 		t.Error("bad string output")
 	}
+	fmt.Println(v)
 }
 
 func TestEmptyBitSet(t *testing.T) {
@@ -842,6 +844,47 @@ func BenchmarkSparseIterate(b *testing.B) {
 		c := uint(0)
 		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
 			c++
+		}
+	}
+}
+
+
+// go test -bench=LemireCreate
+// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
+func BenchmarkLemireCreate(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		bitmap := New(0) // we force dynamic memory allocation
+		for v := uint(0); v <= 100000000; v+= 100 {
+			bitmap.Set(v)
+		}
+	}
+}
+
+// go test -bench=LemireCount
+// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
+func BenchmarkLemireCount(b *testing.B) {
+	bitmap := New(100000000) // we force dynamic memory allocation
+	for v := uint(0); v <= 100000000; v+= 100 {
+		bitmap.Set(v)
+	}
+	sum := uint(0)
+	for i := 0; i < b.N; i++ {
+		sum += bitmap.Count()
+	}
+}
+
+
+// go test -bench=LemireIterate
+// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
+func BenchmarkLemireIterate(b *testing.B) {
+	bitmap := New(100000000) // we force dynamic memory allocation
+	for v := uint(0); v <= 100000000; v+= 100 {
+		bitmap.Set(v)
+	}
+	sum := uint(0)
+	for i := 0; i < b.N; i++ {
+		for i, e := bitmap.NextSet(0); e; i, e = bitmap.NextSet(i + 1) {
+			sum += 1
 		}
 	}
 }
