@@ -769,6 +769,13 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestAllWhenEmpty(t *testing.T) {
+	b := new(BitSet)
+	if b.All() {
+		t.Error("All should return false when it bitset is empty")
+	}
+}
+
 // BENCHMARKS
 
 func BenchmarkSet(b *testing.B) {
@@ -848,13 +855,12 @@ func BenchmarkSparseIterate(b *testing.B) {
 	}
 }
 
-
 // go test -bench=LemireCreate
 // see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
 func BenchmarkLemireCreate(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		bitmap := New(0) // we force dynamic memory allocation
-		for v := uint(0); v <= 100000000; v+= 100 {
+		for v := uint(0); v <= 100000000; v += 100 {
 			bitmap.Set(v)
 		}
 	}
@@ -864,7 +870,7 @@ func BenchmarkLemireCreate(b *testing.B) {
 // see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
 func BenchmarkLemireCount(b *testing.B) {
 	bitmap := New(100000000) // we force dynamic memory allocation
-	for v := uint(0); v <= 100000000; v+= 100 {
+	for v := uint(0); v <= 100000000; v += 100 {
 		bitmap.Set(v)
 	}
 	sum := uint(0)
@@ -873,12 +879,11 @@ func BenchmarkLemireCount(b *testing.B) {
 	}
 }
 
-
 // go test -bench=LemireIterate
 // see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
 func BenchmarkLemireIterate(b *testing.B) {
 	bitmap := New(100000000) // we force dynamic memory allocation
-	for v := uint(0); v <= 100000000; v+= 100 {
+	for v := uint(0); v <= 100000000; v += 100 {
 		bitmap.Set(v)
 	}
 	sum := uint(0)

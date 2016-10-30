@@ -128,7 +128,7 @@ func (b *BitSet) extendSetMaybe(i uint) {
 		} else if cap(b.set) >= nsize {
 			b.set = b.set[:nsize] // fast resize
 		} else if len(b.set) < nsize {
-			newset := make([]uint64, nsize, 2 * nsize) // increase capacity 2x
+			newset := make([]uint64, nsize, 2*nsize) // increase capacity 2x
 			copy(newset, b.set)
 			b.set = newset
 		}
@@ -539,6 +539,9 @@ func (b *BitSet) Complement() (result *BitSet) {
 // All returns true if all bits are set, false otherwise
 func (b *BitSet) All() bool {
 	panicIfNull(b)
+	if b.length == 0 {
+		return false
+	}
 	return b.Count() == b.length
 }
 
