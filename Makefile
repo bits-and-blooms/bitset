@@ -27,6 +27,9 @@ CURRENTDIR=$(shell pwd)
 
 # --- MAKE TARGETS ---
 
+# Alias for qa target
+all: test
+
 # Display general help about this command
 help:
 	@echo ""
@@ -49,8 +52,6 @@ help:
 	@echo "    make nuke       : Deletes any intermediate file"
 	@echo ""
 
-# Alias for help target
-all: help
 
 # Run the unit tests
 test:
