@@ -926,7 +926,7 @@ func BenchmarkLemireIterate(b *testing.B) {
 	sum := uint(0)
 	for i := 0; i < b.N; i++ {
 		for i, e := bitmap.NextSet(0); e; i, e = bitmap.NextSet(i + 1) {
-			sum += 1
+			sum++
 		}
 	}
 }
