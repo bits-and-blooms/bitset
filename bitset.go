@@ -239,7 +239,7 @@ func (b *BitSet) ClearAll() *BitSet {
 
 // wordCount returns the number of words used in a bit set
 func (b *BitSet) wordCount() int {
-	return wordsNeeded(b.length)
+	return len(b.set)
 }
 
 // Clone this BitSet
@@ -512,16 +512,16 @@ func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 }
 
 // Is the length an exact multiple of word sizes?
-func (b *BitSet) isEven() bool {
+func (b *BitSet) isLenExactMultiple() bool {
 	return b.length%wordSize == 0
 }
 
 // Clean last word by setting unused bits to 0
 func (b *BitSet) cleanLastWord() {
-	if !b.isEven() {
+	if !b.isLenExactMultiple() {
 		// Mask for cleaning last word
 		const allBits uint64 = 0xffffffffffffffff
-		b.set[wordsNeeded(b.length)-1] &= allBits >> (wordSize - b.length%wordSize)
+		b.set[len(b.set)-1] &= allBits >> (wordSize - b.length%wordSize)
 	}
 }
 

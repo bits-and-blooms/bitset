@@ -914,6 +914,9 @@ func BenchmarkLemireCount(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		sum += bitmap.Count()
 	}
+	if sum == 0 { // added just to fool ineffassign
+		return
+	}
 }
 
 // go test -bench=LemireIterate
@@ -928,5 +931,8 @@ func BenchmarkLemireIterate(b *testing.B) {
 		for i, e := bitmap.NextSet(0); e; i, e = bitmap.NextSet(i + 1) {
 			sum++
 		}
+	}
+	if sum == 0 { // added just to fool ineffassign
+		return
 	}
 }
