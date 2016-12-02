@@ -19,7 +19,7 @@ PROJECT=bitset
 # Name of RPM or DEB package
 PKGNAME=${OWNER}-${PROJECT}
 
-# Go lang path. Set if necessary
+# Go lang path.
 # GOPATH=$(shell readlink -f $(shell pwd)/../../../../)
 
 # Current directory

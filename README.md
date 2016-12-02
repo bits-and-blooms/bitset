@@ -31,7 +31,7 @@ Many of the methods, including Set, Clear, and Flip, return a BitSet pointer, wh
         b.Clear(1000)
     }
     for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
-       frmt.Println("The following bit is set:",i);
+       fmt.Println("The following bit is set:",i);
     }
     if B.Intersection(bitset.New(100).Set(10)).Count() > 1 {
         fmt.Println("Intersection works.")
