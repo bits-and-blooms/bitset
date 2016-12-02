@@ -50,9 +50,9 @@ Godoc documentation is at: https://godoc.org/github.com/willf/bitset
 go get github.com/willf/bitset
 ```
 
-## Getting started
+## Contributing
 
-This application is written in the Go language, please refer to the guides in https://golang.org for getting started.
+If you wish to contribute to this project, please branch and issue a pull request against master ("[GitHub Flow](https://guides.github.com/introduction/flow/)")
 
 This project include a Makefile that allows you to test and build the project with simple commands.
 To see all available options:
@@ -62,7 +62,7 @@ make help
 
 ## Running all tests
 
-Before committing the code, please check if it passes all tests using
+Before committing the code, please check if it passes all tests using (note: this will install some dependencies):
 ```bash
 make qa
 ```
