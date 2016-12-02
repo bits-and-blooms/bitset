@@ -9,7 +9,6 @@ branches:
 branches:
   only:
     - master
-    - develop
 
 go:
   - 1.5
