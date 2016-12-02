@@ -26,6 +26,7 @@ PKGNAME=${OWNER}-${PROJECT}
 CURRENTDIR=$(shell pwd)
 
 # --- MAKE TARGETS ---
+all: qa
 
 # Display general help about this command
 help:
@@ -53,8 +54,6 @@ help:
 	@echo "    make nuke        : Deletes any intermediate file"
 	@echo ""
 
-# Alias for help target
-all: help
 
 # Run the unit tests
 test:
@@ -114,7 +113,7 @@ docs:
 	@echo '<html><head><meta http-equiv="refresh" content="0;./127.0.0.1:6060/pkg/github.com/'${OWNER}'/'${PROJECT}'/index.html"/></head><a href="./127.0.0.1:6060/pkg/github.com/'${OWNER}'/'${PROJECT}'/index.html">'${PKGNAME}' Documentation ...</a></html>' > target/docs/index.html
 
 # Alias to run all quality-assurance checks
-qa: fmtcheck test vet lint coverage cyclo ineffassign misspell astscan
+qa: deps fmtcheck test vet lint coverage cyclo ineffassign misspell astscan
 
 # --- INSTALL ---
 
