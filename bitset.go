@@ -9,7 +9,7 @@ individual integers.
 But it also provides set intersection, union, difference,
 complement, and symmetric operations, as well as tests to
 check whether any, all, or no bits are set, and querying a
-bitset's current length and number of postive bits.
+bitset's current length and number of positive bits.
 
 BitSets are expanded to the size of the largest set bit; the
 memory allocation is approximately Max bits, where Max is

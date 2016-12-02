@@ -2,8 +2,9 @@
 
 *Go language library to map between non-negative integers and boolean values*
 
-[![Master Branch](https://img.shields.io/badge/-master:-gray.svg)](https://github.com/willf/bitset/tree/master)
-[![Master Build Status](https://travis-ci.org/willf/bitset.svg?branch=master)](https://travis-ci.org/willf/bitset)
+[![Master Build Status](https://secure.travis-ci.org/willf/bitset.png?branch=master)](https://travis-ci.org/willf/bitset?branch=master)
+[![Master Coverage Status](https://coveralls.io/repos/willf/bitset/badge.svg?branch=master&service=github)](https://coveralls.io/github/willf/bitset?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/willf/bitset)](https://goreportcard.com/report/github.com/willf/bitset)
 
 
 ## Description
@@ -13,7 +14,7 @@ It should be more efficient than map[uint] bool.
 
 It provides methods for setting, clearing, flipping, and testing individual integers.
 
-But it also provides set intersection, union, difference, complement, and symmetric operations, as well as tests to check whether any, all, or no bits are set, and querying a bitset's current length and number of postive bits.
+But it also provides set intersection, union, difference, complement, and symmetric operations, as well as tests to check whether any, all, or no bits are set, and querying a bitset's current length and number of positive bits.
 
 BitSets are expanded to the size of the largest set bit; the memory allocation is approximately Max bits, where Max is the largest set bit. BitSets are never shrunk. On creation, a hint can be given for the number of bits that will be used.
 
