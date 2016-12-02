@@ -43,10 +43,15 @@ Discussions golang-nuts Google Group:
 
 Godoc documentation is at: https://godoc.org/github.com/willf/bitset
 
+## Installation
+
+```bash
+go get github.com/willf/bitset
+```
 
 ## Getting started
 
-This application is written in the go language, please refer to the guides in https://golang.org for getting started.
+This application is written in the Go language, please refer to the guides in https://golang.org for getting started.
 
 This project include a Makefile that allows you to test and build the project with simple commands.
 To see all available options:
