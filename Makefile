@@ -10,31 +10,49 @@
 # Use bash as shell (Note: Ubuntu now uses dash which doesn't support PIPESTATUS).
 SHELL=/bin/bash
 
+# CVS path (path to the parent dir containing the project)
+CVSPATH=github.com/willf
+
 # Project owner
 OWNER=willf
+
+# Project vendor
+VENDOR=willf
 
 # Project name
 PROJECT=bitset
 
-# Name of RPM or DEB package
-PKGNAME=${OWNER}-${PROJECT}
+# Project version
+VERSION=$(shell cat VERSION)
 
-# Go lang path. Set if necessary
-# GOPATH=$(shell readlink -f $(shell pwd)/../../../../)
+# Project release number (packaging build number)
+RELEASE=$(shell cat RELEASE)
+
+# Name of RPM or DEB package
+PKGNAME=${VENDOR}-${PROJECT}
 
 # Current directory
 CURRENTDIR=$(shell pwd)
 
-# --- MAKE TARGETS ---
-all: qa
+# GO lang path
+ifneq ($(GOPATH),)
+	ifeq ($(findstring $(GOPATH),$(CURRENTDIR)),)
+		# the defined GOPATH is not valid
+		GOPATH=
+	endif
+endif
+ifeq ($(GOPATH),)
+	# extract the GOPATH
+	GOPATH=$(firstword $(subst /src/, ,$(CURRENTDIR)))
+endif
 
-# Alias for qa target
-all: test
+# --- MAKE TARGETS ---
 
 # Display general help about this command
 help:
 	@echo ""
 	@echo "$(PROJECT) Makefile."
+	@echo "GOPATH=$(GOPATH)"
 	@echo "The following commands are available:"
 	@echo ""
 	@echo "    make qa          : Run all the tests"
@@ -57,63 +75,69 @@ help:
 	@echo "    make nuke        : Deletes any intermediate file"
 	@echo ""
 
+# Alias for help target
+all: help
 
 # Run the unit tests
 test:
 	@mkdir -p target/test
-	@mkdir -p target/report
-	GOPATH=$(GOPATH) go test -covermode=count -coverprofile=target/report/coverage.out -bench=. -race -v ./... | \
+	GOPATH=$(GOPATH) \
+	go test -covermode=atomic -bench=. -race -v ./... | \
 	tee >(PATH=$(GOPATH)/bin:$(PATH) go-junit-report > target/test/report.xml); \
 	test $${PIPESTATUS[0]} -eq 0
 
 # Format the source code
 format:
-	@find ./ -type f -name "*.go" -exec gofmt -w {} \;
+	@find . -type f -name "*.go" -exec gofmt -s -w {} \;
 
 # Check if the source code has been formatted
 fmtcheck:
 	@mkdir -p target
-	@find ./ -type f -name "*.go" -exec gofmt -d {} \; | tee target/format.diff
+	@find . -type f -name "*.go" -exec gofmt -s -d {} \; | tee target/format.diff
 	@test ! -s target/format.diff || { echo "ERROR: the source code has not been formatted - please use 'make format' or 'gofmt'"; exit 1; }
 
 # Check for syntax errors
 vet:
-	GOPATH=$(GOPATH) go vet ./...
+	GOPATH=$(GOPATH) go vet .
 
 # Check for style errors
 lint:
-	GOPATH=$(GOPATH) PATH=$(GOPATH)/bin:$(PATH) golint ./...
+	GOPATH=$(GOPATH) PATH=$(GOPATH)/bin:$(PATH) golint .
 
 # Generate the coverage report
 coverage:
-	GOPATH=$(GOPATH) go tool cover -html=target/report/coverage.out -o target/report/coverage.html
+	@mkdir -p target/report
+	GOPATH=$(GOPATH) \
+	go test -covermode=count -coverprofile=target/report/coverage.out -v ./... && \
+	GOPATH=$(GOPATH) \
+	go tool cover -html=target/report/coverage.out -o target/report/coverage.html
 
 # Report cyclomatic complexity
 cyclo:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) gocyclo -avg ./ | tee target/report/cyclo.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) gocyclo -avg . | tee target/report/cyclo.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # Detect ineffectual assignments
 ineffassign:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) ineffassign ./ | tee target/report/ineffassign.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) ineffassign . | tee target/report/ineffassign.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # Detect commonly misspelled words in source files
 misspell:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) misspell -error ./  | tee target/report/misspell.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) misspell -error .  | tee target/report/misspell.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # AST scanner
 astscan:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) gas --nosec=true ./... | tee target/report/astscan.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) gas ./*.go | tee target/report/astscan.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # Generate source docs
 docs:
 	@mkdir -p target/docs
 	nohup sh -c 'GOPATH=$(GOPATH) godoc -http=127.0.0.1:6060' > target/godoc_server.log 2>&1 &
-	wget --directory-prefix=target/docs/ --execute robots=off --retry-connrefused --recursive --no-parent --adjust-extension --page-requisites --convert-links http://127.0.0.1:6060/pkg/github.com/${OWNER}/${PROJECT}/ ; kill -9 `lsof -ti :6060`
-	@echo '<html><head><meta http-equiv="refresh" content="0;./127.0.0.1:6060/pkg/github.com/'${OWNER}'/'${PROJECT}'/index.html"/></head><a href="./127.0.0.1:6060/pkg/github.com/'${OWNER}'/'${PROJECT}'/index.html">'${PKGNAME}' Documentation ...</a></html>' > target/docs/index.html
+	wget --directory-prefix=target/docs/ --execute robots=off --retry-connrefused --recursive --no-parent --adjust-extension --page-requisites --convert-links http://127.0.0.1:6060/pkg/github.com/${VENDOR}/${PROJECT}/ ; kill -9 `lsof -ti :6060`
+	@echo '<html><head><meta http-equiv="refresh" content="0;./127.0.0.1:6060/pkg/'${CVSPATH}'/'${PROJECT}'/index.html"/></head><a href="./127.0.0.1:6060/pkg/'${CVSPATH}'/'${PROJECT}'/index.html">'${PKGNAME}' Documentation ...</a></html>' > target/docs/index.html
 
 # Alias to run all quality-assurance checks
 qa: deps fmtcheck test vet lint coverage cyclo ineffassign misspell astscan
