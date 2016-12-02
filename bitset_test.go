@@ -110,6 +110,46 @@ func TestBitSetAndGet(t *testing.T) {
 	}
 }
 
+func TestNextClear(t *testing.T) {
+	v := New(1000)
+	v.Set(0).Set(1)
+	next, found := v.NextClear(0)
+	if !found || next != 2 {
+		t.Errorf("Found next clear bit as %d, it should have been 2", next)
+	}
+
+	v = New(1000)
+	for i := uint(0); i < 66; i++ {
+		v.Set(i)
+	}
+	next, found = v.NextClear(0)
+	if !found || next != 66 {
+		t.Errorf("Found next clear bit as %d, it should have been 66", next)
+	}
+
+	v = New(1000)
+	for i := uint(0); i < 64; i++ {
+		v.Set(i)
+	}
+	v.Clear(45)
+	v.Clear(52)
+	next, found = v.NextClear(10)
+	if !found || next != 45 {
+		t.Errorf("Found next clear bit as %d, it should have been 45", next)
+	}
+
+	v = New(1000)
+	for i := uint(0); i < 128; i++ {
+		v.Set(i)
+	}
+	v.Clear(73)
+	v.Clear(99)
+	next, found = v.NextClear(10)
+	if !found || next != 73 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+}
+
 func TestIterate(t *testing.T) {
 	v := New(10000)
 	v.Set(0)

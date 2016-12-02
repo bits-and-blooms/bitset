@@ -55,6 +55,9 @@ const wordSize = uint(64)
 // log2WordSize is lg(wordSize)
 const log2WordSize = uint(6)
 
+// allBits has every bit set
+const allBits uint64 = 0xffffffffffffffff
+
 // A BitSet is a set of bits. The zero value of a BitSet is an empty set of length 0.
 type BitSet struct {
 	length uint
@@ -223,6 +226,30 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 		}
 		x = x + 1
 
+	}
+	return 0, false
+}
+
+// NextClear returns the next clear bit from the specified index,
+// including possibly the current index
+// along with an error code (true = valid, false = no bit found i.e. all bits are set)
+func (b *BitSet) NextClear(i uint) (uint, bool) {
+	x := int(i >> log2WordSize)
+	if x >= len(b.set) {
+		return 0, false
+	}
+	w := b.set[x]
+	w = w >> (i & (wordSize - 1))
+	wA := allBits >> (i & (wordSize - 1))
+	if w != wA {
+		return i + trailingZeroes64(^w), true
+	}
+	x++
+	for x < len(b.set) {
+		if b.set[x] != allBits {
+			return uint(x)*wordSize + trailingZeroes64(^b.set[x]), true
+		}
+		x++
 	}
 	return 0, false
 }
@@ -519,8 +546,6 @@ func (b *BitSet) isLenExactMultiple() bool {
 // Clean last word by setting unused bits to 0
 func (b *BitSet) cleanLastWord() {
 	if !b.isLenExactMultiple() {
-		// Mask for cleaning last word
-		const allBits uint64 = 0xffffffffffffffff
 		b.set[len(b.set)-1] &= allBits >> (wordSize - b.length%wordSize)
 	}
 }
