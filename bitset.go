@@ -565,6 +565,9 @@ func (b *BitSet) Complement() (result *BitSet) {
 // empty sets.
 func (b *BitSet) All() bool {
 	panicIfNull(b)
+	if b.length == 0 {
+		return false
+	}
 	return b.Count() == b.length
 }
 

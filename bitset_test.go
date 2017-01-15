@@ -853,6 +853,13 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestAllWhenEmpty(t *testing.T) {
+	b := new(BitSet)
+	if b.All() {
+		t.Error("All should return false when it bitset is empty")
+	}
+}
+
 // BENCHMARKS
 
 func BenchmarkSet(b *testing.B) {
