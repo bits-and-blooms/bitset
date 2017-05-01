@@ -87,8 +87,8 @@ func (b *BitSet) Bytes() []uint64 {
 
 // wordsNeeded calculates the number of words needed for i bits
 func wordsNeeded(i uint) int {
-	if i > ((^uint(0)) - wordSize + 1) {
-		return int((^uint(0)) >> log2WordSize)
+	if i > (Cap() - wordSize + 1) {
+		return int(Cap() >> log2WordSize)
 	}
 	return int((i + (wordSize - 1)) >> log2WordSize)
 }
