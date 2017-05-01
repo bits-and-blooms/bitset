@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"math/rand"
 	"testing"
 )
 
@@ -24,6 +23,17 @@ func TestStringer(t *testing.T) {
 		t.Error("bad string output")
 	}
 	fmt.Println(v)
+}
+
+func TestStringLong(t *testing.T) {
+	v := New(0)
+	for i := uint(0); i < 262145; i++ {
+		v.Set(i)
+	}
+	str := v.String()
+	if len(str) != 1723903 {
+		t.Error("Unexpected string length: ", len(str))
+	}
 }
 
 func TestEmptyBitSet(t *testing.T) {
@@ -52,14 +62,14 @@ func TestZeroValueBitSet(t *testing.T) {
 
 func TestBitSetNew(t *testing.T) {
 	v := New(16)
-	if v.Test(0) != false {
+	if v.Test(0) {
 		t.Errorf("Unable to make a bit set and read its 0th value.")
 	}
 }
 
 func TestBitSetHuge(t *testing.T) {
 	v := New(uint(math.MaxUint32))
-	if v.Test(0) != false {
+	if v.Test(0) {
 		t.Errorf("Unable to make a huge bit set and read its 0th value.")
 	}
 }
@@ -74,7 +84,7 @@ func TestLen(t *testing.T) {
 func TestBitSetIsClear(t *testing.T) {
 	v := New(1000)
 	for i := uint(0); i < 1000; i++ {
-		if v.Test(i) != false {
+		if v.Test(i) {
 			t.Errorf("Bit %d is set, and it shouldn't be.", i)
 		}
 	}
@@ -105,7 +115,7 @@ func TestExpand(t *testing.T) {
 func TestBitSetAndGet(t *testing.T) {
 	v := New(1000)
 	v.Set(100)
-	if v.Test(100) != true {
+	if !v.Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
 }
@@ -147,6 +157,50 @@ func TestNextClear(t *testing.T) {
 	next, found = v.NextClear(10)
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+
+	next, found = v.NextClear(72)
+	if !found || next != 73 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+	next, found = v.NextClear(73)
+	if !found || next != 73 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+	next, found = v.NextClear(74)
+	if !found || next != 99 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+
+	v = New(128)
+	next, found = v.NextClear(0)
+	if !found || next != 0 {
+		t.Errorf("Found next clear bit as %d, it should have been 0", next)
+	}
+
+	for i := uint(0); i < 128; i++ {
+		v.Set(i)
+	}
+	_, found = v.NextClear(0)
+	if found {
+		t.Errorf("There are not clear bits")
+	}
+
+	b := new(BitSet)
+	c, d := b.NextClear(1)
+	if c != 0 || d {
+		t.Error("Unexpected values")
+		return
+	}
+
+	v = New(100)
+	for i := uint(0); i != 100; i++ {
+		v.Set(i)
+	}
+	next, found = v.NextClear(0)
+	if found || next != 0 {
+		t.Errorf("Found next clear bit as %d, it should have return (0, false)", next)
+
 	}
 }
 
@@ -199,17 +253,17 @@ func TestIterate(t *testing.T) {
 func TestSetTo(t *testing.T) {
 	v := New(1000)
 	v.SetTo(100, true)
-	if v.Test(100) != true {
+	if !v.Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
 	v.SetTo(100, false)
-	if v.Test(100) != false {
+	if v.Test(100) {
 		t.Errorf("Bit %d is set, and it shouldn't be.", 100)
 	}
 }
 
 func TestChain(t *testing.T) {
-	if New(1000).Set(100).Set(99).Clear(99).Test(100) != true {
+	if !New(1000).Set(100).Set(99).Clear(99).Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
 }
@@ -483,6 +537,10 @@ func TestNone(t *testing.T) {
 	if v.None() {
 		t.Error("Non-empty sets with some bits set should return false on None()")
 	}
+	v = new(BitSet)
+	if !v.None() {
+		t.Error("Empty sets should return true on None()")
+	}
 }
 
 func TestEqual(t *testing.T) {
@@ -504,6 +562,14 @@ func TestEqual(t *testing.T) {
 	a.Set(0)
 	if !a.Equal(c) {
 		t.Error("Two sets with the same bits set should be equal")
+	}
+	if a.Equal(nil) {
+		t.Error("The sets should be different")
+	}
+	a = New(0)
+	b = New(0)
+	if !a.Equal(b) {
+		t.Error("Two empty set should be equal")
 	}
 }
 
@@ -752,41 +818,41 @@ func TestIsSuperSet(t *testing.T) {
 		c.Set(i)
 	}
 
-	if a.IsSuperSet(b) == true {
+	if a.IsSuperSet(b) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if a.IsSuperSet(c) == true {
+	if a.IsSuperSet(c) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if b.IsSuperSet(a) == true {
+	if b.IsSuperSet(a) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if b.IsSuperSet(c) == true {
+	if b.IsSuperSet(c) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if c.IsSuperSet(a) != true {
+	if !c.IsSuperSet(a) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if c.IsSuperSet(b) != true {
+	if !c.IsSuperSet(b) {
 		t.Errorf("IsSuperSet fails")
 	}
 
-	if a.IsStrictSuperSet(b) == true {
+	if a.IsStrictSuperSet(b) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if a.IsStrictSuperSet(c) == true {
+	if a.IsStrictSuperSet(c) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if b.IsStrictSuperSet(a) == true {
+	if b.IsStrictSuperSet(a) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if b.IsStrictSuperSet(c) == true {
+	if b.IsStrictSuperSet(c) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if c.IsStrictSuperSet(a) != true {
+	if !c.IsStrictSuperSet(a) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if c.IsStrictSuperSet(b) != true {
+	if !c.IsStrictSuperSet(b) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
 }
@@ -853,126 +919,136 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
-// BENCHMARKS
-
-func BenchmarkSet(b *testing.B) {
-	b.StopTimer()
-	r := rand.New(rand.NewSource(0))
-	sz := 100000
-	s := New(uint(sz))
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		s.Set(uint(r.Int31n(int32(sz))))
+func TestSafeSet(t *testing.T) {
+	b := new(BitSet)
+	c := b.safeSet()
+	outType := fmt.Sprintf("%T", c)
+	expType := "[]uint64"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
 	}
-}
-
-func BenchmarkGetTest(b *testing.B) {
-	b.StopTimer()
-	r := rand.New(rand.NewSource(0))
-	sz := 100000
-	s := New(uint(sz))
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		s.Test(uint(r.Int31n(int32(sz))))
-	}
-}
-
-func BenchmarkSetExpand(b *testing.B) {
-	b.StopTimer()
-	sz := uint(100000)
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		var s BitSet
-		s.Set(sz)
-	}
-}
-
-// go test -bench=Count
-func BenchmarkCount(b *testing.B) {
-	b.StopTimer()
-	s := New(100000)
-	for i := 0; i < 100000; i += 100 {
-		s.Set(uint(i))
-	}
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		s.Count()
-	}
-}
-
-// go test -bench=Iterate
-func BenchmarkIterate(b *testing.B) {
-	b.StopTimer()
-	s := New(10000)
-	for i := 0; i < 10000; i += 3 {
-		s.Set(uint(i))
-	}
-	b.StartTimer()
-	for j := 0; j < b.N; j++ {
-		c := uint(0)
-		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
-			c++
-		}
-	}
-}
-
-// go test -bench=SparseIterate
-func BenchmarkSparseIterate(b *testing.B) {
-	b.StopTimer()
-	s := New(100000)
-	for i := 0; i < 100000; i += 30 {
-		s.Set(uint(i))
-	}
-	b.StartTimer()
-	for j := 0; j < b.N; j++ {
-		c := uint(0)
-		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
-			c++
-		}
-	}
-}
-
-// go test -bench=LemireCreate
-// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
-func BenchmarkLemireCreate(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		bitmap := New(0) // we force dynamic memory allocation
-		for v := uint(0); v <= 100000000; v += 100 {
-			bitmap.Set(v)
-		}
-	}
-}
-
-// go test -bench=LemireCount
-// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
-func BenchmarkLemireCount(b *testing.B) {
-	bitmap := New(100000000) // we force dynamic memory allocation
-	for v := uint(0); v <= 100000000; v += 100 {
-		bitmap.Set(v)
-	}
-	sum := uint(0)
-	for i := 0; i < b.N; i++ {
-		sum += bitmap.Count()
-	}
-	if sum == 0 { // added just to fool ineffassign
+	if len(c) != 0 {
+		t.Error("The slice should be empty")
 		return
 	}
 }
 
-// go test -bench=LemireIterate
-// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
-func BenchmarkLemireIterate(b *testing.B) {
-	bitmap := New(100000000) // we force dynamic memory allocation
-	for v := uint(0); v <= 100000000; v += 100 {
-		bitmap.Set(v)
+func TestFrom(t *testing.T) {
+	u := []uint64{2, 3, 5, 7, 11}
+	b := From(u)
+	outType := fmt.Sprintf("%T", b)
+	expType := "*bitset.BitSet"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
 	}
-	sum := uint(0)
-	for i := 0; i < b.N; i++ {
-		for i, e := bitmap.NextSet(0); e; i, e = bitmap.NextSet(i + 1) {
-			sum++
-		}
+}
+
+func TestBytes(t *testing.T) {
+	b := new(BitSet)
+	c := b.Bytes()
+	outType := fmt.Sprintf("%T", c)
+	expType := "[]uint64"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
 	}
-	if sum == 0 { // added just to fool ineffassign
+	if len(c) != 0 {
+		t.Error("The slice should be empty")
+		return
+	}
+}
+
+func TestCap(t *testing.T) {
+	c := Cap()
+	if c <= 0 {
+		t.Error("The uint capacity should be >= 0")
+		return
+	}
+}
+
+func TestWordsNeededLong(t *testing.T) {
+	i := Cap()
+	out := wordsNeeded(i)
+	if out <= 0 {
+		t.Error("Unexpected value: ", out)
+		return
+	}
+}
+
+func TestNewPanic(t *testing.T) {
+	n := New(Cap())
+	if n.length != 0 {
+		t.Error("Unexpected value: ", n.length)
+		return
+	}
+}
+
+func TestTestTooLong(t *testing.T) {
+	b := new(BitSet)
+	if b.Test(1) {
+		t.Error("Unexpected value: true")
+		return
+	}
+}
+
+func TestClearTooLong(t *testing.T) {
+	b := new(BitSet)
+	c := b.Clear(1)
+	if b != c {
+		t.Error("Unexpected value")
+		return
+	}
+}
+
+func TestClearAll(t *testing.T) {
+	u := []uint64{2, 3, 5, 7, 11}
+	b := From(u)
+	c := b.ClearAll()
+	if c.length != 320 {
+		t.Error("Unexpected length: ", b.length)
+		return
+	}
+	if c.Test(0) || c.Test(1) || c.Test(2) || c.Test(3) || c.Test(4) || c.Test(5) {
+		t.Error("All bits should be unset")
+		return
+	}
+}
+
+func TestFlip(t *testing.T) {
+	b := new(BitSet)
+	c := b.Flip(11)
+	if c.length != 12 {
+		t.Error("Unexpected value: ", c.length)
+		return
+	}
+	d := c.Flip(7)
+	if d.length != 12 {
+		t.Error("Unexpected value: ", d.length)
+		return
+	}
+}
+
+func TestCopy(t *testing.T) {
+	a := New(10)
+	if a.Copy(nil) != 0 {
+		t.Error("No values should be copied")
+		return
+	}
+	a = New(10)
+	b := New(20)
+	if a.Copy(b) != 10 {
+		t.Error("Unexpected value")
+		return
+	}
+}
+
+func TestNextSetError(t *testing.T) {
+	b := new(BitSet)
+	c, d := b.NextSet(1)
+	if c != 0 || d {
+		t.Error("Unexpected values")
 		return
 	}
 }
