@@ -112,7 +112,7 @@ func New(length uint) (bset *BitSet) {
 	return bset
 }
 
-// Cap returns the total possible capicity, or number of bits
+// Cap returns the total possible capacity, or number of bits
 func Cap() uint {
 	return ^uint(0)
 }
