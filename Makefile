@@ -5,7 +5,7 @@
 # ------------------------------------------------------------------------------
 
 # List special make targets that are not associated with files
-.PHONY: help all test format fmtcheck vet lint coverage cyclo ineffassign misspell astscan qa deps clean nuke
+.PHONY: help all test format fmtcheck vet lint coverage cyclo ineffassign misspell structcheck varcheck errcheck gosimple astscan qa deps clean nuke
 
 # Use bash as shell (Note: Ubuntu now uses dash which doesn't support PIPESTATUS).
 SHELL=/bin/bash
@@ -24,9 +24,6 @@ PROJECT=bitset
 
 # Project version
 VERSION=$(shell cat VERSION)
-
-# Project release number (packaging build number)
-RELEASE=$(shell cat RELEASE)
 
 # Name of RPM or DEB package
 PKGNAME=${VENDOR}-${PROJECT}
@@ -66,6 +63,10 @@ help:
 	@echo "    make cyclo       : Generate the cyclomatic complexity report"
 	@echo "    make ineffassign : Detect ineffectual assignments"
 	@echo "    make misspell    : Detect commonly misspelled words in source files"
+	@echo "    make structcheck : Find unused struct fields"
+	@echo "    make varcheck    : Find unused global variables and constants"
+	@echo "    make errcheck    : Check that error return values are used"
+	@echo "    make gosimple    : Suggest code simplifications"
 	@echo "    make astscan     : GO AST scanner"
 	@echo ""
 	@echo "    make docs        : Generate source code documentation"
@@ -81,8 +82,17 @@ all: help
 # Run the unit tests
 test:
 	@mkdir -p target/test
+	@mkdir -p target/report
 	GOPATH=$(GOPATH) \
-	go test -covermode=atomic -bench=. -race -v ./... | \
+	go test \
+	-covermode=atomic \
+	-bench=. \
+	-race \
+	-cpuprofile=target/report/cpu.out \
+	-memprofile=target/report/mem.out \
+	-mutexprofile=target/report/mutex.out \
+	-coverprofile=target/report/coverage.out \
+	-v ./... | \
 	tee >(PATH=$(GOPATH)/bin:$(PATH) go-junit-report > target/test/report.xml); \
 	test $${PIPESTATUS[0]} -eq 0
 
@@ -108,29 +118,47 @@ lint:
 coverage:
 	@mkdir -p target/report
 	GOPATH=$(GOPATH) \
-	go test -covermode=count -coverprofile=target/report/coverage.out -v ./... && \
-	GOPATH=$(GOPATH) \
 	go tool cover -html=target/report/coverage.out -o target/report/coverage.html
 
 # Report cyclomatic complexity
 cyclo:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) gocyclo -avg . | tee target/report/cyclo.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) gocyclo -avg ./ | tee target/report/cyclo.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # Detect ineffectual assignments
 ineffassign:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) ineffassign . | tee target/report/ineffassign.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) ineffassign ./ | tee target/report/ineffassign.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # Detect commonly misspelled words in source files
 misspell:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) misspell -error .  | tee target/report/misspell.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) misspell -error ./  | tee target/report/misspell.txt ; test $${PIPESTATUS[0]} -eq 0
+
+# Find unused struct fields
+structcheck:
+	@mkdir -p target/report
+	GOPATH=$(GOPATH) structcheck -a ./  | tee target/report/structcheck.txt
+
+# Find unused global variables and constants
+varcheck:
+	@mkdir -p target/report
+	GOPATH=$(GOPATH) varcheck -e ./  | tee target/report/varcheck.txt
+
+# Check that error return values are used
+errcheck:
+	@mkdir -p target/report
+	GOPATH=$(GOPATH) errcheck ./  | tee target/report/errcheck.txt
+
+# Suggest code simplifications
+gosimple:
+	@mkdir -p target/report
+	GOPATH=$(GOPATH) gosimple ./  | tee target/report/gosimple.txt
 
 # AST scanner
 astscan:
 	@mkdir -p target/report
-	GOPATH=$(GOPATH) gas ./*.go | tee target/report/astscan.txt ; test $${PIPESTATUS[0]} -eq 0
+	GOPATH=$(GOPATH) gas .//*.go | tee target/report/astscan.txt ; test $${PIPESTATUS[0]} -eq 0
 
 # Generate source docs
 docs:
@@ -140,7 +168,7 @@ docs:
 	@echo '<html><head><meta http-equiv="refresh" content="0;./127.0.0.1:6060/pkg/'${CVSPATH}'/'${PROJECT}'/index.html"/></head><a href="./127.0.0.1:6060/pkg/'${CVSPATH}'/'${PROJECT}'/index.html">'${PKGNAME}' Documentation ...</a></html>' > target/docs/index.html
 
 # Alias to run all quality-assurance checks
-qa: fmtcheck test vet lint coverage cyclo ineffassign misspell astscan
+qa: fmtcheck test vet lint coverage cyclo ineffassign misspell structcheck varcheck errcheck gosimple astscan
 
 # --- INSTALL ---
 
@@ -153,7 +181,11 @@ deps:
 	GOPATH=$(GOPATH) go get github.com/fzipp/gocyclo
 	GOPATH=$(GOPATH) go get github.com/gordonklaus/ineffassign
 	GOPATH=$(GOPATH) go get github.com/client9/misspell/cmd/misspell
-	GOPATH=$(GOPATH) go get github.com/HewlettPackard/gas
+	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/structcheck
+	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/varcheck
+	GOPATH=$(GOPATH) go get github.com/kisielk/errcheck
+	GOPATH=$(GOPATH) go get honnef.co/go/tools/cmd/gosimple
+	GOPATH=$(GOPATH) go get github.com/GoASTScanner/gas
 
 # Remove any build artifact
 clean:
