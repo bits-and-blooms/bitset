@@ -241,13 +241,15 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	w := b.set[x]
 	w = w >> (i & (wordSize - 1))
 	wA := allBits >> (i & (wordSize - 1))
-	if w != wA {
-		return i + trailingZeroes64(^w), true
+	index := i + trailingZeroes64(^w)
+	if w != wA && index < b.length {
+		return index, true
 	}
 	x++
 	for x < len(b.set) {
-		if b.set[x] != allBits {
-			return uint(x)*wordSize + trailingZeroes64(^b.set[x]), true
+		index = uint(x)*wordSize + trailingZeroes64(^b.set[x])
+		if b.set[x] != allBits && index < b.length {
+			return index, true
 		}
 		x++
 	}

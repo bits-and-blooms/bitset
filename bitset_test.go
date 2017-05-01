@@ -158,6 +158,7 @@ func TestNextClear(t *testing.T) {
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
 	}
+
 	next, found = v.NextClear(72)
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
@@ -190,6 +191,16 @@ func TestNextClear(t *testing.T) {
 	if c != 0 || d {
 		t.Error("Unexpected values")
 		return
+	}
+
+	v = New(100)
+	for i := uint(0); i != 100; i++ {
+		v.Set(i)
+	}
+	next, found = v.NextClear(0)
+	if found || next != 0 {
+		t.Errorf("Found next clear bit as %d, it should have return (0, false)", next)
+
 	}
 }
 
