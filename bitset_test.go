@@ -52,14 +52,14 @@ func TestZeroValueBitSet(t *testing.T) {
 
 func TestBitSetNew(t *testing.T) {
 	v := New(16)
-	if v.Test(0) != false {
+	if v.Test(0) {
 		t.Errorf("Unable to make a bit set and read its 0th value.")
 	}
 }
 
 func TestBitSetHuge(t *testing.T) {
 	v := New(uint(math.MaxUint32))
-	if v.Test(0) != false {
+	if v.Test(0) {
 		t.Errorf("Unable to make a huge bit set and read its 0th value.")
 	}
 }
@@ -74,7 +74,7 @@ func TestLen(t *testing.T) {
 func TestBitSetIsClear(t *testing.T) {
 	v := New(1000)
 	for i := uint(0); i < 1000; i++ {
-		if v.Test(i) != false {
+		if v.Test(i) {
 			t.Errorf("Bit %d is set, and it shouldn't be.", i)
 		}
 	}
@@ -105,7 +105,7 @@ func TestExpand(t *testing.T) {
 func TestBitSetAndGet(t *testing.T) {
 	v := New(1000)
 	v.Set(100)
-	if v.Test(100) != true {
+	if !v.Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
 }
@@ -199,17 +199,17 @@ func TestIterate(t *testing.T) {
 func TestSetTo(t *testing.T) {
 	v := New(1000)
 	v.SetTo(100, true)
-	if v.Test(100) != true {
+	if !v.Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
 	v.SetTo(100, false)
-	if v.Test(100) != false {
+	if v.Test(100) {
 		t.Errorf("Bit %d is set, and it shouldn't be.", 100)
 	}
 }
 
 func TestChain(t *testing.T) {
-	if New(1000).Set(100).Set(99).Clear(99).Test(100) != true {
+	if !New(1000).Set(100).Set(99).Clear(99).Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
 }
@@ -752,41 +752,41 @@ func TestIsSuperSet(t *testing.T) {
 		c.Set(i)
 	}
 
-	if a.IsSuperSet(b) == true {
+	if a.IsSuperSet(b) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if a.IsSuperSet(c) == true {
+	if a.IsSuperSet(c) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if b.IsSuperSet(a) == true {
+	if b.IsSuperSet(a) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if b.IsSuperSet(c) == true {
+	if b.IsSuperSet(c) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if c.IsSuperSet(a) != true {
+	if !c.IsSuperSet(a) {
 		t.Errorf("IsSuperSet fails")
 	}
-	if c.IsSuperSet(b) != true {
+	if !c.IsSuperSet(b) {
 		t.Errorf("IsSuperSet fails")
 	}
 
-	if a.IsStrictSuperSet(b) == true {
+	if a.IsStrictSuperSet(b) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if a.IsStrictSuperSet(c) == true {
+	if a.IsStrictSuperSet(c) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if b.IsStrictSuperSet(a) == true {
+	if b.IsStrictSuperSet(a) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if b.IsStrictSuperSet(c) == true {
+	if b.IsStrictSuperSet(c) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if c.IsStrictSuperSet(a) != true {
+	if !c.IsStrictSuperSet(a) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
-	if c.IsStrictSuperSet(b) != true {
+	if !c.IsStrictSuperSet(b) {
 		t.Errorf("IsStrictSuperSet fails")
 	}
 }
