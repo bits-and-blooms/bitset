@@ -1,6 +1,6 @@
 # MAKEFILE
 #
-# @author      Nicola Asuni <nicola@cognitivelogic.com>
+# @author      Nicola Asuni <info@tecnick.com>
 # @link        https://github.com/willf/bitset
 # ------------------------------------------------------------------------------
 
