@@ -25,6 +25,17 @@ func TestStringer(t *testing.T) {
 	fmt.Println(v)
 }
 
+func TestStringLong(t *testing.T) {
+	v := New(0)
+	for i := uint(0); i < 262145; i++ {
+		v.Set(i)
+	}
+	str := v.String()
+	if len(str) != 1723903 {
+		t.Error("Unexpected string length: ", len(str))
+	}
+}
+
 func TestEmptyBitSet(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -146,6 +157,39 @@ func TestNextClear(t *testing.T) {
 	next, found = v.NextClear(10)
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+	next, found = v.NextClear(72)
+	if !found || next != 73 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+	next, found = v.NextClear(73)
+	if !found || next != 73 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+	next, found = v.NextClear(74)
+	if !found || next != 99 {
+		t.Errorf("Found next clear bit as %d, it should have been 73", next)
+	}
+
+	v = New(128)
+	next, found = v.NextClear(0)
+	if !found || next != 0 {
+		t.Errorf("Found next clear bit as %d, it should have been 0", next)
+	}
+
+	for i := uint(0); i < 128; i++ {
+		v.Set(i)
+	}
+	_, found = v.NextClear(0)
+	if found {
+		t.Errorf("There are not clear bits")
+	}
+
+	b := new(BitSet)
+	c, d := b.NextClear(1)
+	if c != 0 || d {
+		t.Error("Unexpected values")
+		return
 	}
 }
 
@@ -482,6 +526,10 @@ func TestNone(t *testing.T) {
 	if v.None() {
 		t.Error("Non-empty sets with some bits set should return false on None()")
 	}
+	v = new(BitSet)
+	if !v.None() {
+		t.Error("Empty sets should return true on None()")
+	}
 }
 
 func TestEqual(t *testing.T) {
@@ -503,6 +551,14 @@ func TestEqual(t *testing.T) {
 	a.Set(0)
 	if !a.Equal(c) {
 		t.Error("Two sets with the same bits set should be equal")
+	}
+	if a.Equal(nil) {
+		t.Error("The sets should be different")
+	}
+	a = New(0)
+	b = New(0)
+	if !a.Equal(b) {
+		t.Error("Two empty set should be equal")
 	}
 }
 
@@ -848,6 +904,140 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	// Bitsets must be equal after marshalling and unmarshalling
 	if !a.Equal(b) {
 		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+		return
+	}
+}
+
+func TestSafeSet(t *testing.T) {
+	b := new(BitSet)
+	c := b.safeSet()
+	outType := fmt.Sprintf("%T", c)
+	expType := "[]uint64"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+	if len(c) != 0 {
+		t.Error("The slice should be empty")
+		return
+	}
+}
+
+func TestFrom(t *testing.T) {
+	u := []uint64{2, 3, 5, 7, 11}
+	b := From(u)
+	outType := fmt.Sprintf("%T", b)
+	expType := "*bitset.BitSet"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+}
+
+func TestBytes(t *testing.T) {
+	b := new(BitSet)
+	c := b.Bytes()
+	outType := fmt.Sprintf("%T", c)
+	expType := "[]uint64"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+	if len(c) != 0 {
+		t.Error("The slice should be empty")
+		return
+	}
+}
+
+func TestCap(t *testing.T) {
+	c := Cap()
+	if c <= 0 {
+		t.Error("The uint capacity should be >= 0")
+		return
+	}
+}
+
+func TestWordsNeededLong(t *testing.T) {
+	i := Cap()
+	out := wordsNeeded(i)
+	if out <= 0 {
+		t.Error("Unexpected value: ", out)
+		return
+	}
+}
+
+func TestNewPanic(t *testing.T) {
+	n := New(Cap())
+	if n.length != 0 {
+		t.Error("Unexpected value: ", n.length)
+		return
+	}
+}
+
+func TestTestTooLong(t *testing.T) {
+	b := new(BitSet)
+	if b.Test(1) {
+		t.Error("Unexpected value: true")
+		return
+	}
+}
+
+func TestClearTooLong(t *testing.T) {
+	b := new(BitSet)
+	c := b.Clear(1)
+	if b != c {
+		t.Error("Unexpected value")
+		return
+	}
+}
+
+func TestClearAll(t *testing.T) {
+	u := []uint64{2, 3, 5, 7, 11}
+	b := From(u)
+	c := b.ClearAll()
+	if c.length != 320 {
+		t.Error("Unexpected length: ", b.length)
+		return
+	}
+	if c.Test(0) || c.Test(1) || c.Test(2) || c.Test(3) || c.Test(4) || c.Test(5) {
+		t.Error("All bits should be unset")
+		return
+	}
+}
+
+func TestFlip(t *testing.T) {
+	b := new(BitSet)
+	c := b.Flip(11)
+	if c.length != 12 {
+		t.Error("Unexpected value: ", c.length)
+		return
+	}
+	d := c.Flip(7)
+	if d.length != 12 {
+		t.Error("Unexpected value: ", d.length)
+		return
+	}
+}
+
+func TestCopy(t *testing.T) {
+	a := New(10)
+	if a.Copy(nil) != 0 {
+		t.Error("No values should be copied")
+		return
+	}
+	a = New(10)
+	b := New(20)
+	if a.Copy(b) != 10 {
+		t.Error("Unexpected value")
+		return
+	}
+}
+
+func TestNextSetError(t *testing.T) {
+	b := new(BitSet)
+	c, d := b.NextSet(1)
+	if c != 0 || d {
+		t.Error("Unexpected values")
 		return
 	}
 }
