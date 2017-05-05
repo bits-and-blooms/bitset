@@ -23,18 +23,43 @@ Many of the methods, including Set, Clear, and Flip, return a BitSet pointer, wh
 
 ### Example use:
 
-    import "bitset"
-    var b BitSet
-    b.Set(10).Set(11)
-    if b.Test(1000) {
-        b.Clear(1000)
-    }
-    for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {
-       fmt.Println("The following bit is set:",i);
-    }
-    if B.Intersection(bitset.New(100).Set(10)).Count() > 1 {
-        fmt.Println("Intersection works.")
-    }
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+
+	"github.com/willf/bitset"
+)
+
+func main() {
+	fmt.Printf("Hello from BitSet!\n")
+	var b bitset.BitSet
+	// play some Go Fish
+	for i := 0; i < 100; i++ {
+		card1 := uint(rand.Intn(52))
+		card2 := uint(rand.Intn(52))
+		b.Set(card1)
+		if b.Test(card2) {
+			fmt.Println("Go Fish!")
+		}
+		b.Clear(card1)
+	}
+
+	// Chaining
+	b.Set(10).Set(11)
+
+	for i, e := b.NextSet(0); e; i, e = b.NextSet(i + 1) {
+		fmt.Println("The following bit is set:", i)
+	}
+	if b.Intersection(bitset.New(100).Set(10)).Count() == 1 {
+		fmt.Println("Intersection works.")
+	} else {
+		fmt.Println("Intersection doesn't work???")
+	}
+}
+```
 
 As an alternative to BitSets, one should check out the 'big' package, which provides a (less set-theoretical) view of bitsets.
 
