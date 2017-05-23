@@ -945,6 +945,30 @@ func TestFrom(t *testing.T) {
 	}
 }
 
+func TestReset(t *testing.T) {
+	b := From([]uint64{2, 3, 5, 7, 11})
+	u := []uint64{1, 2, 3}
+	r := b.Reset(u)
+	outType := fmt.Sprintf("%T", r)
+	expType := "*bitset.BitSet"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+	if r != b {
+		t.Error("The Bitset should be reused")
+		return
+	}
+	if r.length != 192 {
+		t.Error("Unexpected length: ", r.length)
+		return
+	}
+	if &r.set[0] != &u[0] {
+		t.Error("The slices should be pointing to the same address")
+		return
+	}
+}
+
 func TestBytes(t *testing.T) {
 	b := new(BitSet)
 	c := b.Bytes()
