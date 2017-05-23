@@ -77,7 +77,14 @@ func (b *BitSet) safeSet() []uint64 {
 
 // From is a constructor used to create a BitSet from an array of integers
 func From(buf []uint64) *BitSet {
-	return &BitSet{uint(len(buf)) * 64, buf}
+	return &BitSet{length(buf), buf}
+}
+
+// Reset resets the Bitset to an array of integers
+func (b *BitSet) Reset(buf []uint64) *BitSet {
+	b.length = length(buf)
+	b.set = buf
+	return b
 }
 
 // Bytes returns the bitset as array of integers
@@ -115,6 +122,10 @@ func New(length uint) (bset *BitSet) {
 // Cap returns the total possible capacity, or number of bits
 func Cap() uint {
 	return ^uint(0)
+}
+
+func length(buf []uint64) uint {
+	return uint(len(buf)) * 64
 }
 
 // Len returns the length of the BitSet in words
