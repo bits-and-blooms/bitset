@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestPopcntSlice(t *testing.T) {
+func TestComparePopcntSlice(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	resGo := popcntSliceGo(s)
 	resAsm := popcntSliceAsm(s)
@@ -18,7 +18,7 @@ func TestPopcntSlice(t *testing.T) {
 	}
 }
 
-func TestPopcntMaskSlice(t *testing.T) {
+func TestComparePopcntMaskSlice(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
 	resGo := popcntMaskSliceGo(s, m)
@@ -28,7 +28,7 @@ func TestPopcntMaskSlice(t *testing.T) {
 	}
 }
 
-func TestPopcntAndSlice(t *testing.T) {
+func TestComparePopcntAndSlice(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
 	resGo := popcntAndSliceGo(s, m)
@@ -38,7 +38,7 @@ func TestPopcntAndSlice(t *testing.T) {
 	}
 }
 
-func TestPopcntOrSlice(t *testing.T) {
+func TestComparePopcntOrSlice(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
 	resGo := popcntOrSliceGo(s, m)
@@ -48,7 +48,7 @@ func TestPopcntOrSlice(t *testing.T) {
 	}
 }
 
-func TestPopcntXorSlice(t *testing.T) {
+func TestComparePopcntXorSlice(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
 	resGo := popcntXorSliceGo(s, m)
