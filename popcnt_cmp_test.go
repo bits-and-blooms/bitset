@@ -1,3 +1,4 @@
+// +build !go1.9
 // +build amd64,!appengine
 
 // This file tests the popcnt funtions
