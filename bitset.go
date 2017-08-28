@@ -441,7 +441,6 @@ func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 	if compare.length > 0 {
 		b.extendSetMaybe(compare.length - 1)
 	}
-	return
 }
 
 // Union of base set and other set
