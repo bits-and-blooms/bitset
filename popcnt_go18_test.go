@@ -6,49 +6,49 @@ import (
 	"testing"
 )
 
-func TestPopcntSlice(t *testing.T) {
+func TestPopcntSliceGo(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
-	res := popcntSlice(s)
+	res := popcntSliceGo(s)
 	const l uint64 = 27
 	if res != l {
 		t.Errorf("Wrong popcount %d != %d", res, l)
 	}
 }
 
-func TestPopcntMaskSlice(t *testing.T) {
+func TestPopcntMaskSliceGo(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
-	res := popcntMaskSlice(s, m)
+	res := popcntMaskSliceGo(s, m)
 	const l uint64 = 9
 	if res != l {
 		t.Errorf("Wrong mask %d !=  %d", res, l)
 	}
 }
 
-func TestPopcntAndSlice(t *testing.T) {
+func TestPopcntAndSliceGo(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
-	res := popcntAndSlice(s, m)
+	res := popcntAndSliceGo(s, m)
 	const l uint64 = 18
 	if res != l {
 		t.Errorf("Wrong And %d !=  %d", res, l)
 	}
 }
 
-func TestPopcntOrSlice(t *testing.T) {
+func TestPopcntOrSliceGo(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
-	res := popcntOrSlice(s, m)
+	res := popcntOrSliceGo(s, m)
 	const l uint64 = 50
 	if res != l {
 		t.Errorf("Wrong OR %d !=  %d", res, l)
 	}
 }
 
-func TestPopcntXorSlice(t *testing.T) {
+func TestPopcntXorSliceGo(t *testing.T) {
 	s := []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29}
 	m := []uint64{31, 37, 41, 43, 47, 53, 59, 61, 67, 71}
-	res := popcntXorSlice(s, m)
+	res := popcntXorSliceGo(s, m)
 	const l uint64 = 32
 	if res != l {
 		t.Errorf("Wrong OR %d !=  %d", res, l)
