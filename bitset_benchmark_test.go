@@ -102,10 +102,11 @@ func BenchmarkLemireCreate(b *testing.B) {
 // go test -bench=LemireCount
 // see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
 func BenchmarkLemireCount(b *testing.B) {
-	bitmap := New(100000000) // we force dynamic memory allocation
+	bitmap := New(100000000)
 	for v := uint(0); v <= 100000000; v += 100 {
 		bitmap.Set(v)
 	}
+	b.ResetTimer()
 	sum := uint(0)
 	for i := 0; i < b.N; i++ {
 		sum += bitmap.Count()
@@ -118,10 +119,11 @@ func BenchmarkLemireCount(b *testing.B) {
 // go test -bench=LemireIterate
 // see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
 func BenchmarkLemireIterate(b *testing.B) {
-	bitmap := New(100000000) // we force dynamic memory allocation
+	bitmap := New(100000000)
 	for v := uint(0); v <= 100000000; v += 100 {
 		bitmap.Set(v)
 	}
+	b.ResetTimer()
 	sum := uint(0)
 	for i := 0; i < b.N; i++ {
 		for i, e := bitmap.NextSet(0); e; i, e = bitmap.NextSet(i + 1) {

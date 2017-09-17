@@ -65,6 +65,13 @@ As an alternative to BitSets, one should check out the 'big' package, which prov
 
 Godoc documentation is at: https://godoc.org/github.com/willf/bitset
 
+
+## Implementation Note
+
+Go 1.9 introduced a native `math/bits` library. We provide backward compatibility to Go 1.7, which might be removed.
+
+It is possible that a later version will match the `math/bits` return signature for counts (which is `int`, rather than our library's `unit64`). If so, the version will be bumped.
+
 ## Installation
 
 ```bash
