@@ -12,8 +12,8 @@ branches:
     - travis
 
 go:
-  - 1.8
-  - 1.9
+  - 1.8.x
+  - 1.9.x
   - tip
 
 matrix:
