@@ -1,0 +1,13 @@
+package: github.com/m3db/bitset
+import: []
+testImport:
+- package: github.com/leanovate/gopter
+  version: 9e6101e5a87586b269acf3d0d61f363e4317309f
+  subpackages:
+  - commands
+  - gen
+- package: github.com/stretchr/testify
+  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a
+  subpackages:
+  - assert
+  - require
