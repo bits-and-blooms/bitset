@@ -1,5 +1,7 @@
 # bitset
 
+## Note: This is a fork of [github.com/willf/bitset](http://github.com/willf/bitset) that provides a read only bitset that can be instantiated from a mmap'd bytes ref and also limits the scope of the API.
+
 *Go language library to map between non-negative integers and boolean values*
 
 [![Master Build Status](https://secure.travis-ci.org/m3db/bitset.png?branch=master)](https://travis-ci.org/m3db/bitset?branch=master)
