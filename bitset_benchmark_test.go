@@ -168,11 +168,11 @@ func BenchmarkLemireIterateManyb(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		j := uint(0)
 		j, buffer = bitmap.NextSetMany(j, buffer)
-		for ; len(buffer) > 0; j, buffer = bitmap.NextSetMany(j,buffer) {
+		for ; len(buffer) > 0; j, buffer = bitmap.NextSetMany(j, buffer) {
 			for k := range buffer {
 				sum += buffer[k]
 			}
-      j += 1
+			j += 1
 		}
 	}
 
