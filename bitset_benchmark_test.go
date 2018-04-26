@@ -126,10 +126,56 @@ func BenchmarkLemireIterate(b *testing.B) {
 	b.ResetTimer()
 	sum := uint(0)
 	for i := 0; i < b.N; i++ {
-		for i, e := bitmap.NextSet(0); e; i, e = bitmap.NextSet(i + 1) {
+		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
 			sum++
 		}
 	}
+	if sum == 0 { // added just to fool ineffassign
+		return
+	}
+}
+
+// go test -bench=LemireIterateb
+// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
+func BenchmarkLemireIterateb(b *testing.B) {
+	bitmap := New(100000000)
+	for v := uint(0); v <= 100000000; v += 100 {
+		bitmap.Set(v)
+	}
+	b.ResetTimer()
+	sum := uint(0)
+	for i := 0; i < b.N; i++ {
+		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
+			sum += j
+		}
+	}
+
+	if sum == 0 { // added just to fool ineffassign
+		return
+	}
+}
+
+// go test -bench=BenchmarkLemireIterateManyb
+// see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
+func BenchmarkLemireIterateManyb(b *testing.B) {
+	bitmap := New(100000000)
+	for v := uint(0); v <= 100000000; v += 100 {
+		bitmap.Set(v)
+	}
+	b.ResetTimer()
+	sum := uint(0)
+	buffer := make([]uint, 256)
+	for i := 0; i < b.N; i++ {
+		j := uint(0)
+		j, buffer = bitmap.NextSetMany(j, buffer)
+		for ; len(buffer) > 0; j, buffer = bitmap.NextSetMany(j, buffer) {
+			for k := range buffer {
+				sum += buffer[k]
+			}
+			j += 1
+		}
+	}
+
 	if sum == 0 { // added just to fool ineffassign
 		return
 	}
