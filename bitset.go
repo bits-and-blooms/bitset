@@ -58,6 +58,18 @@ const log2WordSize = uint(6)
 // allBits has every bit set
 const allBits uint64 = 0xffffffffffffffff
 
+// default binary BigEndian
+var binaryOrder binary.ByteOrder = binary.BigEndian
+
+// default json encoding base64.URLEncoding
+var base64Encoding *base64.Encoding = base64.URLEncoding
+
+// Marshal/Unmarshal BitSet with base64.StdEncoding(Default: base64.URLEncoding)
+func Base64StdEncoding() { base64Encoding = base64.StdEncoding }
+
+// Marshal/Unmarshal Binary as Little Endian(Default: binary.BigEndian)
+func LittleEndian() { binaryOrder = binary.LittleEndian }
+
 // A BitSet is a set of bits. The zero value of a BitSet is an empty set of length 0.
 type BitSet struct {
 	length uint
@@ -667,13 +679,13 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	length := uint64(b.length)
 
 	// Write length
-	err := binary.Write(stream, binary.BigEndian, length)
+	err := binary.Write(stream, binaryOrder, length)
 	if err != nil {
 		return 0, err
 	}
 
 	// Write set
-	err = binary.Write(stream, binary.BigEndian, b.set)
+	err = binary.Write(stream, binaryOrder, b.set)
 	return int64(b.BinaryStorageSize()), err
 }
 
@@ -682,7 +694,7 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	var length uint64
 
 	// Read length first
-	err := binary.Read(stream, binary.BigEndian, &length)
+	err := binary.Read(stream, binaryOrder, &length)
 	if err != nil {
 		return 0, err
 	}
@@ -693,7 +705,7 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	}
 
 	// Read remaining bytes as set
-	err = binary.Read(stream, binary.BigEndian, newset.set)
+	err = binary.Read(stream, binaryOrder, newset.set)
 	if err != nil {
 		return 0, err
 	}
@@ -736,7 +748,7 @@ func (b *BitSet) MarshalJSON() ([]byte, error) {
 	}
 
 	// URLEncode all bytes
-	return json.Marshal(base64.URLEncoding.EncodeToString(buffer.Bytes()))
+	return json.Marshal(base64Encoding.EncodeToString(buffer.Bytes()))
 }
 
 // UnmarshalJSON unmarshals a BitSet from JSON created using MarshalJSON
@@ -749,7 +761,7 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 	}
 
 	// URLDecode string
-	buf, err := base64.URLEncoding.DecodeString(s)
+	buf, err := base64Encoding.DecodeString(s)
 	if err != nil {
 		return err
 	}
