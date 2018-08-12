@@ -1014,14 +1014,6 @@ func TestWordsNeededLong(t *testing.T) {
 	}
 }
 
-func TestNewPanic(t *testing.T) {
-	n := New(Cap())
-	if n.length != 0 {
-		t.Error("Unexpected value: ", n.length)
-		return
-	}
-}
-
 func TestTestTooLong(t *testing.T) {
 	b := new(BitSet)
 	if b.Test(1) {
