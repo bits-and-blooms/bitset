@@ -280,11 +280,10 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 		word = word ^ t
 	}
 	for idx, word := range b.set[x+1:] {
-    //base += 64
 		for word != 0 {
 			r := trailingZeroes64(word)
 			t := word & ((^word) + 1)
-			myanswer[size] = r + uint(x + idx + 1) * 64 //base
+			myanswer[size] = r + uint(x+idx+1)*64 
 			size++
 			if size == capacity {
 				goto End
@@ -300,7 +299,7 @@ End:
 	}
 }
 
-func (b *BitSet) NextSetManyold(i uint, buffer []uint) (uint, []uint) {
+func (b *BitSet) NextSetManyoldold(i uint, buffer []uint) (uint, []uint) {
 	myanswer := buffer[:0]
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
