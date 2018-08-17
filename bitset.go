@@ -246,7 +246,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 // including possibly the current index and up to cap(buffer).
 // If the returned slice has len zero, then no more set bits were found
 //
-//    buffer := make([]uint, 256) // this should be reused 
+//    buffer := make([]uint, 256) // this should be reused
 //    j := uint(0)
 //    j, buffer = bitmap.NextSetMany(j, buffer)
 //    for ; len(buffer) > 0; j, buffer = bitmap.NextSetMany(j,buffer) {
