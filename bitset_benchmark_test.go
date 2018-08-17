@@ -197,7 +197,7 @@ func BenchmarkFlorianUekermannIterateMany(b *testing.B) {
 	setRnd(input, 4)
 	var bitmap = From(input)
 	b.ResetTimer()
-	var checksum  = uint(0)
+	var checksum = uint(0)
 	for i := 0; i < b.N; i++ {
 		buffer := make([]uint, 256)
 		var last, batch = bitmap.NextSetMany(0, buffer)
@@ -218,11 +218,38 @@ func BenchmarkFlorianUekermannIterateManyReg(b *testing.B) {
 	setRnd(input, 4)
 	var bitmap = From(input)
 	b.ResetTimer()
-	var checksum  = uint(0)
+	var checksum = uint(0)
 	for i := 0; i < b.N; i++ {
 		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
 			checksum += j
 		}
+	}
+	if checksum == 0 { // added just to fool ineffassign
+		return
+	}
+}
+
+func good(set []uint64) (checksum uint) {
+	for wordIdx, word := range set {
+		var wordIdx = uint(wordIdx * 64)
+		for word != 0 {
+			var bitIdx = uint(trailingZeroes64(word))
+			word ^= 1 << bitIdx
+			// Do something with the result of the next line
+			var index = wordIdx + bitIdx
+			checksum += index
+		}
+	}
+	return checksum
+}
+
+func BenchmarkFlorianUekermannIterateManyComp(b *testing.B) {
+	var input = make([]uint64, 68)
+	setRnd(input, 4)
+	b.ResetTimer()
+	var checksum = uint(0)
+	for i := 0; i < b.N; i++ {
+		checksum += good(input)
 	}
 	if checksum == 0 { // added just to fool ineffassign
 		return

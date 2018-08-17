@@ -263,7 +263,7 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 		return 0, myanswer
 	}
 	w := b.set[x]
-  skip := i & (wordSize - 1)
+	skip := i & (wordSize - 1)
 	w = (w >> skip) << skip
 	base := uint(x << 6)
 	capacity := cap(buffer)
