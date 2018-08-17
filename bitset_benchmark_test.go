@@ -180,3 +180,51 @@ func BenchmarkLemireIterateManyb(b *testing.B) {
 		return
 	}
 }
+
+func setRnd(bits []uint64, halfings int) {
+	var rnd = rand.NewSource(0).(rand.Source64)
+	for i := range bits {
+		bits[i] = 0xFFFFFFFFFFFFFFFF
+		for j := 0; j < halfings; j++ {
+			bits[i] &= rnd.Uint64()
+		}
+	}
+}
+
+// go test -bench=BenchmarkFlorianUekermannIterateMany
+func BenchmarkFlorianUekermannIterateMany(b *testing.B) {
+	var input = make([]uint64, 68)
+	setRnd(input, 4)
+	var bitmap = From(input)
+	b.ResetTimer()
+	var checksum  = uint(0)
+	for i := 0; i < b.N; i++ {
+		buffer := make([]uint, 256)
+		var last, batch = bitmap.NextSetMany(0, buffer)
+		for len(batch) > 0 {
+			for _, idx := range batch {
+				checksum += idx
+			}
+			last, batch = bitmap.NextSetMany(last+1, batch)
+		}
+	}
+	if checksum == 0 { // added just to fool ineffassign
+		return
+	}
+}
+
+func BenchmarkFlorianUekermannIterateManyReg(b *testing.B) {
+	var input = make([]uint64, 68)
+	setRnd(input, 4)
+	var bitmap = From(input)
+	b.ResetTimer()
+	var checksum  = uint(0)
+	for i := 0; i < b.N; i++ {
+		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
+			checksum += j
+		}
+	}
+	if checksum == 0 { // added just to fool ineffassign
+		return
+	}
+}
