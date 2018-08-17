@@ -196,10 +196,10 @@ func BenchmarkFlorianUekermannIterateMany(b *testing.B) {
 	var input = make([]uint64, 68)
 	setRnd(input, 4)
 	var bitmap = From(input)
+	buffer := make([]uint, 256)
 	b.ResetTimer()
 	var checksum = uint(0)
 	for i := 0; i < b.N; i++ {
-		buffer := make([]uint, 256)
 		var last, batch = bitmap.NextSetMany(0, buffer)
 		for len(batch) > 0 {
 			for _, idx := range batch {
@@ -325,7 +325,6 @@ func BenchmarkFlorianUekermannMidDensityIterateMany(b *testing.B) {
 	}
 	var bitmap = From(input)
 	buffer := make([]uint, 256)
-
 	b.ResetTimer()
 	var checksum = uint(0)
 	for i := 0; i < b.N; i++ {
@@ -385,7 +384,6 @@ func BenchmarkFlorianUekermannMidStrongDensityIterateMany(b *testing.B) {
 	}
 	var bitmap = From(input)
 	buffer := make([]uint, 256)
-
 	b.ResetTimer()
 	var checksum = uint(0)
 	for i := 0; i < b.N; i++ {
