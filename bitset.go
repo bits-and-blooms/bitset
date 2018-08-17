@@ -283,7 +283,7 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 		for word != 0 {
 			r := trailingZeroes64(word)
 			t := word & ((^word) + 1)
-			myanswer[size] = r + uint(x+idx+1)*64 
+			myanswer[size] = r + uint(x+idx+1)*64
 			size++
 			if size == capacity {
 				goto End
