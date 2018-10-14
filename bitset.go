@@ -62,12 +62,12 @@ const allBits uint64 = 0xffffffffffffffff
 var binaryOrder binary.ByteOrder = binary.BigEndian
 
 // default json encoding base64.URLEncoding
-var base64Encoding *base64.Encoding = base64.URLEncoding
+var base64Encoding = base64.URLEncoding
 
-// Marshal/Unmarshal BitSet with base64.StdEncoding(Default: base64.URLEncoding)
+// Base64StdEncoding Marshal/Unmarshal BitSet with base64.StdEncoding(Default: base64.URLEncoding)
 func Base64StdEncoding() { base64Encoding = base64.StdEncoding }
 
-// Marshal/Unmarshal Binary as Little Endian(Default: binary.BigEndian)
+// LittleEndian Marshal/Unmarshal Binary as Little Endian(Default: binary.BigEndian)
 func LittleEndian() { binaryOrder = binary.LittleEndian }
 
 // A BitSet is a set of bits. The zero value of a BitSet is an empty set of length 0.
@@ -293,9 +293,8 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 End:
 	if size > 0 {
 		return myanswer[size-1], myanswer[:size]
-	} else {
-		return 0, myanswer[:0]
 	}
+	return 0, myanswer[:0]
 }
 
 // NextClear returns the next clear bit from the specified index,
@@ -672,7 +671,7 @@ func (b *BitSet) DumpAsBits() string {
 	for ; i >= 0; i-- {
 		fmt.Fprintf(buffer, "%064b.", b.set[i])
 	}
-	return string(buffer.Bytes())
+	return buffer.String()
 }
 
 // BinaryStorageSize returns the binary storage requirements
