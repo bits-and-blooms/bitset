@@ -172,7 +172,7 @@ func BenchmarkLemireIterateManyb(b *testing.B) {
 			for k := range buffer {
 				sum += buffer[k]
 			}
-			j += 1
+			j++
 		}
 	}
 
@@ -276,7 +276,7 @@ func BenchmarkFlorianUekermannLowDensityIterateMany(b *testing.B) {
 			for k := range buffer {
 				sum += buffer[k]
 			}
-			j += 1
+			j++
 		}
 	}
 	if sum == 0 { // added just to fool ineffassign
@@ -339,7 +339,7 @@ func BenchmarkFlorianUekermannMidDensityIterateMany(b *testing.B) {
 			for k := range buffer {
 				sum += buffer[k]
 			}
-			j += 1
+			j++
 		}
 	}
 
@@ -402,7 +402,7 @@ func BenchmarkFlorianUekermannMidStrongDensityIterateMany(b *testing.B) {
 			for k := range buffer {
 				sum += buffer[k]
 			}
-			j += 1
+			j++
 		}
 	}
 
