@@ -217,36 +217,36 @@ func (b *BitSet) String() string {
 	return buffer.String()
 }
 
-// DeleteAt deletes a bit from any position within the bitset
-// All the bits residing on the right of the deleted bit get
-// shifted left by 1
+// DeleteAt deletes the bit at the given index position from
+// within the bitset
+// All the bits residing on the left of the deleted bit get
+// shifted right by 1
 // The running time of this operation may potentially be
 // relatively slow, O(length)
-func (b *BitSet) DeleteAt(idx uint) *BitSet {
+func (b *BitSet) DeleteAt(i uint) *BitSet {
 	// the index of the slice element where we'll delete a bit
-	deleteAtElement := idx / 64
+	deleteAtElement := i >> log2WordSize
 
-	// generate a mask for the data that needs to be shifted left
+	// generate a mask for the data that needs to be shifted right
 	// within that slice element that gets modified
-	dataMask := uint64(1)<<(uint64(64)-uint64(idx)%64) - 1
+	dataMask := ^((uint64(1) << (i & (wordSize - 1))) - 1)
 
-	// extract the data that we'll shift left from the slice element
-	data := b.set[deleteAtElement] & (dataMask >> 1)
+	// extract the data that we'll shift right from the slice element
+	data := b.set[deleteAtElement] & dataMask
 
 	// set the masked area to 0 while leaving the rest as it is
 	b.set[deleteAtElement] &= ^dataMask
 
-	// shift the previously extracted data to the left and then
+	// shift the previously extracted data to the right and then
 	// set it in the previously masked area
-	b.set[deleteAtElement] |= data << 1
+	b.set[deleteAtElement] |= (data >> 1) & dataMask
 
 	// loop over all the consecutive slice elements to copy each
-	// highest bit into the lowest position of the previous element,
-	// then shift the entire content to the left by 1
+	// lowest bit into the highest position of the previous element,
+	// then shift the entire content to the right by 1
 	for i := int(deleteAtElement) + 1; i < len(b.set); i++ {
-		b.set[i-1] |= (b.set[i] & (1 << 63)) >> 63
-
-		b.set[i] <<= 1
+		b.set[i-1] |= (b.set[i] & 1) << 63
+		b.set[i] >>= 1
 	}
 
 	b.length = b.length - 1
