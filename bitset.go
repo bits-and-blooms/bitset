@@ -217,6 +217,43 @@ func (b *BitSet) String() string {
 	return buffer.String()
 }
 
+// DeleteAt deletes a bit from any position within the bitset
+// All the bits residing on the right of the deleted bit get
+// shifted left by 1
+// The running time of this operation may potentially be
+// relatively slow, O(length)
+func (b *BitSet) DeleteAt(idx uint) *BitSet {
+	// the index of the slice element where we'll delete a bit
+	deleteAtElement := idx / 64
+
+	// generate a mask for the data that needs to be shifted left
+	// within that slice element that gets modified
+	dataMask := uint64(1)<<(uint64(64)-uint64(idx)%64) - 1
+
+	// extract the data that we'll shift left from the slice element
+	data := b.set[deleteAtElement] & (dataMask >> 1)
+
+	// set the masked area to 0 while leaving the rest as it is
+	b.set[deleteAtElement] &= ^dataMask
+
+	// shift the previously extracted data to the left and then
+	// set it in the previously masked area
+	b.set[deleteAtElement] |= data << 1
+
+	// loop over all the consecutive slice elements to copy each
+	// highest bit into the lowest position of the previous element,
+	// then shift the entire content to the left by 1
+	for i := int(deleteAtElement) + 1; i < len(b.set); i++ {
+		b.set[i-1] |= (b.set[i] & (1 << 63)) >> 63
+
+		b.set[i] <<= 1
+	}
+
+	b.length = b.length - 1
+
+	return b
+}
+
 // NextSet returns the next bit set from the specified index,
 // including possibly the current index
 // along with an error code (true = valid, false = no set bit found)
