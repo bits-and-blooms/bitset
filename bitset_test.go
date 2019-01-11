@@ -1082,7 +1082,7 @@ func TestNextSetError(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteWithBitStrings(t *testing.T) {
 	type testCase struct {
 		input     []string
 		deleteIdx uint
@@ -1185,5 +1185,43 @@ func TestDelete(t *testing.T) {
 				return
 			}
 		}
+	}
+}
+
+func TestDeleteWithBitSetInstance(t *testing.T) {
+	length := uint(256)
+	bitSet := New(length)
+
+	// the indexes that get set in the bit set
+	indexesToSet := []uint{0, 1, 126, 127, 128, 129, 170, 171, 200, 201, 202, 203, 255}
+
+	// the position we delete from the bitset
+	deleteAt := uint(127)
+
+	// the indexes that we expect to be set after the delete
+	expectedToBeSet := []uint{0, 1, 126, 127, 128, 169, 170, 199, 200, 201, 202, 254}
+
+	expected := make(map[uint]struct{})
+	for _, index := range expectedToBeSet {
+		expected[index] = struct{}{}
+	}
+
+	for _, index := range indexesToSet {
+		bitSet.Set(index)
+	}
+
+	bitSet.DeleteAt(deleteAt)
+
+	for i := uint(0); i < length; i++ {
+		if _, ok := expected[i]; ok {
+			if !bitSet.Test(i) {
+				t.Errorf("Expected index %d to be set, but wasn't", i)
+			}
+		} else {
+			if bitSet.Test(i) {
+				t.Errorf("Expected index %d to not be set, but was", i)
+			}
+		}
+
 	}
 }
