@@ -220,6 +220,8 @@ func (b *BitSet) String() string {
 // DeleteAt deletes a bit from any position within the bitset
 // All the bits residing on the right of the deleted bit get
 // shifted left by 1
+// The running time of this operation may potentially be
+// relatively slow, O(length)
 func (b *BitSet) DeleteAt(idx uint) *BitSet {
 	// the index of the slice element where we'll delete a bit
 	deleteAtElement := idx / 64
