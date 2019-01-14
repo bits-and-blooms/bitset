@@ -192,6 +192,70 @@ func (b *BitSet) Flip(i uint) *BitSet {
 	return b
 }
 
+// Shrink shrinks BitSet to desired length in bits. It clears all bits > length
+// and reduces the size and length of the set.
+//
+// A new slice is allocated to store the new bits, so you may see an increase in
+// memory usage until the GC runs. Normally this should not be a problem, but if you
+// have an extremely large BitSet its important to understand that the old BitSet will
+// remain in memory until the GC frees it.
+func (b *BitSet) Shrink(length uint) *BitSet {
+	idx := wordsNeeded(length + 1)
+	if idx > len(b.set) {
+		return b
+	}
+	shrunk := make([]uint64, idx)
+	copy(shrunk, b.set[:idx])
+	b.set = shrunk
+	b.length = length + 1
+	b.set[idx-1] &= (allBits >> (uint64(64) - uint64(length&(wordSize-1)) - 1))
+	return b
+}
+
+// InsertAt takes an index which indicates where a bit should be
+// inserted. Then it shifts all the bits in the set to the left by 1, starting
+// from the given index position, and sets the index position to 0.
+//
+// Depending on the size of your BitSet, and where you are inserting the new entry,
+// this method could be extremely slow and in some cases might cause the entire BitSet
+// to be recopied.
+func (b *BitSet) InsertAt(idx uint) *BitSet {
+	insertAtElement := (idx >> log2WordSize)
+
+	// if length of set is a multiple of wordSize we need to allocate more space first
+	if b.isLenExactMultiple() {
+		b.set = append(b.set, uint64(0))
+	}
+
+	var i uint
+	for i = uint(len(b.set) - 1); i > insertAtElement; i-- {
+		// all elements above the position where we want to insert can simply by shifted
+		b.set[i] <<= 1
+
+		// we take the most significant bit of the previous element and set it as
+		// the least significant bit of the current element
+		b.set[i] |= (b.set[i-1] & 0x8000000000000000) >> 63
+	}
+
+	// generate a mask to extract the data that we need to shift left
+	// within the element where we insert a bit
+	dataMask := ^(uint64(1)<<uint64(idx&(wordSize-1)) - 1)
+
+	// extract that data that we'll shift
+	data := b.set[i] & dataMask
+
+	// set the positions of the data mask to 0 in the element where we insert
+	b.set[i] &= ^dataMask
+
+	// shift data mask to the left and insert its data to the slice element
+	b.set[i] |= data << 1
+
+	// add 1 to length of BitSet
+	b.length++
+
+	return b
+}
+
 // String creates a string representation of the Bitmap
 func (b *BitSet) String() string {
 	// follows code from https://github.com/RoaringBitmap/roaring

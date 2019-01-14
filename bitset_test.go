@@ -517,6 +517,245 @@ func TestAll(t *testing.T) {
 	}
 }
 
+func TestShrink(t *testing.T) {
+	b := New(0)
+
+	b.Set(0)
+	b.Set(1)
+	b.Set(2)
+	b.Set(3)
+	b.Set(64)
+	b.Shrink(2)
+	if !b.Test(0) {
+		t.Error("0 should be set")
+		return
+	}
+	if !b.Test(1) {
+		t.Error("1 should be set")
+		return
+	}
+	if !b.Test(2) {
+		t.Error("2 should be set")
+		return
+	}
+	if b.Test(3) {
+		t.Error("3 should not be set")
+		return
+	}
+	if b.Test(64) {
+		t.Error("64 should not be set")
+		return
+	}
+
+	b.Set(24)
+	b.Shrink(100)
+	if !b.Test(24) {
+		t.Error("24 should be set")
+		return
+	}
+
+	b.Set(127)
+	b.Set(128)
+	b.Set(129)
+	b.Shrink(128)
+	if !b.Test(127) {
+		t.Error("127 should be set")
+		return
+	}
+	if !b.Test(128) {
+		t.Error("128 should be set")
+		return
+	}
+	if b.Test(129) {
+		t.Error("129 should not be set")
+		return
+	}
+
+	b.Set(129)
+	b.Shrink(129)
+	if !b.Test(129) {
+		t.Error("129 should be set")
+		return
+	}
+
+	b.Set(1000)
+	b.Set(2000)
+	b.Set(3000)
+	b.Shrink(3000)
+	if len(b.set) != 3000/64+1 {
+		t.Error("Wrong length of BitSet.set")
+		return
+	}
+	if !b.Test(3000) {
+		t.Error("3000 should be set")
+		return
+	}
+
+	b.Shrink(2000)
+	if len(b.set) != 2000/64+1 {
+		t.Error("Wrong length of BitSet.set")
+		return
+	}
+	if b.Test(3000) {
+		t.Error("3000 should not be set")
+		return
+	}
+	if !b.Test(2000) {
+		t.Error("2000 should be set")
+		return
+	}
+	if !b.Test(1000) {
+		t.Error("1000 should be set")
+		return
+	}
+	if !b.Test(24) {
+		t.Error("24 should be set")
+		return
+	}
+}
+
+func TestInsertAtWithSet(t *testing.T) {
+	b := New(0)
+	b.Set(0)
+	b.Set(1)
+	b.Set(63)
+	b.Set(64)
+	b.Set(65)
+
+	b.InsertAt(3)
+	if !b.Test(0) {
+		t.Error("0 should be set")
+		return
+	}
+	if !b.Test(1) {
+		t.Error("1 should be set")
+		return
+	}
+	if b.Test(3) {
+		t.Error("3 should not be set")
+		return
+	}
+	if !b.Test(64) {
+		t.Error("64 should be set")
+		return
+	}
+	if !b.Test(65) {
+		t.Error("65 should be set")
+		return
+	}
+	if !b.Test(66) {
+		t.Error("66 should be set")
+		return
+	}
+
+}
+
+func TestInsertAt(t *testing.T) {
+	type testCase struct {
+		input     []string
+		insertIdx uint
+		expected  []string
+	}
+
+	testCases := []testCase{
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(62),
+			expected: []string{
+				"1011111111111111111111111111111111111111111111111111111111111111",
+				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(63),
+			expected: []string{
+				"0111111111111111111111111111111111111111111111111111111111111111",
+				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(0),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111111111111110",
+				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(70),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"1111111111111111111111111111111111111111111111111111111110111111",
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"1111111111111111111111111111111111111111111111111111111111110000",
+			},
+			insertIdx: uint(70),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"1111111111111111111111111111111111111111111111111111111110111111",
+				"1111111111111111111111111111111111111111111111111111111111100001",
+				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111110000",
+			},
+			insertIdx: uint(10),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111101111110000",
+				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		var input []uint64
+		for _, inputElement := range tc.input {
+			parsed, _ := strconv.ParseUint(inputElement, 2, 64)
+			input = append(input, parsed)
+		}
+
+		var expected []uint64
+		for _, expectedElement := range tc.expected {
+			parsed, _ := strconv.ParseUint(expectedElement, 2, 64)
+			expected = append(expected, parsed)
+		}
+
+		b := From(input)
+		b.InsertAt(tc.insertIdx)
+		if len(b.set) != len(expected) {
+			t.Error("Length of sets should be equal")
+			return
+		}
+		for i := range b.set {
+			if b.set[i] != expected[i] {
+				t.Error("Unexpected results found in set")
+				return
+			}
+		}
+	}
+}
+
 func TestNone(t *testing.T) {
 	v := New(0)
 	if !v.None() {
