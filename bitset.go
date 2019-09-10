@@ -726,7 +726,7 @@ func (b *BitSet) All() bool {
 	return b.Count() == b.length
 }
 
-// None returns true if no bit is set, false otherwise. Retursn true for
+// None returns true if no bit is set, false otherwise. Returns true for
 // empty sets.
 func (b *BitSet) None() bool {
 	panicIfNull(b)
