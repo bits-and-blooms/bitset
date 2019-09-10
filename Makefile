@@ -150,11 +150,6 @@ errcheck:
 	@mkdir -p target/report
 	GOPATH=$(GOPATH) errcheck ./  | tee target/report/errcheck.txt
 
-# Suggest code simplifications
-gosimple:
-	@mkdir -p target/report
-	GOPATH=$(GOPATH) gosimple ./  | tee target/report/gosimple.txt
-
 # AST scanner
 astscan:
 	@mkdir -p target/report
@@ -184,7 +179,6 @@ deps:
 	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/structcheck
 	GOPATH=$(GOPATH) go get github.com/opennota/check/cmd/varcheck
 	GOPATH=$(GOPATH) go get github.com/kisielk/errcheck
-	GOPATH=$(GOPATH) go get honnef.co/go/tools/cmd/gosimple
 	GOPATH=$(GOPATH) go get github.com/securego/gosec/cmd/gosec/...
 
 # Remove any build artifact
