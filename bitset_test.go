@@ -100,6 +100,20 @@ func TestExendOnBoundary(t *testing.T) {
 	v.Set(32)
 }
 
+func TestExceedCap(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Set to capacity should have caused a panic")
+		}
+	}()
+	NumHosts := uint(32768)
+	bmp := New(NumHosts)
+	bmp.ClearAll()
+	d := Cap()
+	bmp.Set(d)
+
+}
+
 func TestExpand(t *testing.T) {
 	v := New(0)
 	defer func() {
