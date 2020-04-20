@@ -81,6 +81,38 @@ func TestLen(t *testing.T) {
 	}
 }
 
+func TestLenIsNumberOfBitsNotBytes(t *testing.T) {
+	var b BitSet
+	if b.Len() != 0 {
+		t.Errorf("empty bitset should have Len 0, got %v", b.Len())
+	}
+
+	b.Set(0)
+	if b.Len() != 1 {
+		t.Errorf("bitset with first bit set should have Len 1, got %v", b.Len())
+	}
+
+	b.Set(8)
+	if b.Len() != 9 {
+		t.Errorf("bitset with 0th and 8th bit set should have Len 9, got %v", b.Len())
+	}
+
+	b.Set(1)
+	if b.Len() != 9 {
+		t.Errorf("bitset with 0th, 1st and 8th bit set should have Len 9, got %v", b.Len())
+	}
+}
+
+func ExampleBitSet_Len() {
+	var b BitSet
+	b.Set(8)
+	fmt.Println("len", b.Len())
+	fmt.Println("count", b.Count())
+	// Output:
+	// len 9
+	// count 1
+}
+
 func TestBitSetIsClear(t *testing.T) {
 	v := New(1000)
 	for i := uint(0); i < 1000; i++ {

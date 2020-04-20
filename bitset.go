@@ -129,7 +129,8 @@ func Cap() uint {
 	return ^uint(0)
 }
 
-// Len returns the length of the BitSet in words
+// Len returns the number of bits in the BitSet.
+// Note the difference to method Count, see example.
 func (b *BitSet) Len() uint {
 	return b.length
 }
@@ -465,7 +466,8 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	return
 }
 
-// Count (number of set bits)
+// Count (number of set bits).
+// Also known as "popcount" or "popularity count".
 func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
 		return uint(popcntSlice(b.set))
