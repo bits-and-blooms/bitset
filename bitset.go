@@ -475,12 +475,12 @@ func (b *BitSet) Count() uint {
 	return 0
 }
 
-// Equal tests the equvalence of two BitSets.
+// Equal tests the equivalence of two BitSets.
 // False if they are of different sizes, otherwise true
 // only if all the same bits are set
 func (b *BitSet) Equal(c *BitSet) bool {
-	if c == nil {
-		return false
+	if c == nil || b == nil {
+		return c == b
 	}
 	if b.length != c.length {
 		return false
