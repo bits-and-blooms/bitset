@@ -842,6 +842,15 @@ func TestEqual(t *testing.T) {
 	if !a.Equal(b) {
 		t.Error("Two empty set should be equal")
 	}
+	var x *BitSet
+	var y *BitSet
+	z := New(0)
+	if !x.Equal(y) {
+		t.Error("Two nil bitsets should be equal")
+	}
+	if x.Equal(z) {
+		t.Error("Nil receiver bitset should not be equal to non-nil bitset")
+	}
 }
 
 func TestUnion(t *testing.T) {
