@@ -877,3 +877,40 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 	_, err = b.ReadFrom(bytes.NewReader(buf))
 	return err
 }
+
+func (b *BitSet) Indices() []uint {
+	r := make([]uint, 0)
+
+	i := uint(0)
+	for {
+		index, more := b.NextSet(i)
+		if !more {
+			break
+		} else {
+			r = append(r, index)
+			i = index + 1
+		}
+	}
+
+	return r
+}
+
+func (b *BitSet) GenIndices() chan uint {
+	indicesChan := make(chan uint)
+
+	go func() {
+		defer close(indicesChan)
+		i := uint(0)
+		for {
+			index, more := b.NextSet(i)
+			if !more {
+				break
+			} else {
+				indicesChan <- index
+				i = index + 1
+			}
+		}
+	}()
+
+	return indicesChan
+}
