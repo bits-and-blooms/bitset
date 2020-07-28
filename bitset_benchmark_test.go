@@ -181,6 +181,45 @@ func BenchmarkLemireIterateManyb(b *testing.B) {
 	}
 }
 
+func BenchmarkLemireIterateIndicesb(b *testing.B) {
+	bitmap := New(100000000)
+	for v := uint(0); v <= 100000000; v += 100 {
+		bitmap.Set(v)
+	}
+	b.ResetTimer()
+	sum := uint(0)
+	for i := 0; i < b.N; i++ {
+		indices := bitmap.Indices()
+		for k := range indices {
+			sum += indices[k]
+		}
+	}
+
+	if sum == 0 { // added just to fool ineffassign
+		return
+	}
+}
+
+func BenchmarkLemireIterateChannelb(b *testing.B) {
+	bitmap := New(100000000)
+	for v := uint(0); v <= 100000000; v += 100 {
+		bitmap.Set(v)
+	}
+	b.ResetTimer()
+	sum := uint(0)
+	for i := 0; i < b.N; i++ {
+		preempt := make(chan struct{})
+		defer close(preempt)
+		for idx := range bitmap.GenIndices(preempt) {
+			sum += idx
+		}
+	}
+
+	if sum == 0 { // added just to fool ineffassign
+		return
+	}
+}
+
 func setRnd(bits []uint64, halfings int) {
 	var rnd = rand.NewSource(0).(rand.Source64)
 	for i := range bits {
