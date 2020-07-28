@@ -895,19 +895,24 @@ func (b *BitSet) Indices() []uint {
 	return r
 }
 
-func (b *BitSet) GenIndices() chan uint {
+func (b *BitSet) GenIndices(preempt <-chan struct{}) <-chan uint {
 	indicesChan := make(chan uint)
 
 	go func() {
 		defer close(indicesChan)
 		i := uint(0)
+	generateLoop:
 		for {
 			index, more := b.NextSet(i)
-			if !more {
-				break
+			if more {
+				select {
+				case <-preempt:
+					break generateLoop
+				case indicesChan <- index:
+					i = index + 1
+				}
 			} else {
-				indicesChan <- index
-				i = index + 1
+				break
 			}
 		}
 	}()
