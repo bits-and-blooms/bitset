@@ -809,7 +809,7 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	newset := New(uint(length))
 
 	if uint64(newset.length) != length {
-		return 0, errors.New("Unmarshalling error: type mismatch")
+		return 0, errors.New("unmarshalling error: type mismatch")
 	}
 
 	// Read remaining bytes as set
