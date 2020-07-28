@@ -1506,6 +1506,46 @@ func TestDeleteWithBitSetInstance(t *testing.T) {
 	}
 }
 
+func TestSetNewMany(t *testing.T) {
+	length := uint(256)
+	bitSet := New(length)
+
+	// the indexes that get set in the bit set
+	indexesToSet := []uint{0, 1, 126, 127, 128, 129, 170, 171, 200, 201, 202, 203, 255}
+
+	// the position we delete from the bitset
+	deleteAt := uint(127)
+
+	// the indexes that we expect to be set after the delete
+	expectedToBeSet := []uint{0, 1, 126, 127, 128, 169, 170, 199, 200, 201, 202, 254}
+
+	expected := make(map[uint]struct{})
+	for _, index := range expectedToBeSet {
+		expected[index] = struct{}{}
+	}
+
+	for _, index := range indexesToSet {
+		bitSet.Set(index)
+	}
+
+	bitSet.DeleteAt(deleteAt)
+
+	indices := make([]uint, bitSet.Count())
+	bitSet.NextSetMany(0, indices)
+
+	if len(indices) != len(expectedToBeSet) {
+		t.Errorf("Expected the indices set to be of length %d, but was %d", len(indexesToSet), len(indices))
+	} else {
+		for i := 0; i < len(indices); i++ {
+			got := indices[i]
+			expected := expectedToBeSet[i]
+			if got != expected {
+				t.Errorf("Unexpected 'Set' bit at index %d. Expected %d, got %d", i, expected, got)
+			}
+		}
+	}
+}
+
 func TestSetIndices(t *testing.T) {
 	length := uint(256)
 	bitSet := New(length)
