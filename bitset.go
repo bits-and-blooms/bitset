@@ -339,6 +339,9 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 // including possibly the current index
 // along with an error code (true = valid, false = no set bit found)
 // for i,e := v.NextSet(0); e; i,e = v.NextSet(i + 1) {...}
+//
+// Users concerned with performance may want to use NextSetMany to
+// retrieve several values at once.
 func (b *BitSet) NextSet(i uint) (uint, bool) {
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
@@ -374,6 +377,14 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 //     j += 1
 //    }
 //
+//
+// It is possible to retrieve all set bits as follow:
+//
+//    indices := make([]uint, bitmap.Count())
+//    bitmap.NextSetMany(0, indices)
+//
+// However if bitmap.Count() is large, it might be preferable to
+// use several calls to NextSetMany, for performance reasons.
 func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	myanswer := buffer
 	capacity := cap(buffer)
