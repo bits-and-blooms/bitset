@@ -65,6 +65,9 @@ As an alternative to BitSets, one should check out the 'big' package, which prov
 
 Godoc documentation is at: https://godoc.org/github.com/willf/bitset
 
+## Memory Usage
+
+The memory usage of a bitset using N bits is at least N/8 bytes. The number of bits in a bitset is at least as large as one plus the greatest bit index you have accessed. Thus it is possible to run out of memory while using a bitset. If you have lots of bits, you might prefer compressed bitsets, like the [Roaring bitmaps](http://roaringbitmap.org) and its [Go implementation](https://github.com/RoaringBitmap/roaring).
 
 ## Implementation Note
 
