@@ -138,6 +138,9 @@ func (b *BitSet) Len() uint {
 // extendSetMaybe adds additional words to incorporate new bits if needed
 func (b *BitSet) extendSetMaybe(i uint) {
 	if i >= b.length { // if we need more bits, make 'em
+		if i >= Cap() {
+			panic("You are exceeding the capacity")
+		}
 		nsize := wordsNeeded(i + 1)
 		if b.set == nil {
 			b.set = make([]uint64, nsize)
@@ -160,7 +163,12 @@ func (b *BitSet) Test(i uint) bool {
 	return b.set[i>>log2WordSize]&(1<<(i&(wordSize-1))) != 0
 }
 
-// Set bit i to 1
+// Set bit i to 1, the capacity of the bitset is automatically
+// increased accordingly.
+// If i>= Cap(), this function will panic.
+// Warning: using a very large value for 'i'
+// may lead to a memory shortage and a panic: the caller is responsible
+// for providing sensible parameters in line with their memory capacity.
 func (b *BitSet) Set(i uint) *BitSet {
 	b.extendSetMaybe(i)
 	b.set[i>>log2WordSize] |= 1 << (i & (wordSize - 1))
@@ -176,7 +184,11 @@ func (b *BitSet) Clear(i uint) *BitSet {
 	return b
 }
 
-// SetTo sets bit i to value
+// SetTo sets bit i to value.
+// If i>= Cap(), this function will panic.
+// Warning: using a very large value for 'i'
+// may lead to a memory shortage and a panic: the caller is responsible
+// for providing sensible parameters in line with their memory capacity.
 func (b *BitSet) SetTo(i uint, value bool) *BitSet {
 	if value {
 		return b.Set(i)
@@ -184,7 +196,11 @@ func (b *BitSet) SetTo(i uint, value bool) *BitSet {
 	return b.Clear(i)
 }
 
-// Flip bit at i
+// Flip bit at i.
+// If i>= Cap(), this function will panic.
+// Warning: using a very large value for 'i'
+// may lead to a memory shortage and a panic: the caller is responsible
+// for providing sensible parameters in line with their memory capacity.
 func (b *BitSet) Flip(i uint) *BitSet {
 	if i >= b.length {
 		return b.Set(i)
