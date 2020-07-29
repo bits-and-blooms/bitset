@@ -84,15 +84,10 @@ go get github.com/willf/bitset
 
 If you wish to contribute to this project, please branch and issue a pull request against master ("[GitHub Flow](https://guides.github.com/introduction/flow/)")
 
-This project include a Makefile that allows you to test and build the project with simple commands.
-To see all available options:
-```bash
-make help
-```
-
 ## Running all tests
 
-Before committing the code, please check if it passes all tests using (note: this will install some dependencies):
+Before committing the code, please check if it passes tests, has adequate coverage, etc.
 ```bash
-make qa
+go test
+go test -cover
 ```
