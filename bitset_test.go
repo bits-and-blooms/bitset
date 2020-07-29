@@ -571,6 +571,28 @@ func TestShrink(t *testing.T) {
 	b.Set(2)
 	b.Set(3)
 	b.Set(64)
+	b.Compact()
+	if !b.Test(0) {
+		t.Error("0 should be set")
+		return
+	}
+	if !b.Test(1) {
+		t.Error("1 should be set")
+		return
+	}
+	if !b.Test(2) {
+		t.Error("2 should be set")
+		return
+	}
+	if !b.Test(3) {
+		t.Error("3 should be set")
+		return
+	}
+	if !b.Test(64) {
+		t.Error("64 should be set")
+		return
+	}
+
 	b.Shrink(2)
 	if !b.Test(0) {
 		t.Error("0 should be set")
@@ -603,6 +625,20 @@ func TestShrink(t *testing.T) {
 	b.Set(127)
 	b.Set(128)
 	b.Set(129)
+	b.Compact()
+	if !b.Test(127) {
+		t.Error("127 should be set")
+		return
+	}
+	if !b.Test(128) {
+		t.Error("128 should be set")
+		return
+	}
+	if !b.Test(129) {
+		t.Error("129 be set")
+		return
+	}
+
 	b.Shrink(128)
 	if !b.Test(127) {
 		t.Error("127 should be set")

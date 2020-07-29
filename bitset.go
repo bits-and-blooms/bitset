@@ -209,24 +209,49 @@ func (b *BitSet) Flip(i uint) *BitSet {
 	return b
 }
 
-// Shrink shrinks BitSet to desired length in bits. It clears all bits > length
-// and reduces the size and length of the set.
+// Shrink shrinks BitSet so that the provided value is the last possible
+// set value. It clears all bits > the provided index and reduces the size
+// and length of the set.
+//
+// Note that the parameter value is not the new length in bits: it is the
+// maximal value that can be stored in the bitset after the function call.
+// The new length in bits is the parameter value + 1. Thus it is not possible
+// to use this function to set the length to 0, the minimal value of the length
+// after this function call is 1.
 //
 // A new slice is allocated to store the new bits, so you may see an increase in
 // memory usage until the GC runs. Normally this should not be a problem, but if you
 // have an extremely large BitSet its important to understand that the old BitSet will
 // remain in memory until the GC frees it.
-func (b *BitSet) Shrink(length uint) *BitSet {
-	idx := wordsNeeded(length + 1)
+func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
+	length := lastbitindex + 1
+	idx := wordsNeeded(length)
 	if idx > len(b.set) {
 		return b
 	}
 	shrunk := make([]uint64, idx)
 	copy(shrunk, b.set[:idx])
 	b.set = shrunk
-	b.length = length + 1
-	b.set[idx-1] &= (allBits >> (uint64(64) - uint64(length&(wordSize-1)) - 1))
+	b.length = length
+	b.set[idx-1] &= (allBits >> (uint64(64) - uint64(length&(wordSize-1))))
 	return b
+}
+
+// Compact shrinks BitSet to so that we preserve all set bits, while minimizing
+// memory usage. Compact calls Shrink.
+func (b *BitSet) Compact() *BitSet {
+	idx := len(b.set) - 1
+	for ; idx >= 0 && b.set[idx] == 0; idx-- {
+	}
+	newlength := uint((idx + 1) << log2WordSize)
+	if newlength >= b.length {
+		return b // nothing to do
+	}
+	if newlength > 0 {
+		return b.Shrink(newlength - 1)
+	}
+	// We preserve one word
+	return b.Shrink(63)
 }
 
 // InsertAt takes an index which indicates where a bit should be
