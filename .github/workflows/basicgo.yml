@@ -1,18 +1,35 @@
-name: Go-CI
-
 on: [push, pull_request]
-
+name: Test
 jobs:
-  go-test:
-    name: Go Test
+  test:
+    strategy:
+      matrix:
+        go-version: [1.13.x, 1.14.x]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Test
+      run: go test ./...
+
+  test-gopath:
+    env:
+      GOPATH: ${{ github.workspace }}
+      GO111MODULE: off
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: go1.12  linters
-      uses: shoukoo/golang-pipeline/go1.12/linter@master
+    - name: Install Go
+      uses: actions/setup-go@v2
       with:
-        GOLINT: on
-        GOLINTPATH: pkg/controller
-        MISSPELL: on
-    - name: go1.12 test
-      uses: shoukoo/golang-pipeline/go1.12/test@master
+        go-version: 1.14.x
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        path: ./src/github.com/${{ github.repository }}
+    - name: Test
+      run: go test ./...
