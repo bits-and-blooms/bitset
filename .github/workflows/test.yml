@@ -20,7 +20,6 @@ jobs:
   test-gopath:
     env:
       GOPATH: ${{ github.workspace }}
-      GO111MODULE: off
     runs-on: ubuntu-latest
     steps:
     - name: Install Go
