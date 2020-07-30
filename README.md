@@ -63,7 +63,7 @@ func main() {
 
 As an alternative to BitSets, one should check out the 'big' package, which provides a (less set-theoretical) view of bitsets.
 
-Godoc documentation is at: https://godoc.org/github.com/willf/bitset
+Package documentation is at: https://pkg.go.dev/github.com/willf/bitset?tab=doc
 
 ## Memory Usage
 
