@@ -2,7 +2,8 @@
 
 *Go language library to map between non-negative integers and boolean values*
 
-![Test](https://github.com/willf/bitset/workflows/Test/badge.svg) [![Master Coverage Status](https://coveralls.io/repos/willf/bitset/badge.svg?branch=master&service=github)](https://coveralls.io/github/willf/bitset?branch=master)
+[![Test](https://github.com/willf/bitset/workflows/Test/badge.svg)](https://github.com/willf/bitset/actions?query=workflow%3ATest)
+[![Master Coverage Status](https://coveralls.io/repos/willf/bitset/badge.svg?branch=master&service=github)](https://coveralls.io/github/willf/bitset?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/willf/bitset)](https://goreportcard.com/report/github.com/willf/bitset)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/willf/bitset?tab=doc)](https://pkg.go.dev/github.com/willf/bitset?tab=doc)
 
