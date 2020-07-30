@@ -4,7 +4,7 @@
 
 ![Test](https://github.com/willf/bitset/workflows/Test/badge.svg)[![Master Coverage Status](https://coveralls.io/repos/willf/bitset/badge.svg?branch=master&service=github)](https://coveralls.io/github/willf/bitset?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/willf/bitset)](https://goreportcard.com/report/github.com/willf/bitset)
-[![GoDoc](https://godoc.org/github.com/willf/bitset?status.svg)](http://godoc.org/github.com/willf/bitset)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/willf/bitset?tab=doc)](https://pkg.go.dev/github.com/willf/bitset?tab=doc)
 
 
 ## Description
