@@ -519,7 +519,7 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 }
 
 // Count (number of set bits).
-// Also known as "popcount" or "popularity count".
+// Also known as "popcount" or "population count".
 func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
 		return uint(popcntSlice(b.set))
