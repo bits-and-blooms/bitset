@@ -1389,6 +1389,21 @@ func TestFlip(t *testing.T) {
 	}
 }
 
+func TestFlipRange(t *testing.T) {
+	b := new(BitSet)
+	b.Set(1).Set(3).Set(5).Set(7).Set(9).Set(11).Set(13).Set(15)
+	c := b.FlipRange(4, 25)
+	if c.length != 25 {
+		t.Error("Unexpected value: ", c.length)
+		return
+	}
+	d := c.FlipRange(8, 24)
+	if d.length != 25 {
+		t.Error("Unexpected value: ", d.length)
+		return
+	}
+}
+
 func TestCopy(t *testing.T) {
 	a := New(10)
 	if a.Copy(nil) != 0 {
