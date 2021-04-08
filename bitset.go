@@ -211,7 +211,7 @@ func (b *BitSet) Flip(i uint) *BitSet {
 
 // FlipRange bit in [start, end).
 // If end>= Cap(), this function will panic.
-// Warning: using a very large value for 'i'
+// Warning: using a very large value for 'end'
 // may lead to a memory shortage and a panic: the caller is responsible
 // for providing sensible parameters in line with their memory capacity.
 func (b *BitSet) FlipRange(start, end uint) *BitSet {
