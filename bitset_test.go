@@ -564,6 +564,13 @@ func TestAll(t *testing.T) {
 }
 
 func TestShrink(t *testing.T) {
+	bs := New(10)
+	bs.Set(0)
+	bs.Shrink(63)
+	if !bs.Test(0) {
+		t.Error("0 should be set")
+		return
+	}
 	b := New(0)
 
 	b.Set(0)
