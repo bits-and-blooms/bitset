@@ -524,9 +524,10 @@ func (b *BitSet) Clone() *BitSet {
 	return c
 }
 
-// Copy into a destination BitSet
-// Returning the size of the destination BitSet
-// like array copy
+// Copy into a destination BitSet using the Go array copy semantics:
+// the number of bits copied is the minimum of the number of bits in the current
+// BitSet (Len()) and the destination Bitset.
+// We return the number of bits copied in the destination BitSet.
 func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
