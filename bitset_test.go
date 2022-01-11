@@ -1425,6 +1425,22 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+func TestCopyFull(t *testing.T) {
+	a := New(10)
+	b := &BitSet{}
+	a.CopyFull(b)
+	if b.length != a.length || len(b.set) != len(a.set) {
+		t.Error("Expected full length copy")
+		return
+	}
+	for i, v := range a.set {
+		if v != b.set[i] {
+			t.Error("Unexpected value")
+			return
+		}
+	}
+}
+
 func TestNextSetError(t *testing.T) {
 	b := new(BitSet)
 	c, d := b.NextSet(1)
