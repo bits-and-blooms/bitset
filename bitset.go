@@ -255,8 +255,8 @@ func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
 	b.set = shrunk
 	b.length = length
 	if length < 64 {
-	  b.set[idx-1] &= (allBits >> (uint64(64) - uint64(length&(wordSize-1))))
-    }
+		b.set[idx-1] &= (allBits >> (uint64(64) - uint64(length&(wordSize-1))))
+	}
 	return b
 }
 
@@ -540,6 +540,27 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 		count = b.length
 	}
 	return
+}
+
+// CopyFull copies into a destination BitSet such that the destination is
+// identical to the source after the operation, allocating memory if necessary.
+func (b *BitSet) CopyFull(c *BitSet) {
+	if c == nil {
+		return
+	}
+	c.length = b.length
+	if len(b.set) == 0 {
+		if c.set != nil {
+			c.set = c.set[:0]
+		}
+	} else {
+		if cap(c.set) < len(b.set) {
+			c.set = make([]uint64, len(b.set))
+		} else {
+			c.set = c.set[:len(b.set)]
+		}
+		copy(c.set, b.set)
+	}
 }
 
 // Count (number of set bits).
