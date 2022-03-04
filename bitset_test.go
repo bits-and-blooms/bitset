@@ -1409,6 +1409,18 @@ func TestFlipRange(t *testing.T) {
 		t.Error("Unexpected value: ", d.length)
 		return
 	}
+	//
+	for i := uint(0); i < 256; i++ {
+		for j := uint(0); j <= i; j++ {
+			bits := New(i)
+			bits.FlipRange(0, j)
+			c := bits.Count()
+			if c != j {
+				t.Error("Unexpected value: ", c, " expected: ", j)
+				return
+			}
+		}
+	}
 }
 
 func TestCopy(t *testing.T) {

@@ -226,7 +226,9 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	for i := startWord; i < endWord; i++ {
 		b.set[i] = ^b.set[i]
 	}
-	b.set[endWord] ^= ^uint64(0) >> (-end & (wordSize - 1))
+	if end & (wordSize - 1) != 0 {
+		b.set[endWord] ^= ^uint64(0) >> (-end & (wordSize - 1))
+    }
 	return b
 }
 
