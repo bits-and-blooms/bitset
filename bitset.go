@@ -227,7 +227,9 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	b.extendSetMaybe(end - 1)
 	var startWord uint = start >> log2WordSize
 	var endWord uint = end >> log2WordSize
-	b.set[startWord] ^= ^(^uint64(0) << (start & (wordSize - 1)))
+	if end&(wordSize-1) != 0 {
+		b.set[endWord] ^= ^uint64(0) >> (-end & (wordSize - 1))
+	}
 	for i := startWord; i < endWord; i++ {
 		b.set[i] = ^b.set[i]
 	}
