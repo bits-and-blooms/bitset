@@ -1220,6 +1220,19 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 	}
 }
 
+func TestMarshalUnmarshalBinaryBig(t *testing.T) {
+	a := New(1048578).Set(10).Set(1048576).Set(1048577).Set(1048578)
+	b := new(BitSet)
+
+	copyBinary(t, a, b)
+
+	// BitSets must be equal after marshalling and unmarshalling
+	if !a.Equal(b) {
+		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+		return
+	}
+}
+
 func TestMarshalUnmarshalBinaryByLittleEndian(t *testing.T) {
 	LittleEndian()
 	a := New(1010).Set(10).Set(1001)

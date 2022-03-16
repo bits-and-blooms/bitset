@@ -894,9 +894,26 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 		return 0, err
 	}
 
-	// Write set
-	err = binary.Write(stream, binaryOrder, b.set)
-	return int64(b.BinaryStorageSize()), err
+	// fast path for small set
+	if length < 1048576 {
+		err = binary.Write(stream, binaryOrder, b.set)
+		return int64(b.BinaryStorageSize()), err
+	}
+
+	// with big set (more than 1Gb), write data in chunk to prevent
+	// high memory usage
+	const bufferCount = 8192 // number of items inside a chunk each write
+	buffer := make([]byte, bufferCount*8)
+	bitsetLen := len(b.set)
+	for i, x := range b.set {
+		binaryOrder.PutUint64(buffer[8*(i%bufferCount):], x)
+		if i%bufferCount == bufferCount-1 || i == bitsetLen-1 {
+			if _, err := stream.Write(buffer[:8*(i%bufferCount+1)]); err != nil {
+				return int64(binary.Size(uint64(0)) + i*8), err
+			}
+		}
+	}
+	return int64(b.BinaryStorageSize()), nil
 }
 
 // ReadFrom reads a BitSet from a stream written using WriteTo
