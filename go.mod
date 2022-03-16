@@ -1,3 +1,3 @@
-module github.com/bits-and-blooms/bitset
+module github.com/thanhpk/bitset
 
-go 1.14
+go 1.17
