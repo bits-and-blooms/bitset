@@ -931,10 +931,34 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 		return 0, errors.New("unmarshalling error: type mismatch")
 	}
 
-	// Read remaining bytes as set
-	err = binary.Read(stream, binaryOrder, newset.set)
-	if err != nil {
-		return 0, err
+	// fast path for small set
+	if length < 1048576 {
+		// Read remaining bytes as set
+		err = binary.Read(stream, binaryOrder, newset.set)
+		if err != nil {
+			return 0, err
+		}
+		*b = *newset
+		return int64(b.BinaryStorageSize()), nil
+	}
+
+	// with big set (more than 1Gb), write data in chunk to prevent
+	// high memory usage
+	const bufferCount = 8192 // number of items inside a chunk each read
+	buffer := make([]byte, bufferCount*8)
+	count := 0
+	for {
+		n, err := stream.Read(buffer[:bufferCount*8])
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return 0, err
+		}
+		for i := 0; i*8 < n; i++ {
+			newset.set[count] = binaryOrder.Uint64(buffer[i*8:])
+			count++
+		}
 	}
 
 	*b = *newset
