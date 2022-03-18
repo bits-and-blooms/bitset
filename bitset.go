@@ -898,19 +898,16 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	// current implementation of bufio.Writer is more memory efficient than
 	// binary.Write for large set
 	writer := bufio.NewWriter(stream)
-	var item = make([]byte, 8)     // for serializing uint64
-	var n = binary.Size(uint64(0)) // number of bytes written
-	for _, x := range b.set {
-		binaryOrder.PutUint64(item, x)
-		nn, err := writer.Write(item)
-		if err != nil {
-			return int64(n+nn), err
+	var item = make([]byte, binary.Size(uint64(0))) // for serializing one uint64
+	for i := range b.set {
+		binaryOrder.PutUint64(item, b.set[i])
+		if nn, err := writer.Write(item); err != nil {
+			return int64(i*binary.Size(uint64(0)) + nn), err
 		}
-		n += nn
 	}
 
 	err = writer.Flush()
-	return int64(n), err
+	return int64(b.BinaryStorageSize()), err
 }
 
 // ReadFrom reads a BitSet from a stream written using WriteTo
@@ -932,9 +929,8 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	// current implementation bufio.Reader is more memory efficient than
 	// binary.Read for large set
 	reader := bufio.NewReader(stream)
-	i := 0
-	var item = make([]byte, 8) // one uint64
-	for {
+	var item = make([]byte, binary.Size(uint64(0))) // one uint64
+	for i := uint64(0); i < length; i++ {
 		if _, err := reader.Read(item); err != nil {
 			if err == io.EOF {
 				break // done
@@ -942,7 +938,6 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 			return 0, err
 		}
 		newset.set[i] = binaryOrder.Uint64(item)
-		i++
 	}
 
 	*b = *newset
