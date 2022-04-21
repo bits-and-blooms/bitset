@@ -87,6 +87,12 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
+// SetBitsetFrom fills the bitset with an array of integers without creating a new BitSet instance
+func (b *BitSet) SetBitsetFrom(buf []uint64) {
+	b.length = uint(len(buf)) * 64
+	b.set = buf
+}
+
 // From is a constructor used to create a BitSet from an array of integers
 func From(buf []uint64) *BitSet {
 	return FromWithLength(uint(len(buf))*64, buf)

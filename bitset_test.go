@@ -1308,6 +1308,18 @@ func TestSafeSet(t *testing.T) {
 	}
 }
 
+func TestSetBitsetFrom(t *testing.T) {
+	u := []uint64{2, 3, 5, 7, 11}
+	b := new(BitSet)
+	b.SetBitsetFrom(u)
+	outType := fmt.Sprintf("%T", b)
+	expType := "*bitset.BitSet"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+}
+
 func TestFrom(t *testing.T) {
 	u := []uint64{2, 3, 5, 7, 11}
 	b := From(u)
