@@ -564,6 +564,13 @@ func TestAll(t *testing.T) {
 }
 
 func TestShrink(t *testing.T) {
+	bs := New(10)
+	bs.Set(0)
+	bs.Shrink(63)
+	if !bs.Test(0) {
+		t.Error("0 should be set")
+		return
+	}
 	b := New(0)
 
 	b.Set(0)
@@ -1301,6 +1308,18 @@ func TestSafeSet(t *testing.T) {
 	}
 }
 
+func TestSetBitsetFrom(t *testing.T) {
+	u := []uint64{2, 3, 5, 7, 11}
+	b := new(BitSet)
+	b.SetBitsetFrom(u)
+	outType := fmt.Sprintf("%T", b)
+	expType := "*bitset.BitSet"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+}
+
 func TestFrom(t *testing.T) {
 	u := []uint64{2, 3, 5, 7, 11}
 	b := From(u)
@@ -1402,6 +1421,18 @@ func TestFlipRange(t *testing.T) {
 		t.Error("Unexpected value: ", d.length)
 		return
 	}
+	//
+	for i := uint(0); i < 256; i++ {
+		for j := uint(0); j <= i; j++ {
+			bits := New(i)
+			bits.FlipRange(0, j)
+			c := bits.Count()
+			if c != j {
+				t.Error("Unexpected value: ", c, " expected: ", j)
+				return
+			}
+		}
+	}
 }
 
 func TestCopy(t *testing.T) {
@@ -1415,6 +1446,22 @@ func TestCopy(t *testing.T) {
 	if a.Copy(b) != 10 {
 		t.Error("Unexpected value")
 		return
+	}
+}
+
+func TestCopyFull(t *testing.T) {
+	a := New(10)
+	b := &BitSet{}
+	a.CopyFull(b)
+	if b.length != a.length || len(b.set) != len(a.set) {
+		t.Error("Expected full length copy")
+		return
+	}
+	for i, v := range a.set {
+		if v != b.set[i] {
+			t.Error("Unexpected value")
+			return
+		}
 	}
 }
 

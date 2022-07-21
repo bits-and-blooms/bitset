@@ -87,9 +87,20 @@ func (b *BitSet) safeSet() []uint64 {
 	return b.set
 }
 
+// SetBitsetFrom fills the bitset with an array of integers without creating a new BitSet instance
+func (b *BitSet) SetBitsetFrom(buf []uint64) {
+	b.length = uint(len(buf)) * 64
+	b.set = buf
+}
+
 // From is a constructor used to create a BitSet from an array of integers
 func From(buf []uint64) *BitSet {
-	return &BitSet{uint(len(buf)) * 64, buf}
+	return FromWithLength(uint(len(buf))*64, buf)
+}
+
+// FromWithLength constructs from an array of integers and length.
+func FromWithLength(len uint, set []uint64) *BitSet {
+	return &BitSet{len, set}
 }
 
 // Bytes returns the bitset as array of integers
@@ -103,6 +114,11 @@ func wordsNeeded(i uint) int {
 		return int(Cap() >> log2WordSize)
 	}
 	return int((i + (wordSize - 1)) >> log2WordSize)
+}
+
+// wordsIndex calculates the index of words in a `uint64`
+func wordsIndex(i uint) uint {
+	return i & (wordSize - 1)
 }
 
 // New creates a new BitSet with a hint that length bits will be required
@@ -158,7 +174,7 @@ func (b *BitSet) Test(i uint) bool {
 	if i >= b.length {
 		return false
 	}
-	return b.set[i>>log2WordSize]&(1<<(i&(wordSize-1))) != 0
+	return b.set[i>>log2WordSize]&(1<<wordsIndex(i)) != 0
 }
 
 // Set bit i to 1, the capacity of the bitset is automatically
@@ -171,7 +187,7 @@ func (b *BitSet) Set(i uint) *BitSet {
 	if i >= b.length { // if we need more bits, make 'em
 		b.extendSet(i)
 	}
-	b.set[i>>log2WordSize] |= 1 << (i & (wordSize - 1))
+	b.set[i>>log2WordSize] |= 1 << wordsIndex(i)
 	return b
 }
 
@@ -180,7 +196,7 @@ func (b *BitSet) Clear(i uint) *BitSet {
 	if i >= b.length {
 		return b
 	}
-	b.set[i>>log2WordSize] &^= 1 << (i & (wordSize - 1))
+	b.set[i>>log2WordSize] &^= 1 << wordsIndex(i)
 	return b
 }
 
@@ -205,7 +221,7 @@ func (b *BitSet) Flip(i uint) *BitSet {
 	if i >= b.length {
 		return b.Set(i)
 	}
-	b.set[i>>log2WordSize] ^= 1 << (i & (wordSize - 1))
+	b.set[i>>log2WordSize] ^= 1 << wordsIndex(i)
 	return b
 }
 
@@ -223,11 +239,13 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	}
 	var startWord uint = start >> log2WordSize
 	var endWord uint = end >> log2WordSize
-	b.set[startWord] ^= ^(^uint64(0) << (start & (wordSize - 1)))
+	b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
 	for i := startWord; i < endWord; i++ {
 		b.set[i] = ^b.set[i]
 	}
-	b.set[endWord] ^= ^uint64(0) >> (-end & (wordSize - 1))
+	if end&(wordSize-1) != 0 {
+		b.set[endWord] ^= ^uint64(0) >> wordsIndex(-end)
+	}
 	return b
 }
 
@@ -255,7 +273,9 @@ func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
 	copy(shrunk, b.set[:idx])
 	b.set = shrunk
 	b.length = length
-	b.set[idx-1] &= (allBits >> (uint64(64) - uint64(length&(wordSize-1))))
+	if length < 64 {
+		b.set[idx-1] &= allBits >> uint64(64-wordsIndex(length))
+	}
 	return b
 }
 
@@ -284,7 +304,7 @@ func (b *BitSet) Compact() *BitSet {
 // this method could be extremely slow and in some cases might cause the entire BitSet
 // to be recopied.
 func (b *BitSet) InsertAt(idx uint) *BitSet {
-	insertAtElement := (idx >> log2WordSize)
+	insertAtElement := idx >> log2WordSize
 
 	// if length of set is a multiple of wordSize we need to allocate more space first
 	if b.isLenExactMultiple() {
@@ -303,13 +323,13 @@ func (b *BitSet) InsertAt(idx uint) *BitSet {
 
 	// generate a mask to extract the data that we need to shift left
 	// within the element where we insert a bit
-	dataMask := ^(uint64(1)<<uint64(idx&(wordSize-1)) - 1)
+	dataMask := uint64(1)<<uint64(wordsIndex(idx)) - 1
 
 	// extract that data that we'll shift
-	data := b.set[i] & dataMask
+	data := b.set[i] & (^dataMask)
 
 	// set the positions of the data mask to 0 in the element where we insert
-	b.set[i] &= ^dataMask
+	b.set[i] &= dataMask
 
 	// shift data mask to the left and insert its data to the slice element
 	b.set[i] |= data << 1
@@ -357,7 +377,7 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 
 	// generate a mask for the data that needs to be shifted right
 	// within that slice element that gets modified
-	dataMask := ^((uint64(1) << (i & (wordSize - 1))) - 1)
+	dataMask := ^((uint64(1) << wordsIndex(i)) - 1)
 
 	// extract the data that we'll shift right from the slice element
 	data := b.set[deleteAtElement] & dataMask
@@ -395,7 +415,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 		return 0, false
 	}
 	w := b.set[x]
-	w = w >> (i & (wordSize - 1))
+	w = w >> wordsIndex(i)
 	if w != 0 {
 		return i + trailingZeroes64(w), true
 	}
@@ -439,7 +459,7 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	if x >= len(b.set) || capacity == 0 {
 		return 0, myanswer[:0]
 	}
-	skip := i & (wordSize - 1)
+	skip := wordsIndex(i)
 	word := b.set[x] >> skip
 	myanswer = myanswer[:capacity]
 	size := int(0)
@@ -482,8 +502,8 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 		return 0, false
 	}
 	w := b.set[x]
-	w = w >> (i & (wordSize - 1))
-	wA := allBits >> (i & (wordSize - 1))
+	w = w >> wordsIndex(i)
+	wA := allBits >> wordsIndex(i)
 	index := i + trailingZeroes64(^w)
 	if w != wA && index < b.length {
 		return index, true
@@ -523,9 +543,10 @@ func (b *BitSet) Clone() *BitSet {
 	return c
 }
 
-// Copy into a destination BitSet
-// Returning the size of the destination BitSet
-// like array copy
+// Copy into a destination BitSet using the Go array copy semantics:
+// the number of bits copied is the minimum of the number of bits in the current
+// BitSet (Len()) and the destination Bitset.
+// We return the number of bits copied in the destination BitSet.
 func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
@@ -538,6 +559,27 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 		count = b.length
 	}
 	return
+}
+
+// CopyFull copies into a destination BitSet such that the destination is
+// identical to the source after the operation, allocating memory if necessary.
+func (b *BitSet) CopyFull(c *BitSet) {
+	if c == nil {
+		return
+	}
+	c.length = b.length
+	if len(b.set) == 0 {
+		if c.set != nil {
+			c.set = c.set[:0]
+		}
+	} else {
+		if cap(c.set) < len(b.set) {
+			c.set = make([]uint64, len(b.set))
+		} else {
+			c.set = c.set[:len(b.set)]
+		}
+		copy(c.set, b.set)
+	}
 }
 
 // Count (number of set bits).
@@ -776,17 +818,17 @@ func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 
 // Is the length an exact multiple of word sizes?
 func (b *BitSet) isLenExactMultiple() bool {
-	return b.length%wordSize == 0
+	return wordsIndex(b.length) == 0
 }
 
 // Clean last word by setting unused bits to 0
 func (b *BitSet) cleanLastWord() {
 	if !b.isLenExactMultiple() {
-		b.set[len(b.set)-1] &= allBits >> (wordSize - b.length%wordSize)
+		b.set[len(b.set)-1] &= allBits >> (wordSize - wordsIndex(b.length))
 	}
 }
 
-// Complement computes the (local) complement of a biset (up to length bits)
+// Complement computes the (local) complement of a bitset (up to length bits)
 func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
 	result = New(b.length)
@@ -814,7 +856,6 @@ func (b *BitSet) None() bool {
 				return false
 			}
 		}
-		return true
 	}
 	return true
 }
@@ -869,7 +910,18 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	}
 
 	// Write set
-	err = binary.Write(stream, binaryOrder, b.set)
+	// current implementation of bufio.Writer is more memory efficient than
+	// binary.Write for large set
+	writer := bufio.NewWriter(stream)
+	var item = make([]byte, binary.Size(uint64(0))) // for serializing one uint64
+	for i := range b.set {
+		binaryOrder.PutUint64(item, b.set[i])
+		if nn, err := writer.Write(item); err != nil {
+			return int64(i*binary.Size(uint64(0)) + nn), err
+		}
+	}
+
+	err = writer.Flush()
 	return int64(b.BinaryStorageSize()), err
 }
 
@@ -889,9 +941,18 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	}
 
 	// Read remaining bytes as set
-	err = binary.Read(stream, binaryOrder, newset.set)
-	if err != nil {
-		return 0, err
+	// current implementation bufio.Reader is more memory efficient than
+	// binary.Read for large set
+	reader := bufio.NewReader(stream)
+	var item = make([]byte, binary.Size(uint64(0))) // one uint64
+	for i := uint64(0); i < length; i++ {
+		if _, err := reader.Read(item); err != nil {
+			if err == io.EOF {
+				break // done
+			}
+			return 0, err
+		}
+		newset.set[i] = binaryOrder.Uint64(item)
 	}
 
 	*b = *newset
@@ -901,14 +962,10 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 // MarshalBinary encodes a BitSet into a binary form and returns the result.
 func (b *BitSet) MarshalBinary() ([]byte, error) {
 	var buf bytes.Buffer
-	writer := bufio.NewWriter(&buf)
-
-	_, err := b.WriteTo(writer)
+	_, err := b.WriteTo(&buf)
 	if err != nil {
 		return []byte{}, err
 	}
-
-	err = writer.Flush()
 
 	return buf.Bytes(), err
 }
@@ -916,10 +973,7 @@ func (b *BitSet) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes the binary form generated by MarshalBinary.
 func (b *BitSet) UnmarshalBinary(data []byte) error {
 	buf := bytes.NewReader(data)
-	reader := bufio.NewReader(buf)
-
-	_, err := b.ReadFrom(reader)
-
+	_, err := b.ReadFrom(buf)
 	return err
 }
 
