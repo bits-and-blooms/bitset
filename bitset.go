@@ -151,24 +151,22 @@ func (b *BitSet) Len() uint {
 	return b.length
 }
 
-// extendSetMaybe adds additional words to incorporate new bits if needed
-func (b *BitSet) extendSetMaybe(i uint) {
-	if i >= b.length { // if we need more bits, make 'em
-		if i >= Cap() {
-			panic("You are exceeding the capacity")
-		}
-		nsize := wordsNeeded(i + 1)
-		if b.set == nil {
-			b.set = make([]uint64, nsize)
-		} else if cap(b.set) >= nsize {
-			b.set = b.set[:nsize] // fast resize
-		} else if len(b.set) < nsize {
-			newset := make([]uint64, nsize, 2*nsize) // increase capacity 2x
-			copy(newset, b.set)
-			b.set = newset
-		}
-		b.length = i + 1
+// extendSet adds additional words to incorporate new bits if needed
+func (b *BitSet) extendSet(i uint) {
+	if i >= Cap() {
+		panic("You are exceeding the capacity")
 	}
+	nsize := wordsNeeded(i + 1)
+	if b.set == nil {
+		b.set = make([]uint64, nsize)
+	} else if cap(b.set) >= nsize {
+		b.set = b.set[:nsize] // fast resize
+	} else if len(b.set) < nsize {
+		newset := make([]uint64, nsize, 2*nsize) // increase capacity 2x
+		copy(newset, b.set)
+		b.set = newset
+	}
+	b.length = i + 1
 }
 
 // Test whether bit i is set.
@@ -186,7 +184,9 @@ func (b *BitSet) Test(i uint) bool {
 // may lead to a memory shortage and a panic: the caller is responsible
 // for providing sensible parameters in line with their memory capacity.
 func (b *BitSet) Set(i uint) *BitSet {
-	b.extendSetMaybe(i)
+	if i >= b.length { // if we need more bits, make 'em
+		b.extendSet(i)
+	}
 	b.set[i>>log2WordSize] |= 1 << wordsIndex(i)
 	return b
 }
@@ -234,8 +234,9 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	if start >= end {
 		return b
 	}
-
-	b.extendSetMaybe(end - 1)
+	if end-1 >= b.length { // if we need more bits, make 'em
+		b.extendSet(end - 1)
+	}
 	var startWord uint = start >> log2WordSize
 	var endWord uint = end >> log2WordSize
 	b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
@@ -713,7 +714,9 @@ func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 		b.set[i] = 0
 	}
 	if compare.length > 0 {
-		b.extendSetMaybe(compare.length - 1)
+		if compare.length-1 >= b.length {
+			b.extendSet(compare.length - 1)
+		}
 	}
 }
 
@@ -752,8 +755,8 @@ func (b *BitSet) InPlaceUnion(compare *BitSet) {
 	if l > int(b.wordCount()) {
 		l = int(b.wordCount())
 	}
-	if compare.length > 0 {
-		b.extendSetMaybe(compare.length - 1)
+	if compare.length > 0 && compare.length-1 >= b.length {
+		b.extendSet(compare.length - 1)
 	}
 	for i := 0; i < l; i++ {
 		b.set[i] |= compare.set[i]
@@ -800,8 +803,8 @@ func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 	if l > int(b.wordCount()) {
 		l = int(b.wordCount())
 	}
-	if compare.length > 0 {
-		b.extendSetMaybe(compare.length - 1)
+	if compare.length > 0 && compare.length-1 >= b.length {
+		b.extendSet(compare.length - 1)
 	}
 	for i := 0; i < l; i++ {
 		b.set[i] ^= compare.set[i]
