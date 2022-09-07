@@ -945,11 +945,9 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	// binary.Read for large set
 	reader := bufio.NewReader(stream)
 	var item = make([]byte, binary.Size(uint64(0))) // one uint64
-	for i := uint64(0); i < length; i++ {
+	nWords := uint64(wordsNeeded(uint(length)))
+	for i := uint64(0); i < nWords; i++ {
 		if _, err := reader.Read(item); err != nil {
-			if err == io.EOF {
-				break // done
-			}
 			return 0, err
 		}
 		newset.set[i] = binaryOrder.Uint64(item)

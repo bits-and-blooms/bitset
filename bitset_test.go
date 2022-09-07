@@ -1270,6 +1270,33 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {
+	a := New(1010).Set(10).Set(1001)
+	data, err := json.Marshal(a)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	// appending some noise
+	data = data[:len(data) - 3] // remove "
+	data = append(data, []byte(`AAAAAAAAAA"`)...)
+
+	b := new(BitSet)
+	err = json.Unmarshal(data, b)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	// Bitsets must be equal after marshalling and unmarshalling
+	// Do not over-reading when unmarshalling
+	if !a.Equal(b) {
+		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+		return
+	}
+}
+
 func TestMarshalUnmarshalJSONByStdEncoding(t *testing.T) {
 	Base64StdEncoding()
 	a := New(1010).Set(10).Set(1001)
