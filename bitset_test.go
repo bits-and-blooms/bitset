@@ -11,6 +11,7 @@ import (
 	"compress/gzip"
 	"encoding"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1227,6 +1228,10 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 
 func TestMarshalUnmarshalBinaryByLittleEndian(t *testing.T) {
 	LittleEndian()
+	defer func() {
+		// Revert when done.
+		binaryOrder = binary.BigEndian
+	}()
 	a := New(1010).Set(10).Set(1001)
 	b := new(BitSet)
 
