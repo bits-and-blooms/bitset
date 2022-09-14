@@ -1713,18 +1713,38 @@ func TestWriteTo(t *testing.T) {
 	}
 }
 
+type inCompleteRetBufReader struct {
+	returnEvery int64
+	reader      io.Reader
+	offset      int64
+}
+
+func (ir *inCompleteRetBufReader) Read(b []byte) (n int, err error) {
+	if ir.returnEvery > 0 {
+		maxRead := ir.returnEvery - (ir.offset % ir.returnEvery)
+		if len(b) > int(maxRead) {
+			b = b[:maxRead]
+		}
+	}
+	n, err = ir.reader.Read(b)
+	ir.offset += int64(n)
+	return
+}
+
 func TestReadFrom(t *testing.T) {
 	addBuf := []byte(`12345678`) // Bytes after stream
 	tests := []struct {
-		length   uint
-		oneEvery uint
-		input    string // base64+gzipped
-		wantErr  error
+		length      uint
+		oneEvery    uint
+		input       string // base64+gzipped
+		wantErr     error
+		returnEvery int64
 	}{
 		{
-			length:   9585,
-			oneEvery: 97,
-			input:    "H4sIAAAAAAAC/2IAA9VCCM3AyMDAwMSACVgYGBg4sIgLMDAwKGARd2BgYGjAFB41noDx6IAJajw64IAajw4UoMajg4ZR4/EaP5pQh1g+MDQyNjE1M7cABAAA//9W5OoOwAQAAA==",
+			length:      9585,
+			oneEvery:    97,
+			input:       "H4sIAAAAAAAC/2IAA9VCCM3AyMDAwMSACVgYGBg4sIgLMDAwKGARd2BgYGjAFB41noDx6IAJajw64IAajw4UoMajg4ZR4/EaP5pQh1g+MDQyNjE1M7cABAAA//9W5OoOwAQAAA==",
+			returnEvery: 127,
 		},
 		{
 			length:   1337,
@@ -1764,7 +1784,7 @@ func TestReadFrom(t *testing.T) {
 			fatalErr(gz.Close())
 
 			bs := New(test.length)
-			_, err = bs.ReadFrom(&buf)
+			_, err = bs.ReadFrom(&inCompleteRetBufReader{returnEvery: test.returnEvery, reader: &buf})
 			if err != nil {
 				if errors.Is(err, test.wantErr) {
 					// Correct, nothing more we can test.
