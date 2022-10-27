@@ -1486,6 +1486,34 @@ func TestCopy(t *testing.T) {
 	}
 }
 
+func TestCopyUnaligned(t *testing.T) {
+	a := New(16)
+	a.FlipRange(0, 16)
+	b := New(1)
+	a.Copy(b)
+	if b.Count() > b.Len() {
+		t.Errorf("targets copied set count (%d) should never be larger than target's length (%d)", b.Count(), b.Len())
+	}
+	if !b.Test(0) {
+		t.Errorf("first bit should still be set in copy: %+v", b)
+	}
+
+	// Test a more complex scenario with a mix of bits set in the unaligned space to verify no bits are lost.
+	a = New(32)
+	a.Set(0).Set(3).Set(4).Set(16).Set(17).Set(29).Set(31)
+	b = New(19)
+	a.Copy(b)
+
+	const expectedCount = 5
+	if b.Count() != expectedCount {
+		t.Errorf("targets copied set count: %d, want %d", b.Count(), expectedCount)
+	}
+
+	if !(b.Test(0) && b.Test(3) && b.Test(4) && b.Test(16) && b.Test(17)) {
+		t.Errorf("expected set bits are not set: %+v", b)
+	}
+}
+
 func TestCopyFull(t *testing.T) {
 	a := New(10)
 	b := &BitSet{}

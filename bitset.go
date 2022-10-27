@@ -556,6 +556,9 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if b.length < c.length {
 		count = b.length
 	}
+	// Cleaning the last word is needed to keep the invariant that other functions, such as Count, require
+	// that any bits in the last word that would exceed the length of the bitmask are set to 0.
+	c.cleanLastWord()
 	return
 }
 
