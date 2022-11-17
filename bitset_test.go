@@ -1224,6 +1224,35 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 		return
 	}
+
+	aSetBit := uint(128)
+	a = New(256).Set(aSetBit)
+	aExpectedMarshaledSize := 8 /* length: uint64 */ + 4 * 8 /* set : [4]uint64 */
+	aMarshaled, err := a.MarshalBinary()
+
+	if err != nil || aExpectedMarshaledSize != len(aMarshaled) || aExpectedMarshaledSize != a.BinaryStorageSize() {
+		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize , ") number of bytes")
+		return
+	}
+
+	shiftAmount := uint(72)
+	// https://github.com/bits-and-blooms/bitset/issues/114
+	for i := uint(0) ; i < shiftAmount; i++ {
+		a.DeleteAt(0)
+	}
+
+	aExpectedMarshaledSize = 8 /* length: uint64 */ + 3 * 8 /* set : [3]uint64 */
+	aMarshaled, err = a.MarshalBinary()
+	if err != nil || aExpectedMarshaledSize != len(aMarshaled) || aExpectedMarshaledSize != a.BinaryStorageSize() {
+		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize , ") number of bytes")
+		return
+	}
+
+	copyBinary(t, a, b)
+
+	if b.Len() != 256 - shiftAmount || !b.Test(aSetBit - shiftAmount) {
+		t.Error("Shifted bitset is not copied correctly")
+	}
 }
 
 func TestMarshalUnmarshalBinaryByLittleEndian(t *testing.T) {

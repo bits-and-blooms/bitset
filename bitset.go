@@ -897,7 +897,8 @@ func (b *BitSet) DumpAsBits() string {
 
 // BinaryStorageSize returns the binary storage requirements
 func (b *BitSet) BinaryStorageSize() int {
-	return binary.Size(uint64(0)) + binary.Size(b.set)
+	nWords := wordsNeeded(b.length)
+	return binary.Size(uint64(0)) + binary.Size(b.set[:nWords])
 }
 
 // WriteTo writes a BitSet to a stream
@@ -915,7 +916,8 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	// binary.Write for large set
 	writer := bufio.NewWriter(stream)
 	var item = make([]byte, binary.Size(uint64(0))) // for serializing one uint64
-	for i := range b.set {
+	nWords := wordsNeeded(uint(length))
+	for i := range b.set[:nWords] {
 		binaryOrder.PutUint64(item, b.set[i])
 		if nn, err := writer.Write(item); err != nil {
 			return int64(i*binary.Size(uint64(0)) + nn), err
