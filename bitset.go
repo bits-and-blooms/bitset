@@ -272,8 +272,9 @@ func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
 	copy(shrunk, b.set[:idx])
 	b.set = shrunk
 	b.length = length
-	if length < 64 {
-		b.set[idx-1] &= allBits >> uint64(64-wordsIndex(length))
+	lastWordUsedBits := length % 64
+	if lastWordUsedBits != 0 {
+		b.set[idx-1] &= allBits >> uint64(64-wordsIndex(lastWordUsedBits))
 	}
 	return b
 }

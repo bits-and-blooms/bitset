@@ -707,6 +707,15 @@ func TestShrink(t *testing.T) {
 		t.Error("24 should be set")
 		return
 	}
+
+	b = New(110)
+	b.Set(80)
+	b.Shrink(70)
+	for _, word := range b.set {
+		if (word != 0) {
+			t.Error("word should be 0", word)
+		}
+	}
 }
 
 func TestInsertAtWithSet(t *testing.T) {
