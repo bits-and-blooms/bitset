@@ -1395,6 +1395,16 @@ func TestSetBitsetFrom(t *testing.T) {
 	}
 }
 
+func TestIssue116(t *testing.T) {
+	a := []uint64{2, 3, 5, 7, 11}
+	b := []uint64{2, 3, 5, 7, 11, 0, 1}
+	bitset1 := FromWithLength(320, a)
+	bitset2 := FromWithLength(320, b)
+	if !bitset1.Equal(bitset2) || !bitset2.Equal(bitset1) {
+		t.Error("Bitsets should be equal irrespective of the underlying capacity")
+	}
+}
+
 func TestFrom(t *testing.T) {
 	u := []uint64{2, 3, 5, 7, 11}
 	b := From(u)

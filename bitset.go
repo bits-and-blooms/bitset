@@ -953,7 +953,7 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	}
 
 	var item [8]byte
-	nWords := wordsNeeded(uint(length))//b.wordCount()
+	nWords := wordsNeeded(uint(length))
 	reader := bufio.NewReader(io.LimitReader(stream, 8*int64(nWords)))
 	for i := 0; i < nWords; i++ {
 		if _, err := io.ReadFull(reader, item[:]); err != nil {
