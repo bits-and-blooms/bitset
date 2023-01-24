@@ -7,6 +7,15 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/bits-and-blooms/bitset?tab=doc)](https://pkg.go.dev/github.com/bits-and-blooms/bitset?tab=doc)
 
 
+This library is part of the [awesome go collection](https://github.com/avelino/awesome-go). It is used in production by several important systems:
+
+* [beego](https://github.com/beego/beego)
+* [CubeFS](https://github.com/cubefs/cubefs)
+* [Amazon EKS Distro](https://github.com/aws/eks-distro)
+* [sourcegraph](https://github.com/sourcegraph/sourcegraph)
+* [torrent](https://github.com/anacrolix/torrent)
+
+
 ## Description
 
 Package bitset implements bitsets, a mapping between non-negative integers and boolean values.
