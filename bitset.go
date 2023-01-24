@@ -115,6 +115,12 @@ func wordsNeeded(i uint) int {
 	return int((i + (wordSize - 1)) >> log2WordSize)
 }
 
+// wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
+// This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing bitmap).
+func wordsNeededUnbound(i uint) int {
+	return int((i + (wordSize - 1)) >> log2WordSize)
+}
+
 // wordsIndex calculates the index of words in a `uint64`
 func wordsIndex(i uint) uint {
 	return i & (wordSize - 1)
@@ -530,7 +536,7 @@ func (b *BitSet) ClearAll() *BitSet {
 
 // wordCount returns the number of words used in a bit set
 func (b *BitSet) wordCount() int {
-	return len(b.set)
+	return wordsNeededUnbound(b.length)
 }
 
 // Clone this BitSet
@@ -606,10 +612,9 @@ func (b *BitSet) Equal(c *BitSet) bool {
 	if b.length == 0 { // if they have both length == 0, then could have nil set
 		return true
 	}
-	// testing for equality shoud not transform the bitset (no call to safeSet)
-
-	for p, v := range b.set {
-		if c.set[p] != v {
+	wn := b.wordCount()
+	for p:= 0; p < wn; p++ {
+		if c.set[p] != b.set[p] {
 			return false
 		}
 	}
@@ -898,7 +903,7 @@ func (b *BitSet) DumpAsBits() string {
 
 // BinaryStorageSize returns the binary storage requirements
 func (b *BitSet) BinaryStorageSize() int {
-	nWords := wordsNeeded(b.length)
+	nWords := b.wordCount()
 	return binary.Size(uint64(0)) + binary.Size(b.set[:nWords])
 }
 
@@ -917,7 +922,7 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	// binary.Write for large set
 	writer := bufio.NewWriter(stream)
 	var item = make([]byte, binary.Size(uint64(0))) // for serializing one uint64
-	nWords := wordsNeeded(uint(length))
+	nWords := b.wordCount()
 	for i := range b.set[:nWords] {
 		binaryOrder.PutUint64(item, b.set[i])
 		if nn, err := writer.Write(item); err != nil {
