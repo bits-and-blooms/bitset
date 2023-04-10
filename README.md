@@ -81,7 +81,7 @@ The memory usage of a bitset using N bits is at least N/8 bytes. The number of b
 
 Go 1.9 introduced a native `math/bits` library. We provide backward compatibility to Go 1.7, which might be removed.
 
-It is possible that a later version will match the `math/bits` return signature for counts (which is `int`, rather than our library's `unit64`). If so, the version will be bumped.
+It is possible that a later version will match the `math/bits` return signature for counts (which is `int`, rather than our library's `uint64`). If so, the version will be bumped.
 
 ## Installation
 
