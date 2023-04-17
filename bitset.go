@@ -613,7 +613,7 @@ func (b *BitSet) Equal(c *BitSet) bool {
 		return true
 	}
 	wn := b.wordCount()
-	for p:= 0; p < wn; p++ {
+	for p := 0; p < wn; p++ {
 		if c.set[p] != b.set[p] {
 			return false
 		}
@@ -901,13 +901,16 @@ func (b *BitSet) DumpAsBits() string {
 	return buffer.String()
 }
 
-// BinaryStorageSize returns the binary storage requirements
+// BinaryStorageSize returns the binary storage requirements (see WriteTo) in bytes.
 func (b *BitSet) BinaryStorageSize() int {
 	nWords := b.wordCount()
 	return binary.Size(uint64(0)) + binary.Size(b.set[:nWords])
 }
 
-// WriteTo writes a BitSet to a stream
+// WriteTo writes a BitSet to a stream. The format is:
+// 1. uint64 length
+// 2. []uint64 set
+// Upon success, the number of bytes written is returned.
 func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	length := uint64(b.length)
 
@@ -935,6 +938,14 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 }
 
 // ReadFrom reads a BitSet from a stream written using WriteTo
+// The format is:
+// 1. uint64 length
+// 2. []uint64 set
+// Upon success, the number of bytes read is returned.
+// If the current BitSet is not large enough to hold the data,
+// it is extended. In case of error, the BitSet is either
+// left unchanged or made empty if the error occurs too late
+// to preserve the content.
 func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	var length uint64
 
@@ -946,26 +957,36 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 		}
 		return 0, err
 	}
-	newset := New(uint(length))
+	newlength := uint(length)
 
-	if uint64(newset.length) != length {
+	if uint64(newlength) != length {
 		return 0, errors.New("unmarshalling error: type mismatch")
 	}
+	nWords := wordsNeeded(uint(newlength))
+	if cap(b.set) >= nWords {
+		b.set = b.set[:nWords]
+	} else {
+		b.set = make([]uint64, nWords)
+	}
+
+	b.length = newlength
 
 	var item [8]byte
-	nWords := wordsNeeded(uint(length))
 	reader := bufio.NewReader(io.LimitReader(stream, 8*int64(nWords)))
 	for i := 0; i < nWords; i++ {
 		if _, err := io.ReadFull(reader, item[:]); err != nil {
 			if err == io.EOF {
 				err = io.ErrUnexpectedEOF
 			}
+			// We do not want to leave the BitSet partially filled as
+			// it is error prone.
+			b.set = b.set[:0]
+			b.length = 0
 			return 0, err
 		}
-		newset.set[i] = binaryOrder.Uint64(item[:])
+		b.set[i] = binaryOrder.Uint64(item[:])
 	}
 
-	*b = *newset
 	return int64(b.BinaryStorageSize()), nil
 }
 

@@ -712,7 +712,7 @@ func TestShrink(t *testing.T) {
 	b.Set(80)
 	b.Shrink(70)
 	for _, word := range b.set {
-		if (word != 0) {
+		if word != 0 {
 			t.Error("word should be 0", word)
 		}
 	}
@@ -1236,30 +1236,30 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 
 	aSetBit := uint(128)
 	a = New(256).Set(aSetBit)
-	aExpectedMarshaledSize := 8 /* length: uint64 */ + 4 * 8 /* set : [4]uint64 */
+	aExpectedMarshaledSize := 8 /* length: uint64 */ + 4*8 /* set : [4]uint64 */
 	aMarshaled, err := a.MarshalBinary()
 
 	if err != nil || aExpectedMarshaledSize != len(aMarshaled) || aExpectedMarshaledSize != a.BinaryStorageSize() {
-		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize , ") number of bytes")
+		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize, ") number of bytes")
 		return
 	}
 
 	shiftAmount := uint(72)
 	// https://github.com/bits-and-blooms/bitset/issues/114
-	for i := uint(0) ; i < shiftAmount; i++ {
+	for i := uint(0); i < shiftAmount; i++ {
 		a.DeleteAt(0)
 	}
 
-	aExpectedMarshaledSize = 8 /* length: uint64 */ + 3 * 8 /* set : [3]uint64 */
+	aExpectedMarshaledSize = 8 /* length: uint64 */ + 3*8 /* set : [3]uint64 */
 	aMarshaled, err = a.MarshalBinary()
 	if err != nil || aExpectedMarshaledSize != len(aMarshaled) || aExpectedMarshaledSize != a.BinaryStorageSize() {
-		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize , ") number of bytes")
+		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize, ") number of bytes")
 		return
 	}
 
 	copyBinary(t, a, b)
 
-	if b.Len() != 256 - shiftAmount || !b.Test(aSetBit - shiftAmount) {
+	if b.Len() != 256-shiftAmount || !b.Test(aSetBit-shiftAmount) {
 		t.Error("Shifted bitset is not copied correctly")
 	}
 }
