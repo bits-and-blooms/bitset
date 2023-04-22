@@ -7,6 +7,7 @@
 package bitset
 
 import (
+	"bytes"
 	"math/rand"
 	"testing"
 )
@@ -443,5 +444,20 @@ func BenchmarkFlorianUekermannMidStrongDensityIterateManyComp(b *testing.B) {
 	}
 	if checksum == 0 { // added just to fool ineffassign
 		return
+	}
+}
+
+func BenchmarkBitsetReadWrite(b *testing.B) {
+	s := New(100000)
+	for i := 0; i < 100000; i += 100 {
+		s.Set(uint(i))
+	}
+	buffer := bytes.Buffer{}
+	temp := New(100000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s.WriteTo(&buffer)
+		temp.ReadFrom(&buffer)
+		buffer.Reset()
 	}
 }
