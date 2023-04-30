@@ -265,20 +265,13 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 // The new length in bits is the parameter value + 1. Thus it is not possible
 // to use this function to set the length to 0, the minimal value of the length
 // after this function call is 1.
-//
-// A new slice is allocated to store the new bits, so you may see an increase in
-// memory usage until the GC runs. Normally this should not be a problem, but if you
-// have an extremely large BitSet its important to understand that the old BitSet will
-// remain in memory until the GC frees it.
 func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
 	length := lastbitindex + 1
 	idx := wordsNeeded(length)
 	if idx > len(b.set) {
 		return b
 	}
-	shrunk := make([]uint64, idx)
-	copy(shrunk, b.set[:idx])
-	b.set = shrunk
+	b.set = b.set[:idx]
 	b.length = length
 	lastWordUsedBits := length % 64
 	if lastWordUsedBits != 0 {
