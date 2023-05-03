@@ -10,7 +10,7 @@ If you have discovered a security vulnerability in this project, please report i
 
 Please use the following contact information for reporting a vulnerability:
 
-- [Daniel Lemire](https://github.com/lemire) - [daniel@lemire.me](mailto:email@example.com)
+- [Daniel Lemire](https://github.com/lemire) - [daniel@lemire.me](mailto:daniel@lemire.me)
 
 In your report, please include:
 
