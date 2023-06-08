@@ -1,3 +1,3 @@
 module github.com/bits-and-blooms/bitset
 
-go 1.15
+go 1.16
