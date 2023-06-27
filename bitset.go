@@ -912,6 +912,13 @@ func (b *BitSet) BinaryStorageSize() int {
 // 1. uint64 length
 // 2. []uint64 set
 // Upon success, the number of bytes written is returned.
+//
+// Performance: if this function is used to write to a disk or network
+// connection, it might be beneficial to wrap the stream in a bufio.Writer.
+// E.g.,
+//
+//	      f, err := os.Create("myfile")
+//		       w := bufio.NewWriter(f)
 func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 	buf := make([]byte, wordBytes)
 	length := uint64(b.length)
@@ -943,6 +950,13 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 // it is extended. In case of error, the BitSet is either
 // left unchanged or made empty if the error occurs too late
 // to preserve the content.
+//
+// Performance: if this function is used to read from a disk or network
+// connection, it might be beneficial to wrap the stream in a bufio.Reader.
+// E.g.,
+//
+//	f, err := os.Open("myfile")
+//	r := bufio.NewReader(f)
 func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	buf := make([]byte, wordBytes)
 
