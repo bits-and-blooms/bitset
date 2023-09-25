@@ -1297,25 +1297,49 @@ func copyBinary(t *testing.T, from encoding.BinaryMarshaler, to encoding.BinaryU
 }
 
 func TestMarshalUnmarshalJSON(t *testing.T) {
-	a := New(1010).Set(10).Set(1001)
-	data, err := json.Marshal(a)
-	if err != nil {
-		t.Errorf(err.Error())
-		return
-	}
+	t.Run("value", func(t *testing.T) {
+		a := BitSet{}
+		a.Set(10).Set(1001)
+		data, err := json.Marshal(a)
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
 
-	b := new(BitSet)
-	err = json.Unmarshal(data, b)
-	if err != nil {
-		t.Errorf(err.Error())
-		return
-	}
+		b := new(BitSet)
+		err = json.Unmarshal(data, b)
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
 
-	// Bitsets must be equal after marshalling and unmarshalling
-	if !a.Equal(b) {
-		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
-		return
-	}
+		// Bitsets must be equal after marshalling and unmarshalling
+		if !a.Equal(b) {
+			t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+			return
+		}
+	})
+	t.Run("pointer", func(t *testing.T) {
+		a := New(1010).Set(10).Set(1001)
+		data, err := json.Marshal(a)
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
+
+		b := new(BitSet)
+		err = json.Unmarshal(data, b)
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
+
+		// Bitsets must be equal after marshalling and unmarshalling
+		if !a.Equal(b) {
+			t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
+			return
+		}
+	})
 }
 
 func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {

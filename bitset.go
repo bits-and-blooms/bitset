@@ -1019,7 +1019,7 @@ func (b *BitSet) UnmarshalBinary(data []byte) error {
 }
 
 // MarshalJSON marshals a BitSet as a JSON structure
-func (b *BitSet) MarshalJSON() ([]byte, error) {
+func (b BitSet) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBuffer(make([]byte, 0, b.BinaryStorageSize()))
 	_, err := b.WriteTo(buffer)
 	if err != nil {
