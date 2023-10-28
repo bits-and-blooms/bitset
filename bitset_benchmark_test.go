@@ -89,6 +89,87 @@ func BenchmarkSparseIterate(b *testing.B) {
 	}
 }
 
+// go test -bench=BitsetOps
+func BenchmarkBitsetOps(b *testing.B) {
+	// let's not write into s inside the benchmarks
+	s := New(100000)
+	for i := 0; i < 100000; i += 100 {
+		s.Set(uint(i))
+	}
+	cpy := s.Clone()
+
+	b.Run("Equal", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			s.Equal(cpy)
+		}
+	})
+
+	b.Run("FlipRange", func(b *testing.B) {
+		s = s.Clone()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.FlipRange(0, 100000)
+		}
+	})
+
+	b.Run("NextSet", func(b *testing.B) {
+		s = New(100000)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.NextSet(0)
+		}
+	})
+
+	b.Run("NextClear", func(b *testing.B) {
+		s = New(100000)
+		s.FlipRange(0, 100000)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.NextClear(0)
+		}
+	})
+
+	b.Run("DifferenceCardinality", func(b *testing.B) {
+		empty := New(100000)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.DifferenceCardinality(empty)
+		}
+	})
+
+	b.Run("InPlaceDifference", func(b *testing.B) {
+		s = s.Clone()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.InPlaceDifference(cpy)
+		}
+	})
+
+	b.Run("InPlaceUnion", func(b *testing.B) {
+		s = s.Clone()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.InPlaceUnion(cpy)
+		}
+	})
+
+	b.Run("InPlaceIntersection", func(b *testing.B) {
+		s = s.Clone()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.InPlaceIntersection(cpy)
+		}
+	})
+
+	b.Run("InPlaceSymmetricDifference", func(b *testing.B) {
+		s = s.Clone()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.InPlaceSymmetricDifference(cpy)
+		}
+	})
+}
+
 // go test -bench=LemireCreate
 // see http://lemire.me/blog/2016/09/22/swift-versus-java-the-bitset-performance-test/
 func BenchmarkLemireCreate(b *testing.B) {
