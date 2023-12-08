@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand"
 	"strconv"
 	"testing"
 )
@@ -1153,60 +1154,53 @@ func TestComplement(t *testing.T) {
 }
 
 func TestIsSuperSet(t *testing.T) {
-	a := New(500)
-	b := New(300)
-	c := New(200)
+	test := func(name string, lenS, lenSS int, overrideS, overrideSS map[int]bool, want, wantStrict bool) {
+		t.Run(name, func(t *testing.T) {
+			s := New(uint(lenS))
+			ss := New(uint(lenSS))
 
-	// Setup bitsets
-	// a and b overlap
-	// only c is (strict) super set
-	for i := uint(0); i < 100; i++ {
-		a.Set(i)
-	}
-	for i := uint(50); i < 150; i++ {
-		b.Set(i)
-	}
-	for i := uint(0); i < 200; i++ {
-		c.Set(i)
-	}
+			l := lenS
+			if lenSS < lenS {
+				l = lenSS
+			}
 
-	if a.IsSuperSet(b) {
-		t.Errorf("IsSuperSet fails")
-	}
-	if a.IsSuperSet(c) {
-		t.Errorf("IsSuperSet fails")
-	}
-	if b.IsSuperSet(a) {
-		t.Errorf("IsSuperSet fails")
-	}
-	if b.IsSuperSet(c) {
-		t.Errorf("IsSuperSet fails")
-	}
-	if !c.IsSuperSet(a) {
-		t.Errorf("IsSuperSet fails")
-	}
-	if !c.IsSuperSet(b) {
-		t.Errorf("IsSuperSet fails")
+			r := rand.New(rand.NewSource(42))
+			for i := 0; i < l; i++ {
+				bit := r.Intn(2) == 1
+				s.SetTo(uint(i), bit)
+				ss.SetTo(uint(i), bit)
+			}
+
+			for i, v := range overrideS {
+				s.SetTo(uint(i), v)
+			}
+			for i, v := range overrideSS {
+				ss.SetTo(uint(i), v)
+			}
+
+			if got := ss.IsSuperSet(s); got != want {
+				t.Errorf("IsSuperSet() = %v, want %v", got, want)
+			}
+			if got := ss.IsStrictSuperSet(s); got != wantStrict {
+				t.Errorf("IsStrictSuperSet() = %v, want %v", got, wantStrict)
+			}
+		})
 	}
 
-	if a.IsStrictSuperSet(b) {
-		t.Errorf("IsStrictSuperSet fails")
-	}
-	if a.IsStrictSuperSet(c) {
-		t.Errorf("IsStrictSuperSet fails")
-	}
-	if b.IsStrictSuperSet(a) {
-		t.Errorf("IsStrictSuperSet fails")
-	}
-	if b.IsStrictSuperSet(c) {
-		t.Errorf("IsStrictSuperSet fails")
-	}
-	if !c.IsStrictSuperSet(a) {
-		t.Errorf("IsStrictSuperSet fails")
-	}
-	if !c.IsStrictSuperSet(b) {
-		t.Errorf("IsStrictSuperSet fails")
-	}
+	test("empty", 0, 0, nil, nil, true, false)
+	test("empty vs non-empty", 0, 100, nil, nil, true, false)
+	test("non-empty vs empty", 100, 0, nil, nil, true, false)
+	test("equal", 100, 100, nil, nil, true, false)
+
+	test("set is shorter, subset", 100, 200, map[int]bool{50: true}, map[int]bool{50: false}, false, false)
+	test("set is shorter, equal", 100, 200, nil, nil, true, false)
+	test("set is shorter, superset", 100, 200, map[int]bool{50: false}, map[int]bool{50: true}, true, true)
+	test("set is shorter, neither", 100, 200, map[int]bool{50: true}, map[int]bool{50: false, 150: true}, false, false)
+
+	test("set is longer, subset", 200, 100, map[int]bool{50: true}, map[int]bool{50: false}, false, false)
+	test("set is longer, equal", 200, 100, nil, nil, true, false)
+	test("set is longer, superset", 200, 100, nil, map[int]bool{150: true}, true, true)
+	test("set is longer, neither", 200, 100, map[int]bool{50: false, 150: true}, map[int]bool{50: true}, false, false)
 }
 
 func TestDumpAsBits(t *testing.T) {

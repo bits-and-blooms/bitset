@@ -927,12 +927,16 @@ func (b *BitSet) Any() bool {
 
 // IsSuperSet returns true if this is a superset of the other set
 func (b *BitSet) IsSuperSet(other *BitSet) bool {
-	for i, e := other.NextSet(0); e; i, e = other.NextSet(i + 1) {
-		if !b.Test(i) {
+	l := other.wordCount()
+	if b.wordCount() < l {
+		l = b.wordCount()
+	}
+	for i, word := range other.set[:l] {
+		if b.set[i]&word != word {
 			return false
 		}
 	}
-	return true
+	return popcntSlice(other.set[l:]) == 0
 }
 
 // IsStrictSuperSet returns true if this is a strict superset of the other set

@@ -8,6 +8,7 @@ package bitset
 
 import (
 	"bytes"
+	"fmt"
 	"math/rand"
 	"testing"
 )
@@ -540,5 +541,79 @@ func BenchmarkBitsetReadWrite(b *testing.B) {
 		s.WriteTo(&buffer)
 		temp.ReadFrom(&buffer)
 		buffer.Reset()
+	}
+}
+
+func BenchmarkIsSuperSet(b *testing.B) {
+	new := func(len int, density float64) *BitSet {
+		r := rand.New(rand.NewSource(42))
+		bs := New(uint(len))
+		for i := 0; i < len; i++ {
+			bs.SetTo(uint(i), r.Float64() < density)
+		}
+		return bs
+	}
+
+	bench := func(name string, lenS, lenSS int, density float64, overrideS, overrideSS map[int]bool, f func(*BitSet, *BitSet) bool) {
+		s := new(lenS, density)
+		ss := new(lenSS, density)
+
+		for i, v := range overrideS {
+			s.SetTo(uint(i), v)
+		}
+		for i, v := range overrideSS {
+			ss.SetTo(uint(i), v)
+		}
+
+		b.Run(name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = f(ss, s)
+			}
+		})
+	}
+
+	f := func(ss, s *BitSet) bool {
+		return ss.IsSuperSet(s)
+	}
+	fStrict := func(ss, s *BitSet) bool {
+		return ss.IsStrictSuperSet(s)
+	}
+
+	for _, len := range []int{1, 10, 100, 1000, 10000, 100000} {
+		density := 0.5
+		bench(fmt.Sprintf("equal, len=%d", len),
+			len, len, density, nil, nil, f)
+		bench(fmt.Sprintf("equal, len=%d, strict", len),
+			len, len, density, nil, nil, fStrict)
+	}
+
+	for _, density := range []float64{0, 0.05, 0.2, 0.8, 0.95, 1} {
+		len := 10000
+		bench(fmt.Sprintf("equal, density=%.2f", density),
+			len, len, density, nil, nil, f)
+		bench(fmt.Sprintf("equal, density=%.2f, strict", density),
+			len, len, density, nil, nil, fStrict)
+	}
+
+	for _, diff := range []int{0, 100, 1000, 9999} {
+		len := 10000
+		density := 0.5
+		overrideS := map[int]bool{diff: true}
+		overrideSS := map[int]bool{diff: false}
+		bench(fmt.Sprintf("subset, len=%d, diff=%d", len, diff),
+			len, len, density, overrideS, overrideSS, f)
+		bench(fmt.Sprintf("subset, len=%d, diff=%d, strict", len, diff),
+			len, len, density, overrideS, overrideSS, fStrict)
+	}
+
+	for _, diff := range []int{0, 100, 1000, 9999} {
+		len := 10000
+		density := 0.5
+		overrideS := map[int]bool{diff: false}
+		overrideSS := map[int]bool{diff: true}
+		bench(fmt.Sprintf("superset, len=%d, diff=%d", len, diff),
+			len, len, density, overrideS, overrideSS, f)
+		bench(fmt.Sprintf("superset, len=%d, diff=%d, strict", len, diff),
+			len, len, density, overrideS, overrideSS, fStrict)
 	}
 }
