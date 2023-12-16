@@ -551,6 +551,18 @@ func (b *BitSet) ClearAll() *BitSet {
 	return b
 }
 
+// SetAll sets the entire BitSet
+func (b *BitSet) SetAll() *BitSet {
+	if b != nil && b.set != nil {
+		for i := range b.set {
+			b.set[i] = allBits
+		}
+
+		b.cleanLastWord()
+	}
+	return b
+}
+
 // wordCount returns the number of words used in a bit set
 func (b *BitSet) wordCount() int {
 	return wordsNeededUnbound(b.length)

@@ -1910,3 +1910,19 @@ func TestReadFrom(t *testing.T) {
 		})
 	}
 }
+
+func TestSetAll(t *testing.T) {
+	test := func(name string, bs *BitSet, want uint) {
+		t.Run(name, func(t *testing.T) {
+			bs.SetAll()
+			if bs.Count() != want {
+				t.Errorf("expected %d bits to be set, got %d", want, bs.Count())
+			}
+		})
+	}
+
+	test("nil", nil, 0)
+	for _, length := range []uint{0, 1, 10, 63, 64, 65, 100, 640} {
+		test(fmt.Sprintf("length %d", length), New(length), length)
+	}
+}
