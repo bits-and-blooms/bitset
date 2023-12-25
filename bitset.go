@@ -956,7 +956,8 @@ func (b *BitSet) IsStrictSuperSet(other *BitSet) bool {
 	return b.Count() > other.Count() && b.IsSuperSet(other)
 }
 
-// DumpAsBits dumps a bit set as a string of bits
+// DumpAsBits dumps a bit set as a string of bits. Following the usual convention in Go,
+// the least significant bits are printed last (index 0 is at the end of the string).
 func (b *BitSet) DumpAsBits() string {
 	if b.set == nil {
 		return "."
