@@ -94,17 +94,17 @@ func (b *BitSet) SetBitsetFrom(buf []uint64) {
 	b.set = buf
 }
 
-// From is a constructor used to create a BitSet from an array of integers
+// From is a constructor used to create a BitSet from an array of words
 func From(buf []uint64) *BitSet {
 	return FromWithLength(uint(len(buf))*64, buf)
 }
 
-// FromWithLength constructs from an array of integers and length.
+// FromWithLength constructs from an array of words and length.
 func FromWithLength(len uint, set []uint64) *BitSet {
 	return &BitSet{len, set}
 }
 
-// Bytes returns the bitset as array of integers
+// Bytes returns the bitset as array of words
 func (b *BitSet) Bytes() []uint64 {
 	return b.set
 }
@@ -1134,4 +1134,38 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 
 	_, err = b.ReadFrom(bytes.NewReader(buf))
 	return err
+}
+
+// Rank returns the nunber of set bits up to and including the index
+// that are set in the bitset.
+// See https://en.wikipedia.org/wiki/Ranking#Ranking_in_statistics
+func (b *BitSet) Rank(index uint) uint {
+	if index >= b.length {
+		return b.Count()
+	}
+	leftover := (index + 1) & 63
+	answer := uint(popcntSlice(b.set[:(index+1)>>6]))
+	if leftover != 0 {
+		answer += uint(popcount(b.set[(index+1)>>6] << (64 - leftover)))
+	}
+	return answer
+}
+
+// Select returns the index of the jth set bit, where j is the argument.
+// The caller is responsible to ensure that 0 <= j < Count(): when j is
+// out of range, the function returns the length of the bitset (b.length).
+//
+// Note that this function differs in convention from the Rank function which
+// returns 1 when ranking the smallest value. We follow the conventional
+// textbook definition of Select and Rank.
+func (b *BitSet) Select(index uint) uint {
+	leftover := index
+	for idx, word := range b.set {
+		w := uint(popcount(word))
+		if w > leftover {
+			return uint(idx)*64 + select64(word, leftover)
+		}
+		leftover -= w
+	}
+	return b.length
 }
