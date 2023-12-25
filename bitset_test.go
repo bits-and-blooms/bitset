@@ -1497,6 +1497,43 @@ func TestClearAll(t *testing.T) {
 	}
 }
 
+func TestRankSelect(t *testing.T) {
+	u := []uint{2, 3, 5, 7, 11, 700, 1500}
+	b := BitSet{}
+	for _, v := range u {
+		b.Set(v)
+	}
+
+	if b.Rank(5) != 3 {
+		t.Error("Unexpected rank")
+		return
+	}
+	if b.Rank(6) != 3 {
+		t.Error("Unexpected rank")
+		return
+	}
+	if b.Rank(1500) != 7 {
+		t.Error("Unexpected rank")
+		return
+	}
+	if b.Select(0) != 2 {
+		t.Error("Unexpected select")
+		return
+	}
+	if b.Select(1) != 3 {
+		t.Error("Unexpected select")
+		return
+	}
+	if b.Select(2) != 5 {
+		t.Error("Unexpected select")
+		return
+	}
+
+	if b.Select(5) != 700 {
+		t.Error("Unexpected select")
+		return
+	}
+}
 func TestFlip(t *testing.T) {
 	b := new(BitSet)
 	c := b.Flip(11)
