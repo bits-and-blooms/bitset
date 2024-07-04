@@ -737,7 +737,7 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	return
 }
 
-// IntersectionCardinality computes the cardinality of the union
+// IntersectionCardinality computes the cardinality of the intersection
 func (b *BitSet) IntersectionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
