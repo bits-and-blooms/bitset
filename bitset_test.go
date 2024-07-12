@@ -129,7 +129,7 @@ func TestBitSetIsClear(t *testing.T) {
 	}
 }
 
-func TestExendOnBoundary(t *testing.T) {
+func TestExtendOnBoundary(t *testing.T) {
 	v := New(32)
 	defer func() {
 		if r := recover(); r != nil {
