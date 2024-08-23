@@ -1185,3 +1185,121 @@ func (b *BitSet) Select(index uint) uint {
 	}
 	return b.length
 }
+
+// top detects the top bit set
+func (b *BitSet) top() (uint, bool) {
+	panicIfNull(b)
+
+	idx := len(b.set) - 1
+	for ; idx >= 0 && b.set[idx] == 0; idx-- {
+	}
+
+	// no set bits
+	if idx < 0 {
+		return 0, false
+	}
+
+	return uint(idx)*wordSize + len64(b.set[idx]) - 1, true
+}
+
+// ShiftLeft shifts the bitset like << operation would do.
+//
+// Left shift may require bitset size extension. We try to avoid the
+// unnecessary memory operations by detecting the leftmost set bit.
+// The function will panic if shift causes excess of capacity.
+func (b *BitSet) ShiftLeft(bits uint) {
+	panicIfNull(b)
+
+	if bits == 0 {
+		return
+	}
+
+	top, ok := b.top()
+	if !ok {
+		return
+	}
+
+	// capacity check
+	if top+bits >= Cap() {
+		panic("You are exceeding the capacity")
+	}
+
+	// destination set
+	dst := b.set
+
+	// not using extendSet() to avoid unneeded data copying
+	nsize := wordsNeeded(top + bits)
+	if len(b.set) < nsize {
+		dst = make([]uint64, nsize, 2*nsize)
+	}
+	if top+bits >= b.length {
+		b.length = top + bits + 1
+	}
+
+	pad, idx := top%wordSize, top>>log2WordSize
+	shift, pages := bits%wordSize, bits>>log2WordSize
+	if bits%wordSize == 0 { // happy case: just add pages
+		copy(dst[pages:nsize], b.set)
+	} else {
+		if pad+shift >= wordSize {
+			dst[idx+pages+1] = b.set[idx] >> (wordSize - shift)
+		}
+
+		for i := int(idx); i >= 0; i-- {
+			if i > 0 {
+				dst[i+int(pages)] = (b.set[i] << shift) | (b.set[i-1] >> (wordSize - shift))
+			} else {
+				dst[i+int(pages)] = b.set[i] << shift
+			}
+		}
+	}
+
+	// zeroing extra pages
+	for i := 0; i < int(pages); i++ {
+		dst[i] = 0
+	}
+
+	b.set = dst
+}
+
+// ShiftRight shifts the bitset like >> operation would do.
+func (b *BitSet) ShiftRight(bits uint) {
+	panicIfNull(b)
+
+	if bits == 0 {
+		return
+	}
+
+	top, ok := b.top()
+	if !ok {
+		return
+	}
+
+	if bits >= top {
+		b.set = make([]uint64, wordsNeeded(b.length))
+		return
+	}
+
+	pad, idx := top%wordSize, top>>log2WordSize
+	shift, pages := bits%wordSize, bits>>log2WordSize
+	if bits%wordSize == 0 { // happy case: just clear pages
+		b.set = b.set[pages:]
+		b.length -= pages * wordSize
+	} else {
+		for i := 0; i <= int(idx-pages); i++ {
+			if i < int(idx-pages) {
+				b.set[i] = (b.set[i+int(pages)] >> shift) | (b.set[i+int(pages)+1] << (wordSize - shift))
+			} else {
+				b.set[i] = b.set[i+int(pages)] >> shift
+			}
+		}
+
+		if pad < shift {
+			b.set[int(idx-pages)] = 0
+		}
+	}
+
+	for i := int(idx-pages) + 1; i <= int(idx); i++ {
+		b.set[i] = 0
+	}
+}

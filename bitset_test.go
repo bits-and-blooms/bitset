@@ -1963,3 +1963,75 @@ func TestSetAll(t *testing.T) {
 		test(fmt.Sprintf("length %d", length), New(length), length)
 	}
 }
+
+func TestShiftLeft(t *testing.T) {
+	data := []uint{5, 28, 45, 72, 89}
+
+	test := func(name string, bits uint) {
+		t.Run(name, func(t *testing.T) {
+			b := New(200)
+			for _, i := range data {
+				b.Set(i)
+			}
+
+			b.ShiftLeft(bits)
+
+			if int(b.Count()) != len(data) {
+				t.Error("bad bits count")
+			}
+
+			for _, i := range data {
+				if !b.Test(i + bits) {
+					t.Errorf("bit %v is not set", i+bits)
+				}
+			}
+		})
+	}
+
+	test("zero", 0)
+	test("no page change", 19)
+	test("shift to full page", 38)
+	test("full page shift", 64)
+	test("no page split", 80)
+	test("with page split", 114)
+	test("with extension", 242)
+}
+
+func TestShiftRight(t *testing.T) {
+	data := []uint{5, 28, 45, 72, 89}
+
+	test := func(name string, bits uint) {
+		t.Run(name, func(t *testing.T) {
+			b := New(200)
+			for _, i := range data {
+				b.Set(i)
+			}
+
+			b.ShiftRight(bits)
+
+			count := 0
+			for _, i := range data {
+				if i > bits {
+					count++
+
+					if !b.Test(i - bits) {
+						t.Errorf("bit %v is not set", i-bits)
+					}
+				}
+			}
+
+			if int(b.Count()) != count {
+				t.Error("bad bits count")
+			}
+		})
+	}
+
+	test("zero", 0)
+	test("no page change", 3)
+	test("no page split", 20)
+	test("with page split", 40)
+	test("full page shift", 64)
+	test("with extension", 70)
+	test("full shift", 89)
+	test("remove all", 242)
+}
