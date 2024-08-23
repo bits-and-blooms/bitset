@@ -148,6 +148,9 @@ func New(length uint) (bset *BitSet) {
 }
 
 // Cap returns the total possible capacity, or number of bits
+// that can be stored in the BitSet. Note that this is further limited
+// by the maximum allocation size in Go, and your available memory,
+// as any Go data structure.
 func Cap() uint {
 	return ^uint(0)
 }
