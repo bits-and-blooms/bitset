@@ -1182,3 +1182,65 @@ func (b *BitSet) Select(index uint) uint {
 	}
 	return b.length
 }
+
+// ShiftLeft shifts the bitset like << operation would do.
+//
+// Left shift may require bitset size extension. We try to avoid the
+// unnecessary memory operations by detecting the leftmost set bit.
+// The function will panic if shift causes excess of capacity.
+func (b *BitSet) ShiftLeft(bits uint) {
+	panicIfNull(b)
+
+	// detect the leftmost set bit
+	idx := len(b.set) - 1
+	for ; idx >= 0 && b.set[idx] == 0; idx-- {
+	}
+
+	// no set bits, nothing to do
+	if idx < 0 {
+		return
+	}
+
+	// leftmost set bit
+	pad := len64(b.set[idx])
+	left := uint(idx)*wordSize + pad - 1
+
+	// capacity check
+	if left+bits >= Cap() {
+		panic("You are exceeding the capacity")
+	}
+
+	// destination set
+	dst := b.set
+
+	// not using extendSet() to avoid unneeded data copying
+	nsize := wordsNeeded(left + bits)
+	if len(b.set) < nsize {
+		dst = make([]uint64, nsize, 2*nsize)
+		b.length = left + bits + 1
+	}
+
+	shift, pages := bits%wordSize, bits>>log2WordSize
+	if bits%wordSize == 0 { // happy case: just add pages
+		copy(dst[pages:nsize], b.set)
+	} else {
+		if pad+shift >= wordSize {
+			dst[idx+int(pages)+1] = b.set[idx] >> (wordSize - shift)
+		}
+
+		for i := idx; i >= 0; i-- {
+			if i > 0 {
+				dst[i+int(pages)] = (b.set[i] << shift) | (b.set[i-1] >> (wordSize - shift))
+			} else {
+				dst[i+int(pages)] = b.set[i] << shift
+			}
+		}
+	}
+
+	// zeroing extra pages
+	for i := 0; i < int(pages); i++ {
+		dst[i] = 0
+	}
+
+	b.set = dst
+}
