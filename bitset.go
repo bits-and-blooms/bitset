@@ -1207,6 +1207,10 @@ func (b *BitSet) top() (uint, bool) {
 func (b *BitSet) ShiftLeft(bits uint) {
 	panicIfNull(b)
 
+	if bits == 0 {
+		return
+	}
+
 	top, ok := b.top()
 	if !ok {
 		return
@@ -1256,6 +1260,10 @@ func (b *BitSet) ShiftLeft(bits uint) {
 // ShiftRight shifts the bitset like >> operation would do.
 func (b *BitSet) ShiftRight(bits uint) {
 	panicIfNull(b)
+
+	if bits == 0 {
+		return
+	}
 
 	top, ok := b.top()
 	if !ok {
