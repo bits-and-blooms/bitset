@@ -1183,6 +1183,22 @@ func (b *BitSet) Select(index uint) uint {
 	return b.length
 }
 
+// top detects the top bit set
+func (b *BitSet) top() (uint, bool) {
+	panicIfNull(b)
+
+	idx := len(b.set) - 1
+	for ; idx >= 0 && b.set[idx] == 0; idx-- {
+	}
+
+	// no set bits
+	if idx < 0 {
+		return 0, false
+	}
+
+	return uint(idx)*wordSize + len64(b.set[idx]) - 1, true
+}
+
 // ShiftLeft shifts the bitset like << operation would do.
 //
 // Left shift may require bitset size extension. We try to avoid the
@@ -1191,22 +1207,13 @@ func (b *BitSet) Select(index uint) uint {
 func (b *BitSet) ShiftLeft(bits uint) {
 	panicIfNull(b)
 
-	// detect the leftmost set bit
-	idx := len(b.set) - 1
-	for ; idx >= 0 && b.set[idx] == 0; idx-- {
-	}
-
-	// no set bits, nothing to do
-	if idx < 0 {
+	top, ok := b.top()
+	if !ok {
 		return
 	}
 
-	// leftmost set bit
-	pad := len64(b.set[idx])
-	left := uint(idx)*wordSize + pad - 1
-
 	// capacity check
-	if left+bits >= Cap() {
+	if top+bits >= Cap() {
 		panic("You are exceeding the capacity")
 	}
 
@@ -1214,21 +1221,22 @@ func (b *BitSet) ShiftLeft(bits uint) {
 	dst := b.set
 
 	// not using extendSet() to avoid unneeded data copying
-	nsize := wordsNeeded(left + bits)
+	nsize := wordsNeeded(top + bits)
 	if len(b.set) < nsize {
 		dst = make([]uint64, nsize, 2*nsize)
-		b.length = left + bits + 1
+		b.length = top + bits + 1
 	}
 
+	pad, idx := top%wordSize, top>>log2WordSize
 	shift, pages := bits%wordSize, bits>>log2WordSize
 	if bits%wordSize == 0 { // happy case: just add pages
 		copy(dst[pages:nsize], b.set)
 	} else {
 		if pad+shift >= wordSize {
-			dst[idx+int(pages)+1] = b.set[idx] >> (wordSize - shift)
+			dst[idx+pages+1] = b.set[idx] >> (wordSize - shift)
 		}
 
-		for i := idx; i >= 0; i-- {
+		for i := int(idx); i >= 0; i-- {
 			if i > 0 {
 				dst[i+int(pages)] = (b.set[i] << shift) | (b.set[i-1] >> (wordSize - shift))
 			} else {
