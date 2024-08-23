@@ -1228,6 +1228,8 @@ func (b *BitSet) ShiftLeft(bits uint) {
 	nsize := wordsNeeded(top + bits)
 	if len(b.set) < nsize {
 		dst = make([]uint64, nsize, 2*nsize)
+	}
+	if top+bits >= b.length {
 		b.length = top + bits + 1
 	}
 
