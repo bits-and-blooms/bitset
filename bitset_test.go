@@ -2030,6 +2030,7 @@ func TestShiftRight(t *testing.T) {
 	test("no page change", 3)
 	test("no page split", 20)
 	test("with page split", 40)
+	test("full page shift", 64)
 	test("with extension", 70)
 	test("full shift", 89)
 	test("remove all", 242)
