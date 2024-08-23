@@ -1252,3 +1252,41 @@ func (b *BitSet) ShiftLeft(bits uint) {
 
 	b.set = dst
 }
+
+// ShiftRight shifts the bitset like >> operation would do.
+func (b *BitSet) ShiftRight(bits uint) {
+	panicIfNull(b)
+
+	top, ok := b.top()
+	if !ok {
+		return
+	}
+
+	if bits >= top {
+		b.set = make([]uint64, wordsNeeded(b.length))
+		return
+	}
+
+	pad, idx := top%wordSize, top>>log2WordSize
+	shift, pages := bits%wordSize, bits>>log2WordSize
+	if bits%wordSize == 0 { // happy case: just clear pages
+		b.set = b.set[pages:]
+		b.length -= pages * wordSize
+	} else {
+		for i := 0; i <= int(idx-pages); i++ {
+			if i < int(idx-pages) {
+				b.set[i] = (b.set[i+int(pages)] >> shift) | (b.set[i+int(pages)+1] << (wordSize - shift))
+			} else {
+				b.set[i] = b.set[i+int(pages)] >> shift
+			}
+		}
+
+		if pad < shift {
+			b.set[int(idx-pages)] = 0
+		}
+	}
+
+	for i := int(idx-pages) + 1; i <= int(idx); i++ {
+		b.set[i] = 0
+	}
+}
