@@ -21,7 +21,7 @@ var len8tab = "" +
 	"\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08" +
 	"\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08"
 
-// Len64 returns the minimum number of bits required to represent x; the result is 0 for x == 0.
+// len64 returns the minimum number of bits required to represent x; the result is 0 for x == 0.
 func len64(x uint64) (n uint) {
 	if x >= 1<<32 {
 		x >>= 32
