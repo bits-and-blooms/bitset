@@ -39,5 +39,5 @@ func len64(x uint64) (n uint) {
 }
 
 func leadingZeroes64(v uint64) uint {
-	return 64 - len64(x)
+	return 64 - len64(v)
 }
