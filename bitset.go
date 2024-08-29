@@ -164,6 +164,19 @@ func New(length uint) (bset *BitSet) {
 	return bset
 }
 
+// MustNew creates a new BitSet with the given length bits.
+// It panics if length exceeds the possible capacity or by a lack of memory.
+func MustNew(length uint) (bset *BitSet) {
+	if length >= Cap() {
+		panic("You are exceeding the capacity")
+	}
+
+	return &BitSet{
+		length,
+		make([]uint64, wordsNeeded(length)), // may panic on lack of memory
+	}
+}
+
 // Cap returns the total possible capacity, or number of bits
 // that can be stored in the BitSet theoretically. Under 32-bit system,
 // it is 4294967295 and under 64-bit system, it is 18446744073709551615.
