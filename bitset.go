@@ -147,6 +147,15 @@ func New(length uint) (bset *BitSet) {
 	return bset
 }
 
+// MustNew creates a new BitSet with a hint that length bits will be required,
+// it panics if you exceed the capacity.
+func MustNew(length uint) (bset *BitSet) {
+	return &BitSet{
+		length,
+		make([]uint64, wordsNeeded(length)),
+	}
+}
+
 // Cap returns the total possible capacity, or number of bits
 // that can be stored in the BitSet. Note that this is further limited
 // by the maximum allocation size in Go, and your available memory,

@@ -13,6 +13,8 @@ import (
 	"testing"
 )
 
+var sinkBitSet *BitSet
+
 func BenchmarkSet(b *testing.B) {
 	b.StopTimer()
 	r := rand.New(rand.NewSource(0))
@@ -615,5 +617,19 @@ func BenchmarkIsSuperSet(b *testing.B) {
 			len, len, density, overrideS, overrideSS, f)
 		bench(fmt.Sprintf("superset, len=%d, diff=%d, strict", len, diff),
 			len, len, density, overrideS, overrideSS, fStrict)
+	}
+}
+
+func BenchmarkNew(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sinkBitSet = New(0)
+	}
+}
+
+func BenchmarkMustNew(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sinkBitSet = MustNew(0)
 	}
 }
