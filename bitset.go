@@ -118,7 +118,7 @@ func wordsNeeded(i uint) int {
 }
 
 // wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
-// This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing bitmap).
+// This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing BitSet).
 func wordsNeededUnbound(i uint) int {
 	return int((i + (wordSize - 1)) >> log2WordSize)
 }
@@ -356,7 +356,7 @@ func (b *BitSet) InsertAt(idx uint) *BitSet {
 	return b
 }
 
-// String creates a string representation of the Bitmap
+// String creates a string representation of the BitSet
 func (b *BitSet) String() string {
 	// follows code from https://github.com/RoaringBitmap/roaring
 	var buffer bytes.Buffer
