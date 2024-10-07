@@ -112,11 +112,11 @@ func From(buf []uint64) *BitSet {
 // As a user of FromWithLength, you are responsible for ensuring
 // that the length is correct: your slice should have length at
 // least (len+63)/64 in 64-bit words.
-func FromWithLength(len uint, set []uint64) *BitSet {
-	if uint(len(set)) < wordsNeeded(len) {
+func FromWithLength(length uint, set []uint64) *BitSet {
+	if len(set) < wordsNeeded(length) {
 		panic("BitSet.FromWithLength: slice is too short")
 	}
-	return &BitSet{len, set}
+	return &BitSet{length, set}
 }
 
 // Bytes returns the bitset as array of 64-bit words, giving direct access to the internal representation.
