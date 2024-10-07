@@ -111,7 +111,7 @@ func From(buf []uint64) *BitSet {
 // the From function.
 // As a user of FromWithLength, you are responsible for ensuring
 // that the length is correct: your slice should have length at
-// least (len+63)/64 in 64-bit words.
+// least (length+63)/64 in 64-bit words.
 func FromWithLength(length uint, set []uint64) *BitSet {
 	if len(set) < wordsNeeded(length) {
 		panic("BitSet.FromWithLength: slice is too short")
