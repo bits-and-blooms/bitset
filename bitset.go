@@ -106,8 +106,16 @@ func From(buf []uint64) *BitSet {
 	return FromWithLength(uint(len(buf))*64, buf)
 }
 
-// FromWithLength constructs from an array of words and length.
+// FromWithLength constructs from an array of words and length in bits.
+// This function is for advanced users, most users should prefer
+// the From function.
+// As a user of FromWithLength, you are responsible for ensuring
+// that the length is correct: your slice should have length at
+// least (len+63)/64 in 64-bit words.
 func FromWithLength(len uint, set []uint64) *BitSet {
+	if uint(len(set)) < wordsNeeded(len) {
+		panic("BitSet.FromWithLength: slice is too short")
+	}
 	return &BitSet{len, set}
 }
 
