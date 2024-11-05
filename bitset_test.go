@@ -2079,7 +2079,7 @@ func TestWord(t *testing.T) {
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {
 			bitSet := From(data)
-			output := bitSet.Word(testCase.index)
+			output := bitSet.GetWord64AtBit(testCase.index)
 
 			if output != testCase.expected {
 				t.Errorf("Word should have returned %d for input %d, but returned %d", testCase.expected, testCase.index, output)

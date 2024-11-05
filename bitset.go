@@ -205,8 +205,8 @@ func (b *BitSet) Test(i uint) bool {
 	return b.set[i>>log2WordSize]&(1<<wordsIndex(i)) != 0
 }
 
-// Word retrieves bits i through i+63 as a single uint64 value
-func (b *BitSet) Word(i uint) uint64 {
+// GetWord64AtBit retrieves bits i through i+63 as a single uint64 value
+func (b *BitSet) GetWord64AtBit(i uint) uint64 {
 	firstWordIndex := int(i >> log2WordSize)
 	subWordIndex := wordsIndex(i)
 
@@ -219,9 +219,7 @@ func (b *BitSet) Word(i uint) uint64 {
 	// The next word, masked to only include the necessary bits and shifted to cover the
 	// top of the word
 	if (firstWordIndex + 1) < len(b.set) {
-		mask := uint64((1 << subWordIndex) - 1)
-
-		secondWord = (b.set[firstWordIndex+1] & mask) << uint64(wordSize-subWordIndex)
+		secondWord = b.set[firstWordIndex+1] << uint64(wordSize-subWordIndex)
 	}
 
 	return firstWord | secondWord
