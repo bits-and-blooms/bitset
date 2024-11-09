@@ -2035,3 +2035,55 @@ func TestShiftRight(t *testing.T) {
 	test("full shift", 89)
 	test("remove all", 242)
 }
+
+func TestWord(t *testing.T) {
+	data := []uint64{0x0bfd85fc01af96dd, 0x3fe212a7eae11414, 0x7aa412221245dee1, 0x557092c1711306d5}
+	testCases := map[string]struct {
+		index    uint
+		expected uint64
+	}{
+		"first word": {
+			index:    0,
+			expected: 0x0bfd85fc01af96dd,
+		},
+		"third word": {
+			index:    128,
+			expected: 0x7aa412221245dee1,
+		},
+		"off the edge": {
+			index:    256,
+			expected: 0,
+		},
+		"way off the edge": {
+			index:    6346235235,
+			expected: 0,
+		},
+		"split between two words": {
+			index:    96,
+			expected: 0x1245dee13fe212a7,
+		},
+		"partly off edge": {
+			index:    254,
+			expected: 1,
+		},
+		"skip one nibble": {
+			index:    4,
+			expected: 0x40bfd85fc01af96d,
+		},
+		"slightly offset results": {
+			index:    65,
+			expected: 0x9ff10953f5708a0a,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			bitSet := From(data)
+			output := bitSet.GetWord64AtBit(testCase.index)
+
+			if output != testCase.expected {
+				t.Errorf("Word should have returned %d for input %d, but returned %d", testCase.expected, testCase.index, output)
+			}
+		})
+	}
+}
