@@ -586,6 +586,46 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	return 0, false
 }
 
+// PreviousSet returns the previous set bit from the specified index,
+// including possibly the current index
+// along with an error code (true = valid, false = no bit found i.e. all bits are clear)
+func (b *BitSet) PreviousSet(i uint) (uint, bool) {
+	x := int(i >> log2WordSize)
+	if x >= len(b.set) {
+		return 0, false
+	}
+	for {
+		if b.Test(i) {
+			return i, true
+		}
+		if i == 0 {
+			break
+		}
+		i--
+	}
+	return 0, false
+}
+
+// PreviousClear returns the previous clear bit from the specified index,
+// including possibly the current index
+// along with an error code (true = valid, false = no clear bit found i.e. all bits are set)
+func (b *BitSet) PreviousClear(i uint) (uint, bool) {
+	x := int(i >> log2WordSize)
+	if x >= len(b.set) {
+		return 0, false
+	}
+	for {
+		if !b.Test(i) {
+			return i, true
+		}
+		if i == 0 {
+			break
+		}
+		i--
+	}
+	return 0, false
+}
+
 // ClearAll clears the entire BitSet.
 // It does not free the memory.
 func (b *BitSet) ClearAll() *BitSet {

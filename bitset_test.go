@@ -2087,3 +2087,57 @@ func TestWord(t *testing.T) {
 		})
 	}
 }
+
+func TestPreviousSet(t *testing.T) {
+	v := New(10)
+	v.Set(0)
+	v.Set(2)
+	v.Set(4)
+	for _, tt := range []struct {
+		index     uint
+		want      uint
+		wantFound bool
+	}{
+		{0, 0, true},
+		{1, 0, true},
+		{2, 2, true},
+		{3, 2, true},
+		{4, 4, true},
+		{5, 4, true},
+		{1024, 0, false},
+	} {
+		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
+			got, found := v.PreviousSet(tt.index)
+			if got != tt.want || found != tt.wantFound {
+				t.Errorf("PreviousSet(%d) = %d, %v, want %d, %v", tt.index, got, found, tt.want, tt.wantFound)
+			}
+		})
+	}
+}
+
+func TestPreviousClear(t *testing.T) {
+	v := New(10)
+	v.Set(0)
+	v.Set(2)
+	v.Set(4)
+	for _, tt := range []struct {
+		index     uint
+		want      uint
+		wantFound bool
+	}{
+		{0, 0, false},
+		{1, 1, true},
+		{2, 1, true},
+		{3, 3, true},
+		{4, 3, true},
+		{5, 5, true},
+		{1024, 0, false},
+	} {
+		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
+			got, found := v.PreviousClear(tt.index)
+			if got != tt.want || found != tt.wantFound {
+				t.Errorf("PreviousClear(%d) = %d, %v, want %d, %v", tt.index, got, found, tt.want, tt.wantFound)
+			}
+		})
+	}
+}
