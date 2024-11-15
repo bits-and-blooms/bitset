@@ -2117,6 +2117,23 @@ func TestPreviousSet(t *testing.T) {
 			}
 		})
 	}
+	v.ClearAll()
+	for _, tt := range []struct {
+		index     uint
+		want      uint
+		wantFound bool
+	}{
+		{0, 0, false},
+		{120, 0, false},
+		{1024, 0, false},
+	} {
+		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
+			got, found := v.PreviousSet(tt.index)
+			if got != tt.want || found != tt.wantFound {
+				t.Errorf("PreviousSet(%d) = %d, %v, want %d, %v", tt.index, got, found, tt.want, tt.wantFound)
+			}
+		})
+	}
 }
 
 func TestPreviousClear(t *testing.T) {
@@ -2139,6 +2156,23 @@ func TestPreviousClear(t *testing.T) {
 		{100, 100, true},
 		{120, 119, true},
 		{121, 121, true},
+		{1024, 0, false},
+	} {
+		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
+			got, found := v.PreviousClear(tt.index)
+			if got != tt.want || found != tt.wantFound {
+				t.Errorf("PreviousClear(%d) = %d, %v, want %d, %v", tt.index, got, found, tt.want, tt.wantFound)
+			}
+		})
+	}
+	v.SetAll()
+	for _, tt := range []struct {
+		index     uint
+		want      uint
+		wantFound bool
+	}{
+		{0, 0, false},
+		{120, 0, false},
 		{1024, 0, false},
 	} {
 		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
