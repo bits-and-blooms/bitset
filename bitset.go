@@ -586,6 +586,68 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	return 0, false
 }
 
+// PreviousSet returns the previous set bit from the specified index,
+// including possibly the current index
+// along with an error code (true = valid, false = no bit found i.e. all bits are clear)
+func (b *BitSet) PreviousSet(i uint) (uint, bool) {
+	x := int(i >> log2WordSize)
+	if x >= len(b.set) {
+		return 0, false
+	}
+	w := b.set[x]
+	// Clear the bits above the index
+	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
+	if w != 0 {
+		return uint(x<<log2WordSize) + len64(w) - 1, true
+	}
+	x--
+	// bounds check elimination in the loop
+	if x < 0 {
+		return 0, false
+	}
+	for x >= 0 {
+		w = b.set[x]
+		if w != 0 {
+			return uint(x<<log2WordSize) + len64(w) - 1, true
+		}
+		x--
+	}
+	return 0, false
+}
+
+// PreviousClear returns the previous clear bit from the specified index,
+// including possibly the current index
+// along with an error code (true = valid, false = no clear bit found i.e. all bits are set)
+func (b *BitSet) PreviousClear(i uint) (uint, bool) {
+	x := int(i >> log2WordSize)
+	if x >= len(b.set) {
+		return 0, false
+	}
+	w := b.set[x]
+	// Flip all bits and find the highest one bit
+	w = ^w
+	// Clear the bits above the index
+	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
+	if w != 0 {
+		return uint(x<<log2WordSize) + len64(w) - 1, true
+	}
+
+	x--
+	// bounds check elimination in the loop
+	if x < 0 {
+		return 0, false
+	}
+	for x >= 0 {
+		w = b.set[x]
+		w = ^w
+		if w != 0 {
+			return uint(x<<log2WordSize) + len64(w) - 1, true
+		}
+		x--
+	}
+	return 0, false
+}
+
 // ClearAll clears the entire BitSet.
 // It does not free the memory.
 func (b *BitSet) ClearAll() *BitSet {

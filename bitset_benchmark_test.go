@@ -130,6 +130,23 @@ func BenchmarkBitsetOps(b *testing.B) {
 		}
 	})
 
+	b.Run("PreviousSet", func(b *testing.B) {
+		s = New(100000)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.PreviousSet(99999)
+		}
+	})
+
+	b.Run("PreviousClear", func(b *testing.B) {
+		s = New(100000)
+		s.FlipRange(0, 100000)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.PreviousClear(99999)
+		}
+	})
+
 	b.Run("DifferenceCardinality", func(b *testing.B) {
 		empty := New(100000)
 		b.ResetTimer()
