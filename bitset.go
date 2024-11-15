@@ -594,14 +594,23 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	for {
-		if b.Test(i) {
-			return i, true
+	w := b.set[x]
+	// Clear the bits above the index
+	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
+	if w != 0 {
+		return uint(x<<log2WordSize) + len64(w) - 1, true
+	}
+	x--
+	// bounds check elimination in the loop
+	if x < 0 {
+		return 0, false
+	}
+	for x >= 0 {
+		w = b.set[x]
+		if w != 0 {
+			return uint(x<<log2WordSize) + len64(w) - 1, true
 		}
-		if i == 0 {
-			break
-		}
-		i--
+		x--
 	}
 	return 0, false
 }
@@ -614,14 +623,27 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	for {
-		if !b.Test(i) {
-			return i, true
+	w := b.set[x]
+	// Flip all bits and find the highest one bit
+	w = ^w
+	// Clear the bits above the index
+	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
+	if w != 0 {
+		return uint(x<<log2WordSize) + len64(w) - 1, true
+	}
+
+	x--
+	// bounds check elimination in the loop
+	if x < 0 {
+		return 0, false
+	}
+	for x >= 0 {
+		w = b.set[x]
+		w = ^w
+		if w != 0 {
+			return uint(x<<log2WordSize) + len64(w) - 1, true
 		}
-		if i == 0 {
-			break
-		}
-		i--
+		x--
 	}
 	return 0, false
 }

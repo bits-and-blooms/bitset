@@ -2089,10 +2089,11 @@ func TestWord(t *testing.T) {
 }
 
 func TestPreviousSet(t *testing.T) {
-	v := New(10)
+	v := New(128)
 	v.Set(0)
 	v.Set(2)
 	v.Set(4)
+	v.Set(120)
 	for _, tt := range []struct {
 		index     uint
 		want      uint
@@ -2104,6 +2105,9 @@ func TestPreviousSet(t *testing.T) {
 		{3, 2, true},
 		{4, 4, true},
 		{5, 4, true},
+		{100, 4, true},
+		{120, 120, true},
+		{121, 120, true},
 		{1024, 0, false},
 	} {
 		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
@@ -2116,10 +2120,11 @@ func TestPreviousSet(t *testing.T) {
 }
 
 func TestPreviousClear(t *testing.T) {
-	v := New(10)
+	v := New(128)
 	v.Set(0)
 	v.Set(2)
 	v.Set(4)
+	v.Set(120)
 	for _, tt := range []struct {
 		index     uint
 		want      uint
@@ -2131,6 +2136,9 @@ func TestPreviousClear(t *testing.T) {
 		{3, 3, true},
 		{4, 3, true},
 		{5, 5, true},
+		{100, 100, true},
+		{120, 119, true},
+		{121, 121, true},
 		{1024, 0, false},
 	} {
 		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
