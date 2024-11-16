@@ -600,17 +600,11 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	if w != 0 {
 		return uint(x<<log2WordSize) + len64(w) - 1, true
 	}
-	x--
-	// bounds check elimination in the loop
-	if x < 0 {
-		return 0, false
-	}
-	for x >= 0 {
+	for x--; x >= 0; x-- {
 		w = b.set[x]
 		if w != 0 {
 			return uint(x<<log2WordSize) + len64(w) - 1, true
 		}
-		x--
 	}
 	return 0, false
 }
@@ -632,18 +626,12 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 		return uint(x<<log2WordSize) + len64(w) - 1, true
 	}
 
-	x--
-	// bounds check elimination in the loop
-	if x < 0 {
-		return 0, false
-	}
-	for x >= 0 {
+	for x--; x >= 0; x-- {
 		w = b.set[x]
 		w = ^w
 		if w != 0 {
 			return uint(x<<log2WordSize) + len64(w) - 1, true
 		}
-		x--
 	}
 	return 0, false
 }
