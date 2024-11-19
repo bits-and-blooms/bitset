@@ -164,7 +164,7 @@ func New(length uint) (bset *BitSet) {
 	return bset
 }
 
-// MustNew creates a new BitSet with a hint that length bits will be required,
+// MustNew creates a new BitSet with the given length bits,
 // it panics if you exceed the capacity.
 func MustNew(length uint) (bset *BitSet) {
 	return &BitSet{
