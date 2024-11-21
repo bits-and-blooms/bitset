@@ -420,6 +420,54 @@ func TestNullCount(t *testing.T) {
 	}
 }
 
+func TestMustNew(t *testing.T) {
+	testCases := []struct {
+		length uint
+		nwords int
+	}{
+		{
+			length: 0,
+			nwords: 0,
+		},
+		{
+			length: 1,
+			nwords: 1,
+		},
+		{
+			length: 64,
+			nwords: 1,
+		},
+		{
+			length: 65,
+			nwords: 2,
+		},
+		{
+			length: 512,
+			nwords: 8,
+		},
+		{
+			length: 513,
+			nwords: 9,
+		},
+	}
+
+	for _, tc := range testCases {
+		b := MustNew(tc.length)
+		if len(b.set) != tc.nwords {
+			t.Errorf("length = %d, len(b.set) got: %d, want: %d", tc.length, len(b.set), tc.nwords)
+		}
+	}
+}
+
+func TestPanicMustNew(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("length too big should have caused a panic")
+		}
+	}()
+	MustNew(Cap())
+}
+
 func TestPanicDifferenceBNil(t *testing.T) {
 	var b *BitSet
 	var compare = New(10)
