@@ -12,7 +12,7 @@ This library is part of the [awesome go collection](https://github.com/avelino/a
 * [beego](https://github.com/beego/beego)
 * [CubeFS](https://github.com/cubefs/cubefs)
 * [Amazon EKS Distro](https://github.com/aws/eks-distro)
-* [sourcegraph](https://github.com/sourcegraph/sourcegraph)
+* [sourcegraph](https://github.com/sourcegraph/sourcegraph-public-snapshot)
 * [torrent](https://github.com/anacrolix/torrent)
 
 
@@ -125,7 +125,7 @@ E.g.,
 
 ## Memory Usage
 
-The memory usage of a bitset using `N` bits is at least `N/8` bytes. The number of bits in a bitset is at least as large as one plus the greatest bit index you have accessed. Thus it is possible to run out of memory while using a bitset. If you have lots of bits, you might prefer compressed bitsets, like the [Roaring bitmaps](http://roaringbitmap.org) and its [Go implementation](https://github.com/RoaringBitmap/roaring).
+The memory usage of a bitset using `N` bits is at least `N/8` bytes. The number of bits in a bitset is at least as large as one plus the greatest bit index you have accessed. Thus it is possible to run out of memory while using a bitset. If you have lots of bits, you might prefer compressed bitsets, like the [Roaring bitmaps](https://roaringbitmap.org) and its [Go implementation](https://github.com/RoaringBitmap/roaring).
 
 The `roaring` library allows you to go back and forth between compressed Roaring bitmaps and the conventional bitset instances:
 ```Go
