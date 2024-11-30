@@ -1,4 +1,4 @@
-// This file tests the popcnt funtions
+// This file tests the popcnt functions
 
 package bitset
 

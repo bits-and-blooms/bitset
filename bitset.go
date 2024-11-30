@@ -791,7 +791,7 @@ func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	return
 }
 
-// DifferenceCardinality computes the cardinality of the differnce
+// DifferenceCardinality computes the cardinality of the difference
 func (b *BitSet) DifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -1277,7 +1277,7 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// Rank returns the nunber of set bits up to and including the index
+// Rank returns the number of set bits up to and including the index
 // that are set in the bitset.
 // See https://en.wikipedia.org/wiki/Ranking#Ranking_in_statistics
 func (b *BitSet) Rank(index uint) uint {

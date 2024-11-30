@@ -1,7 +1,7 @@
 //go:build !go1.9 && amd64 && !appengine
 // +build !go1.9,amd64,!appengine
 
-// This file tests the popcnt funtions
+// This file tests the popcnt functions
 
 package bitset
 
