@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestStringer(t *testing.T) {
@@ -2227,6 +2228,473 @@ func TestPreviousClear(t *testing.T) {
 			got, found := v.PreviousClear(tt.index)
 			if got != tt.want || found != tt.wantFound {
 				t.Errorf("PreviousClear(%d) = %d, %v, want %d, %v", tt.index, got, found, tt.want, tt.wantFound)
+			}
+		})
+	}
+}
+
+func TestBitSetOnesBetween(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    *BitSet
+		from     uint
+		to       uint
+		expected uint
+	}{
+		{"empty range", New(64).Set(0).Set(1), 5, 5, 0},
+		{"invalid range", New(64).Set(0).Set(1), 5, 3, 0},
+		{"single word", New(64).Set(1).Set(2).Set(3), 1, 3, 2},
+		{"single word full", New(64).Set(0).Set(1).Set(2).Set(3), 0, 4, 4},
+		{"cross word boundary", New(128).Set(63).Set(64).Set(65), 63, 66, 3},
+		{"multiple words", New(256).Set(0).Set(63).Set(64).Set(127).Set(128), 0, 129, 5},
+		{"large gap", New(256).Set(0).Set(100).Set(200), 0, 201, 3},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.input.OnesBetween(tc.from, tc.to)
+			if got != tc.expected {
+				t.Errorf("OnesBetween(%d, %d) = %d, want %d",
+					tc.from, tc.to, got, tc.expected)
+			}
+		})
+	}
+
+	// Property-based testing
+	const numTests = 1e5
+	seed := time.Now().UnixNano()
+	rng := rand.New(rand.NewSource(seed))
+	t.Logf("Seed: %d", seed)
+
+	for i := 0; i < numTests; i++ {
+		size := uint(rng.Intn(1024) + 64)
+		bs := New(size)
+
+		// Set random bits
+		for j := 0; j < int(size/4); j++ {
+			bs.Set(uint(rng.Intn(int(size))))
+		}
+
+		// Generate random range
+		from := uint(rng.Intn(int(size)))
+		to := from + uint(rng.Intn(int(size-from)))
+
+		// Compare with naive implementation
+		got := bs.OnesBetween(from, to)
+		want := uint(0)
+		for j := from; j < to; j++ {
+			if bs.Test(j) {
+				want++
+			}
+		}
+
+		if got != want {
+			t.Errorf("Case %d: OnesBetween(%d, %d) = %d, want %d",
+				i, from, to, got, want)
+		}
+	}
+}
+
+func BenchmarkBitSetOnesBetween(b *testing.B) {
+	sizes := []int{64, 256, 1024, 4096, 16384}
+	densities := []float64{0.1, 0.5, 0.9} // Different bit densities to test
+	rng := rand.New(rand.NewSource(42))
+
+	for _, size := range sizes {
+		for _, density := range densities {
+			// Create bitset with given density
+			bs := New(uint(size))
+			for i := 0; i < int(float64(size)*density); i++ {
+				bs.Set(uint(rng.Intn(size)))
+			}
+
+			// Generate random ranges
+			ranges := make([][2]uint, 1000)
+			for i := range ranges {
+				from := uint(rng.Intn(size))
+				to := from + uint(rng.Intn(size-int(from)))
+				ranges[i] = [2]uint{from, to}
+			}
+
+			name := fmt.Sprintf("size=%d/density=%.1f", size, density)
+			b.Run(name, func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					r := ranges[i%len(ranges)]
+					_ = bs.OnesBetween(r[0], r[1])
+				}
+			})
+		}
+	}
+}
+
+func generatePextTestCases(n int) [][2]uint64 {
+	cases := make([][2]uint64, n)
+	for i := range cases {
+		cases[i][0] = rand.Uint64()
+		cases[i][1] = rand.Uint64()
+	}
+	return cases
+}
+
+func BenchmarkPEXT(b *testing.B) {
+	// Generate test cases
+	testCases := generatePextTestCases(1000)
+
+	b.ResetTimer()
+
+	var r uint64
+	for i := 0; i < b.N; i++ {
+		tc := testCases[i%len(testCases)]
+		r = pext(tc[0], tc[1])
+	}
+	_ = r // prevent optimization
+}
+
+func BenchmarkPDEP(b *testing.B) {
+	// Generate test cases
+	testCases := generatePextTestCases(1000)
+
+	b.ResetTimer()
+
+	var r uint64
+	for i := 0; i < b.N; i++ {
+		tc := testCases[i%len(testCases)]
+		r = pdep(tc[0], tc[1])
+	}
+	_ = r // prevent optimization
+}
+
+func TestPext(t *testing.T) {
+	const numTests = 1e6
+	seed := time.Now().UnixNano()
+	rng := rand.New(rand.NewSource(seed))
+	t.Logf("Seed: %d", seed)
+
+	for i := 0; i < numTests; i++ {
+		w := rng.Uint64()
+		m := rng.Uint64()
+		result := pext(w, m)
+		popCount := popcount(m)
+
+		// Test invariants
+		if popCount > 0 && result >= (uint64(1)<<popCount) {
+			t.Fatalf("Case %d: result %x exceeds maximum possible value for mask with popcount %d",
+				i, result, popCount)
+		}
+
+		if popcount(result) > popcount(w&m) {
+			t.Fatalf("Case %d: result has more 1s than masked input: result=%x, input&mask=%x",
+				i, result, w&m)
+		}
+
+		// Test that extracted bits preserve relative ordering:
+		// For each bit position that's set in the mask (m):
+		// 1. Extract a bit from result (resultCopy&1)
+		// 2. Get corresponding input bit from w (w>>j&1)
+		// 3. XOR them - if different, bits weren't preserved correctly
+		resultCopy := result
+		for j := 0; j < 64; j++ {
+			// Check if mask bit is set at position j
+			if m&(uint64(1)<<j) != 0 {
+				// resultCopy&1 gets LSB of remaining result bits
+				// w>>j&1 gets bit j from original input
+				// XOR (^) checks if they match
+				if (resultCopy&1)^(w>>j&1) != 0 {
+					t.Fatalf("Case %d: bit ordering violation at position %d", i, j)
+				}
+				// Shift to examine next bit in packed result
+				resultCopy >>= 1
+			}
+		}
+	}
+}
+
+func TestPdep(t *testing.T) {
+	const numTests = 1e6
+	seed := time.Now().UnixNano()
+	rng := rand.New(rand.NewSource(seed))
+	t.Logf("Seed: %d", seed)
+
+	for i := 0; i < numTests; i++ {
+		w := rng.Uint64() // value to deposit
+		m := rng.Uint64() // mask
+		result := pdep(w, m)
+		popCount := popcount(m)
+
+		// Test invariants
+		if result&^m != 0 {
+			t.Fatalf("Case %d: result %x has bits set outside of mask %x",
+				i, result, m)
+		}
+
+		if popcount(result) > popcount(w) {
+			t.Fatalf("Case %d: result has more 1s than input: result=%x, input=%x",
+				i, result, w)
+		}
+
+		// Verify by using PEXT to extract bits back
+		// The composition of PEXT(PDEP(x,m),m) should equal x masked to popcount bits
+		extracted := pext(result, m)
+		maskBits := (uint64(1) << popCount) - 1
+		if (extracted & maskBits) != (w & maskBits) {
+			t.Fatalf("Case %d: PEXT(PDEP(w,m),m) != w: got=%x, want=%x (w=%x, m=%x)",
+				i, extracted&maskBits, w&maskBits, w, m)
+		}
+	}
+}
+
+func TestBitSetExtract(t *testing.T) {
+	// Property-based tests
+	const numTests = 1e4
+	seed := time.Now().UnixNano()
+	rng := rand.New(rand.NewSource(seed))
+	t.Logf("Seed: %d", seed)
+
+	for i := 0; i < numTests; i++ {
+		// Create random bitsets
+		size := uint(rng.Intn(1024) + 64) // Random size between 64-1087 bits
+		src := New(size)
+		mask := New(size)
+		dst := New(size)
+
+		// Set random bits
+		for j := 0; j < int(size/4); j++ {
+			src.Set(uint(rng.Intn(int(size))))
+			mask.Set(uint(rng.Intn(int(size))))
+		}
+
+		// Extract bits
+		src.ExtractTo(mask, dst)
+
+		// Test invariants
+		if dst.Count() > src.IntersectionCardinality(mask) {
+			t.Errorf("Case %d: result has more 1s than masked input", i)
+		}
+
+		// Test bits are properly extracted and packed
+		pos := uint(0)
+		for j := uint(0); j < size; j++ {
+			if mask.Test(j) {
+				if src.Test(j) != dst.Test(pos) {
+					t.Errorf("Case %d: bit ordering violation at source position %d", i, j)
+				}
+				pos++
+			}
+		}
+	}
+
+	// Keep existing test cases
+	testCases := []struct {
+		name     string
+		src      *BitSet // source bits
+		mask     *BitSet // mask bits
+		expected *BitSet // expected extracted bits
+	}{
+		{
+			name:     "single bit",
+			src:      New(8).Set(1), // 0b01
+			mask:     New(8).Set(1), // 0b01
+			expected: New(8).Set(0), // 0b1
+		},
+		{
+			name:     "two sequential bits",
+			src:      New(8).Set(0).Set(1), // 0b11
+			mask:     New(8).Set(0).Set(1), // 0b11
+			expected: New(8).Set(0).Set(1), // 0b11
+		},
+		{
+			name:     "sparse bits",
+			src:      New(16).Set(0).Set(10),        // 0b10000000001
+			mask:     New(16).Set(0).Set(5).Set(10), // 0b10000100001
+			expected: New(8).Set(0).Set(2),          // 0b101
+		},
+		{
+			name:     "masked off bits",
+			src:      New(8).Set(0).Set(1).Set(2).Set(3), // 0b1111
+			mask:     New(8).Set(0).Set(2),               // 0b0101
+			expected: New(8).Set(0).Set(1),               // 0b11
+		},
+		{
+			name:     "cross word boundary",
+			src:      New(128).Set(63).Set(64).Set(65),
+			mask:     New(128).Set(63).Set(64).Set(65),
+			expected: New(8).Set(0).Set(1).Set(2),
+		},
+		{
+			name:     "large gap",
+			src:      New(256).Set(0).Set(100).Set(200),
+			mask:     New(256).Set(0).Set(100).Set(200),
+			expected: New(8).Set(0).Set(1).Set(2),
+		},
+		{
+			name:     "extracting zeros",
+			src:      New(8),                      // 0b00
+			mask:     New(8).Set(0).Set(1).Set(2), // 0b111
+			expected: New(8),                      // 0b000
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dst := New(tc.expected.Len())
+			tc.src.ExtractTo(tc.mask, dst)
+			if !dst.Equal(tc.expected) {
+				t.Errorf("got %v, expected %v", dst, tc.expected)
+			}
+		})
+	}
+}
+
+func TestBitSetDeposit(t *testing.T) {
+	// Property-based tests
+	const numTests = 1e4
+	seed := time.Now().UnixNano()
+	rng := rand.New(rand.NewSource(seed))
+	t.Logf("Seed: %d", seed)
+
+	for i := 0; i < numTests; i++ {
+		// Create random bitsets
+		size := uint(rng.Intn(1024) + 64) // Random size between 64-1087 bits
+		src := New(size)
+		mask := New(size)
+		dst := New(size)
+
+		// Set random bits
+		for j := 0; j < int(size/4); j++ {
+			src.Set(uint(rng.Intn(int(mask.Count() + 1))))
+			mask.Set(uint(rng.Intn(int(size))))
+		}
+
+		// Deposit bits
+		src.DepositTo(mask, dst)
+
+		// Test invariants
+		if dst.Count() > src.Count() {
+			t.Errorf("Case %d: result has more 1s than input", i)
+		}
+
+		if (dst.Bytes()[0] &^ mask.Bytes()[0]) != 0 {
+			t.Errorf("Case %d: result has bits set outside of mask", i)
+		}
+
+		// Extract bits back and verify
+		extracted := New(size)
+		dst.ExtractTo(mask, extracted)
+		maskBits := New(size)
+		for j := uint(0); j < mask.Count(); j++ {
+			maskBits.Set(j)
+		}
+		srcMasked := src.Clone()
+		srcMasked.InPlaceIntersection(maskBits)
+		if !extracted.Equal(srcMasked) {
+			t.Errorf("Case %d: ExtractTo(DepositTo(x,m),m) != x", i)
+		}
+	}
+
+	// Keep existing test cases
+	testCases := []struct {
+		name     string
+		src      *BitSet // source bits (packed in low positions)
+		mask     *BitSet // mask bits (positions to deposit into)
+		dst      *BitSet // destination bits (initially set)
+		expected *BitSet // expected result
+	}{
+		{
+			name:     "sparse bits",
+			src:      New(8).Set(0),        // 0b01
+			mask:     New(8).Set(0).Set(5), // 0b100001
+			expected: New(8).Set(0),        // 0b000001
+		},
+		{
+			name:     "masked off bits",
+			src:      New(8).Set(0).Set(1), // 0b11
+			mask:     New(8).Set(0).Set(2), // 0b101
+			expected: New(8).Set(0).Set(2), // 0b101
+		},
+		{
+			name:     "cross word boundary",
+			src:      New(8).Set(0).Set(1),     // 0b11
+			mask:     New(128).Set(63).Set(64), // bits across word boundary
+			expected: New(128).Set(63).Set(64), // bits deposited across boundary
+		},
+		{
+			name:     "large gaps",
+			src:      New(8).Set(0).Set(1),     // 0b11
+			mask:     New(128).Set(0).Set(100), // widely spaced bits
+			expected: New(128).Set(0).Set(100), // deposited into sparse positions
+		},
+		{
+			name:     "depositing zeros",
+			src:      New(8),                      // 0b00
+			mask:     New(8).Set(0).Set(1).Set(2), // 0b111
+			expected: New(8),                      // 0b000
+		},
+		{
+			name:     "preserve unmasked bits",
+			src:      New(8),                      // empty source
+			mask:     New(8),                      // empty mask
+			dst:      New(8).Set(1).Set(2).Set(3), // dst has some bits set
+			expected: New(8).Set(1).Set(2).Set(3), // should remain unchanged
+		},
+		{
+			name:     "preserve bits outside mask within word",
+			src:      New(8).Set(0),                      // source has bit 0 set
+			mask:     New(8).Set(1),                      // only depositing into bit 1
+			dst:      New(8).Set(0).Set(2).Set(3),        // dst has bits 0,2,3 set
+			expected: New(8).Set(0).Set(1).Set(2).Set(3), // bits 0,2,3 should remain, bit 1 should be set
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var dst *BitSet
+			if tc.dst == nil {
+				dst = New(tc.expected.Len())
+			} else {
+				dst = tc.dst.Clone()
+			}
+			tc.src.DepositTo(tc.mask, dst)
+			if !dst.Equal(tc.expected) {
+				t.Errorf("got %v, expected %v", dst, tc.expected)
+			}
+		})
+	}
+}
+
+func BenchmarkBitSetExtractDeposit(b *testing.B) {
+	sizes := []int{64, 256, 1024, 4096, 16384, 2 << 15}
+	rng := rand.New(rand.NewSource(42)) // fixed seed for reproducibility
+
+	for _, size := range sizes {
+		// Create source with random bits
+		src := New(uint(size))
+		for i := 0; i < size/4; i++ { // Set ~25% of bits
+			src.Set(uint(rng.Intn(size)))
+		}
+
+		// Create mask with random bits
+		mask := New(uint(size))
+		for i := 0; i < size/4; i++ {
+			mask.Set(uint(rng.Intn(size)))
+		}
+
+		b.Run(fmt.Sprintf("size=%d/fn=ExtractTo", size), func(b *testing.B) {
+			dst := New(uint(size))
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				src.ExtractTo(mask, dst)
+				dst.ClearAll()
+			}
+		})
+
+		b.Run(fmt.Sprintf("size=%d/fn=DepositTo", size), func(b *testing.B) {
+			dst := New(uint(size))
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				src.DepositTo(mask, dst)
+				dst.ClearAll()
 			}
 		})
 	}
