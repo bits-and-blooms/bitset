@@ -2541,6 +2541,18 @@ func TestBitSetExtract(t *testing.T) {
 			if !dst.Equal(tc.expected) {
 				t.Errorf("got %v, expected %v", dst, tc.expected)
 			}
+
+			// Verify inverse relationship within the mask bits
+			deposited := New(tc.src.Len())
+			dst.DepositTo(tc.mask, deposited)
+
+			// Only bits selected by the mask should match between source and deposited
+			maskedSource := tc.src.Intersection(tc.mask)
+			maskedDeposited := deposited.Intersection(tc.mask)
+
+			if !maskedSource.Equal(maskedDeposited) {
+				t.Error("DepositTo(ExtractTo(x,m),m) doesn't preserve masked source bits")
+			}
 		})
 	}
 }
@@ -2656,6 +2668,14 @@ func TestBitSetDeposit(t *testing.T) {
 			tc.src.DepositTo(tc.mask, dst)
 			if !dst.Equal(tc.expected) {
 				t.Errorf("got %v, expected %v", dst, tc.expected)
+			}
+
+			// Verify inverse relationship for set bits up to mask cardinality
+			extracted := New(tc.src.Len())
+			dst.ExtractTo(tc.mask, extracted)
+
+			if !extracted.Equal(tc.src) {
+				t.Error("ExtractTo(DepositTo(x,m),m) doesn't preserve source bits that were selected by mask")
 			}
 		})
 	}
