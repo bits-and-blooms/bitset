@@ -9,6 +9,7 @@ package bitset
 import (
 	"bytes"
 	"fmt"
+	"math/bits"
 	"math/rand"
 	"testing"
 )
@@ -334,7 +335,7 @@ func good(set []uint64) (checksum uint) {
 	for wordIdx, word := range set {
 		var wordIdx = uint(wordIdx * 64)
 		for word != 0 {
-			var bitIdx = uint(trailingZeroes64(word))
+			var bitIdx = uint(bits.TrailingZeros64(word))
 			word ^= 1 << bitIdx
 			var index = wordIdx + bitIdx
 			checksum += index

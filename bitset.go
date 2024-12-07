@@ -44,6 +44,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/bits"
 	"strconv"
 )
 
@@ -491,7 +492,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 	w := b.set[x]
 	w = w >> wordsIndex(i)
 	if w != 0 {
-		return i + trailingZeroes64(w), true
+		return i + uint(bits.TrailingZeros64(w)), true
 	}
 	x++
 	// bounds check elimination in the loop
@@ -500,7 +501,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 	}
 	for x < len(b.set) {
 		if b.set[x] != 0 {
-			return uint(x)*wordSize + trailingZeroes64(b.set[x]), true
+			return uint(x)*wordSize + uint(bits.TrailingZeros64(b.set[x])), true
 		}
 		x++
 
@@ -541,7 +542,7 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	myanswer = myanswer[:capacity]
 	size := int(0)
 	for word != 0 {
-		r := trailingZeroes64(word)
+		r := uint(bits.TrailingZeros64(word))
 		t := word & ((^word) + 1)
 		myanswer[size] = r + i
 		size++
@@ -553,7 +554,7 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	x++
 	for idx, word := range b.set[x:] {
 		for word != 0 {
-			r := trailingZeroes64(word)
+			r := uint(bits.TrailingZeros64(word))
 			t := word & ((^word) + 1)
 			myanswer[size] = r + (uint(x+idx) << 6)
 			size++
@@ -581,7 +582,7 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	w := b.set[x]
 	w = w >> wordsIndex(i)
 	wA := allBits >> wordsIndex(i)
-	index := i + trailingZeroes64(^w)
+	index := i + uint(bits.TrailingZeros64(^w))
 	if w != wA && index < b.length {
 		return index, true
 	}
@@ -592,7 +593,7 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	}
 	for x < len(b.set) {
 		if b.set[x] != allBits {
-			index = uint(x)*wordSize + trailingZeroes64(^b.set[x])
+			index = uint(x)*wordSize + uint(bits.TrailingZeros64(^b.set[x]))
 			if index < b.length {
 				return index, true
 			}
@@ -614,12 +615,12 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	// Clear the bits above the index
 	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
 	if w != 0 {
-		return uint(x<<log2WordSize) + len64(w) - 1, true
+		return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
 	}
 	for x--; x >= 0; x-- {
 		w = b.set[x]
 		if w != 0 {
-			return uint(x<<log2WordSize) + len64(w) - 1, true
+			return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
 		}
 	}
 	return 0, false
@@ -639,14 +640,14 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 	// Clear the bits above the index
 	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
 	if w != 0 {
-		return uint(x<<log2WordSize) + len64(w) - 1, true
+		return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
 	}
 
 	for x--; x >= 0; x-- {
 		w = b.set[x]
 		w = ^w
 		if w != 0 {
-			return uint(x<<log2WordSize) + len64(w) - 1, true
+			return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
 		}
 	}
 	return 0, false
@@ -1287,7 +1288,7 @@ func (b *BitSet) Rank(index uint) uint {
 	leftover := (index + 1) & 63
 	answer := uint(popcntSlice(b.set[:(index+1)>>6]))
 	if leftover != 0 {
-		answer += uint(popcount(b.set[(index+1)>>6] << (64 - leftover)))
+		answer += uint(bits.OnesCount64(b.set[(index+1)>>6] << (64 - leftover)))
 	}
 	return answer
 }
@@ -1302,7 +1303,7 @@ func (b *BitSet) Rank(index uint) uint {
 func (b *BitSet) Select(index uint) uint {
 	leftover := index
 	for idx, word := range b.set {
-		w := uint(popcount(word))
+		w := uint(bits.OnesCount64(word))
 		if w > leftover {
 			return uint(idx)*64 + select64(word, leftover)
 		}
@@ -1324,7 +1325,7 @@ func (b *BitSet) top() (uint, bool) {
 		return 0, false
 	}
 
-	return uint(idx)*wordSize + len64(b.set[idx]) - 1, true
+	return uint(idx)*wordSize + uint(bits.Len64(b.set[idx])) - 1, true
 }
 
 // ShiftLeft shifts the bitset like << operation would do.
