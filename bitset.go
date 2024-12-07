@@ -123,7 +123,16 @@ func FromWithLength(length uint, set []uint64) *BitSet {
 // Bytes returns the bitset as array of 64-bit words, giving direct access to the internal representation.
 // It is not a copy, so changes to the returned slice will affect the bitset.
 // It is meant for advanced users.
+//
+// Deprecated: Bytes is deprecated. Use [bitset.Words] instead.
 func (b *BitSet) Bytes() []uint64 {
+	return b.set
+}
+
+// Words returns the bitset as array of 64-bit words, giving direct access to the internal representation.
+// It is not a copy, so changes to the returned slice will affect the bitset.
+// It is meant for advanced users.
+func (b *BitSet) Words() []uint64 {
 	return b.set
 }
 
