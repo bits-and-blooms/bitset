@@ -1482,6 +1482,22 @@ func TestFrom(t *testing.T) {
 	}
 }
 
+func TestWords(t *testing.T) {
+	b := new(BitSet)
+	c := b.Words()
+	outType := fmt.Sprintf("%T", c)
+	expType := "[]uint64"
+	if outType != expType {
+		t.Error("Expecting type: ", expType, ", gotf:", outType)
+		return
+	}
+	if len(c) != 0 {
+		t.Error("The slice should be empty")
+		return
+	}
+}
+
+// Bytes is deprecated
 func TestBytes(t *testing.T) {
 	b := new(BitSet)
 	c := b.Bytes()
