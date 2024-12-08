@@ -124,7 +124,7 @@ func FromWithLength(length uint, set []uint64) *BitSet {
 // It is not a copy, so changes to the returned slice will affect the bitset.
 // It is meant for advanced users.
 //
-// Deprecated: Bytes is deprecated. Use [bitset.Words] instead.
+// Deprecated: Bytes is deprecated. Use [BitSet.Words] instead.
 func (b *BitSet) Bytes() []uint64 {
 	return b.set
 }
