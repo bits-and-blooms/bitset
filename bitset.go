@@ -1462,7 +1462,7 @@ func (b *BitSet) OnesBetween(from, to uint) uint {
 	if startWord == endWord {
 		// Create mask for bits between from and to
 		mask := uint64((1<<endOffset)-1) &^ ((1 << startOffset) - 1)
-		return uint(popcount(b.set[startWord] & mask))
+		return uint(bits.OnesCount64(b.set[startWord] & mask))
 	}
 
 	var count uint
@@ -1470,7 +1470,7 @@ func (b *BitSet) OnesBetween(from, to uint) uint {
 	// Case 2: Bits span multiple words
 	// 2a: Count bits in first word (from startOffset to end of word)
 	startMask := ^uint64((1 << startOffset) - 1) // Mask for bits >= startOffset
-	count = uint(popcount(b.set[startWord] & startMask))
+	count = uint(bits.OnesCount64(b.set[startWord] & startMask))
 
 	// 2b: Count all bits in complete words between start and end
 	if endWord > startWord+1 {
@@ -1480,7 +1480,7 @@ func (b *BitSet) OnesBetween(from, to uint) uint {
 	// 2c: Count bits in last word (from start of word to endOffset)
 	if endOffset > 0 {
 		endMask := uint64(1<<endOffset) - 1 // Mask for bits < endOffset
-		count += uint(popcount(b.set[endWord] & endMask))
+		count += uint(bits.OnesCount64(b.set[endWord] & endMask))
 	}
 
 	return count
@@ -1530,7 +1530,7 @@ func (b *BitSet) ExtractTo(mask *BitSet, dst *BitSet) {
 
 		// Extract and compact bits according to mask
 		extracted := pext(b.set[i], mask.set[i])
-		bitsExtracted := uint(popcount(mask.set[i]))
+		bitsExtracted := uint(bits.OnesCount64(mask.set[i]))
 
 		// Calculate destination position
 		wordIdx := outPos >> log2WordSize
@@ -1600,7 +1600,7 @@ func (b *BitSet) DepositTo(mask *BitSet, dst *BitSet) {
 
 		// Deposit bits according to mask
 		dst.set[i] = (dst.set[i] &^ mask.set[i]) | pdep(sourceBits, mask.set[i])
-		inPos += uint(popcount(mask.set[i]))
+		inPos += uint(bits.OnesCount64(mask.set[i]))
 	}
 }
 

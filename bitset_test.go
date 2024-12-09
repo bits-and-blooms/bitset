@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/bits"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -2390,7 +2391,7 @@ func TestPext(t *testing.T) {
 		w := rng.Uint64()
 		m := rng.Uint64()
 		result := pext(w, m)
-		popCount := popcount(m)
+		popCount := bits.OnesCount64(m)
 
 		// Test invariants
 		if popCount > 0 && result >= (uint64(1)<<popCount) {
@@ -2398,7 +2399,7 @@ func TestPext(t *testing.T) {
 				i, result, popCount)
 		}
 
-		if popcount(result) > popcount(w&m) {
+		if bits.OnesCount64(result) > bits.OnesCount64(w&m) {
 			t.Fatalf("Case %d: result has more 1s than masked input: result=%x, input&mask=%x",
 				i, result, w&m)
 		}
@@ -2435,7 +2436,7 @@ func TestPdep(t *testing.T) {
 		w := rng.Uint64() // value to deposit
 		m := rng.Uint64() // mask
 		result := pdep(w, m)
-		popCount := popcount(m)
+		popCount := bits.OnesCount64(m)
 
 		// Test invariants
 		if result&^m != 0 {
@@ -2443,7 +2444,7 @@ func TestPdep(t *testing.T) {
 				i, result, m)
 		}
 
-		if popcount(result) > popcount(w) {
+		if bits.OnesCount64(result) > bits.OnesCount64(w) {
 			t.Fatalf("Case %d: result has more 1s than input: result=%x, input=%x",
 				i, result, w)
 		}
