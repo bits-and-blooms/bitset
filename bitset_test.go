@@ -19,6 +19,7 @@ import (
 	"math"
 	"math/bits"
 	"math/rand"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -152,7 +153,6 @@ func TestExceedCap(t *testing.T) {
 	bmp.ClearAll()
 	d := Cap()
 	bmp.Set(d)
-
 }
 
 func TestExpand(t *testing.T) {
@@ -255,7 +255,6 @@ func TestNextClear(t *testing.T) {
 	next, found = v.NextClear(0)
 	if found || next != 0 {
 		t.Errorf("Found next clear bit as %d, it should have return (0, false)", next)
-
 	}
 }
 
@@ -302,7 +301,210 @@ func TestIterate(t *testing.T) {
 	if data[4] != 2000 {
 		t.Errorf("bug 4")
 	}
+}
 
+func TestNextSet(t *testing.T) {
+	testCases := []struct {
+		name string
+		//
+		set []uint
+		del []uint
+		//
+		startIdx uint
+		wantIdx  uint
+		wantOk   bool
+	}{
+		{
+			name:     "null",
+			set:      []uint{},
+			startIdx: 0,
+			wantIdx:  0,
+			wantOk:   false,
+		},
+		{
+			name:     "zero",
+			set:      []uint{0},
+			startIdx: 0,
+			wantIdx:  0,
+			wantOk:   true,
+		},
+		{
+			name:     "1,5",
+			set:      []uint{1, 5},
+			startIdx: 0,
+			wantIdx:  1,
+			wantOk:   true,
+		},
+		{
+			name:     "many",
+			set:      []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			startIdx: 100,
+			wantIdx:  130,
+			wantOk:   true,
+		},
+		{
+			name:     "many-2",
+			set:      []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			del:      []uint{130, 190, 300, 420},
+			startIdx: 100,
+			wantIdx:  250,
+			wantOk:   true,
+		},
+		{
+			name:     "last",
+			set:      []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			startIdx: 511,
+			wantIdx:  511,
+			wantOk:   true,
+		},
+		{
+			name:     "last-2",
+			set:      []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			del:      []uint{511},
+			startIdx: 511,
+			wantIdx:  0,
+			wantOk:   false,
+		},
+	}
+
+	for _, tc := range testCases {
+		var b BitSet
+		for _, u := range tc.set {
+			b.Set(u)
+		}
+
+		for _, u := range tc.del {
+			b.Clear(u) // without compact
+		}
+
+		idx, ok := b.NextSet(tc.startIdx)
+
+		if ok != tc.wantOk {
+			t.Errorf("NextSet, %s: got ok: %v, want: %v", tc.name, ok, tc.wantOk)
+		}
+		if idx != tc.wantIdx {
+			t.Errorf("NextSet, %s: got next idx: %d, want: %d", tc.name, idx, tc.wantIdx)
+		}
+	}
+}
+
+func TestNextSetMany(t *testing.T) {
+	testCases := []struct {
+		name string
+		//
+		set []uint
+		del []uint
+		//
+		buf      []uint
+		wantData []uint
+		//
+		startIdx uint
+		wantIdx  uint
+	}{
+		{
+			name:     "null",
+			set:      []uint{},
+			del:      []uint{},
+			buf:      make([]uint, 0, 512),
+			wantData: []uint{},
+			startIdx: 0,
+			wantIdx:  0,
+		},
+		{
+			name:     "zero",
+			set:      []uint{0},
+			del:      []uint{},
+			buf:      make([]uint, 0, 512),
+			wantData: []uint{0}, // bit #0 is set
+			startIdx: 0,
+			wantIdx:  0,
+		},
+		{
+			name:     "1,5",
+			set:      []uint{1, 5},
+			del:      []uint{},
+			buf:      make([]uint, 0, 512),
+			wantData: []uint{1, 5},
+			startIdx: 0,
+			wantIdx:  5,
+		},
+		{
+			name:     "many",
+			set:      []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			del:      []uint{},
+			buf:      make([]uint, 0, 512),
+			wantData: []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			startIdx: 0,
+			wantIdx:  511,
+		},
+		{
+			name:     "start idx",
+			set:      []uint{1, 65, 130, 190, 250, 300, 380, 420, 480, 511},
+			del:      []uint{},
+			buf:      make([]uint, 0, 512),
+			wantData: []uint{250, 300, 380, 420, 480, 511},
+			startIdx: 195,
+			wantIdx:  511,
+		},
+		{
+			name:     "zero buffer",
+			set:      []uint{1, 2, 3, 4, 511},
+			del:      []uint{},
+			buf:      make([]uint, 0), // buffer
+			wantData: []uint{},
+			startIdx: 0,
+			wantIdx:  0,
+		},
+		{
+			name:     "buffer too short, first word",
+			set:      []uint{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			del:      []uint{},
+			buf:      make([]uint, 0, 5), // buffer
+			wantData: []uint{1, 2, 3, 4, 5},
+			startIdx: 0,
+			wantIdx:  5,
+		},
+		{
+			name:     "buffer too short",
+			set:      []uint{65, 66, 67, 68, 69, 70},
+			del:      []uint{},
+			buf:      make([]uint, 0, 5), // buffer
+			wantData: []uint{65, 66, 67, 68, 69},
+			startIdx: 0,
+			wantIdx:  69,
+		},
+		{
+			name:     "special, last return",
+			set:      []uint{1},
+			del:      []uint{1},          // delete without compact
+			buf:      make([]uint, 0, 5), // buffer
+			wantData: []uint{},
+			startIdx: 0,
+			wantIdx:  0,
+		},
+	}
+
+	for _, tc := range testCases {
+		var b BitSet
+		for _, u := range tc.set {
+			b.Set(u)
+		}
+
+		for _, u := range tc.del {
+			b.Clear(u) // without compact
+		}
+
+		idx, buf := b.NextSetMany(tc.startIdx, tc.buf)
+
+		if idx != tc.wantIdx {
+			t.Errorf("NextSetMany, %s: got next idx: %d, want: %d", tc.name, idx, tc.wantIdx)
+		}
+
+		if !reflect.DeepEqual(buf, tc.wantData) {
+			t.Errorf("NextSetMany, %s: returned buf is not equal as expected:\ngot:  %v\nwant: %v",
+				tc.name, buf, tc.wantData)
+		}
+	}
 }
 
 func TestSetTo(t *testing.T) {
@@ -472,7 +674,7 @@ func TestPanicMustNew(t *testing.T) {
 
 func TestPanicDifferenceBNil(t *testing.T) {
 	var b *BitSet
-	var compare = New(10)
+	compare := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil First should should have caused a panic")
@@ -483,7 +685,7 @@ func TestPanicDifferenceBNil(t *testing.T) {
 
 func TestPanicDifferenceCompareNil(t *testing.T) {
 	var compare *BitSet
-	var b = New(10)
+	b := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil Second should should have caused a panic")
@@ -494,7 +696,7 @@ func TestPanicDifferenceCompareNil(t *testing.T) {
 
 func TestPanicUnionBNil(t *testing.T) {
 	var b *BitSet
-	var compare = New(10)
+	compare := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil First should should have caused a panic")
@@ -505,7 +707,7 @@ func TestPanicUnionBNil(t *testing.T) {
 
 func TestPanicUnionCompareNil(t *testing.T) {
 	var compare *BitSet
-	var b = New(10)
+	b := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil Second should should have caused a panic")
@@ -516,7 +718,7 @@ func TestPanicUnionCompareNil(t *testing.T) {
 
 func TestPanicIntersectionBNil(t *testing.T) {
 	var b *BitSet
-	var compare = New(10)
+	compare := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil First should should have caused a panic")
@@ -527,7 +729,7 @@ func TestPanicIntersectionBNil(t *testing.T) {
 
 func TestPanicIntersectionCompareNil(t *testing.T) {
 	var compare *BitSet
-	var b = New(10)
+	b := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil Second should should have caused a panic")
@@ -538,7 +740,7 @@ func TestPanicIntersectionCompareNil(t *testing.T) {
 
 func TestPanicSymmetricDifferenceBNil(t *testing.T) {
 	var b *BitSet
-	var compare = New(10)
+	compare := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil First should should have caused a panic")
@@ -549,7 +751,7 @@ func TestPanicSymmetricDifferenceBNil(t *testing.T) {
 
 func TestPanicSymmetricDifferenceCompareNil(t *testing.T) {
 	var compare *BitSet
-	var b = New(10)
+	b := New(10)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Nil Second should should have caused a panic")
@@ -802,7 +1004,6 @@ func TestInsertAtWithSet(t *testing.T) {
 		t.Error("66 should be set")
 		return
 	}
-
 }
 
 func TestInsertAt(t *testing.T) {
@@ -1600,6 +1801,7 @@ func TestRankSelect(t *testing.T) {
 		return
 	}
 }
+
 func TestFlip(t *testing.T) {
 	b := new(BitSet)
 	c := b.Flip(11)
@@ -1848,7 +2050,6 @@ func TestDeleteWithBitSetInstance(t *testing.T) {
 				t.Errorf("Expected index %d to not be set, but was", i)
 			}
 		}
-
 	}
 }
 
