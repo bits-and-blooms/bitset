@@ -545,44 +545,50 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 // However if bitmap.Count() is large, it might be preferable to
 // use several calls to NextSetMany, for performance reasons.
 func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
-	myanswer := buffer
 	capacity := cap(buffer)
+	result := buffer[:capacity]
+
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) || capacity == 0 {
-		return 0, myanswer[:0]
+		return 0, result[:0]
 	}
-	skip := wordsIndex(i)
-	word := b.set[x] >> skip
-	myanswer = myanswer[:capacity]
-	size := int(0)
+
+	// process first (partial) word
+	word := b.set[x] >> wordsIndex(i)
+
+	size := 0
 	for word != 0 {
-		r := uint(bits.TrailingZeros64(word))
-		t := word & ((^word) + 1)
-		myanswer[size] = r + i
+		result[size] = i + uint(bits.TrailingZeros64(word))
+
 		size++
 		if size == capacity {
-			goto End
+			return result[size-1], result[:size]
 		}
-		word = word ^ t
+
+		// clear the rightmost set bit
+		word &= word - 1
 	}
+
+	// process the following full words
 	x++
 	for idx, word := range b.set[x:] {
 		for word != 0 {
-			r := uint(bits.TrailingZeros64(word))
-			t := word & ((^word) + 1)
-			myanswer[size] = r + (uint(x+idx) << 6)
+			result[size] = uint((x+idx)<<log2WordSize + bits.TrailingZeros64(word))
+
 			size++
 			if size == capacity {
-				goto End
+				return result[size-1], result[:size]
 			}
-			word = word ^ t
+
+			// clear the rightmost set bit
+			word &= word - 1
 		}
 	}
-End:
+
 	if size > 0 {
-		return myanswer[size-1], myanswer[:size]
+		return result[size-1], result[:size]
 	}
-	return 0, myanswer[:0]
+	return 0, result[:0]
 }
 
 // NextClear returns the next clear bit from the specified index,
