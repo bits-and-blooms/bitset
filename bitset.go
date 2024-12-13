@@ -501,23 +501,25 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
-	w = w >> wordsIndex(i)
-	if w != 0 {
-		return i + uint(bits.TrailingZeros64(w)), true
+
+	// process first (partial) word
+	word := b.set[x] >> wordsIndex(i)
+	if word != 0 {
+		return i + uint(bits.TrailingZeros64(word)), true
 	}
+
+	// process the following full words until next bit is set
 	x++
-	// bounds check elimination in the loop
-	if x < 0 {
+	if x >= len(b.set) {
 		return 0, false
 	}
-	for x < len(b.set) {
-		if b.set[x] != 0 {
-			return uint(x)*wordSize + uint(bits.TrailingZeros64(b.set[x])), true
-		}
-		x++
 
+	for idx, word := range b.set[x:] {
+		if word != 0 {
+			return uint((x+idx)<<log2WordSize + bits.TrailingZeros64(word)), true
+		}
 	}
+
 	return 0, false
 }
 
