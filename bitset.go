@@ -662,16 +662,18 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
+	word := b.set[x]
+
 	// Clear the bits above the index
-	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
-	if w != 0 {
-		return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+	if word != 0 {
+		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 	}
+
 	for x--; x >= 0; x-- {
-		w = b.set[x]
-		if w != 0 {
-			return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+		word = b.set[x]
+		if word != 0 {
+			return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 		}
 	}
 	return 0, false
@@ -685,20 +687,23 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
+	word := b.set[x]
+
 	// Flip all bits and find the highest one bit
-	w = ^w
+	word = ^word
+
 	// Clear the bits above the index
-	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
-	if w != 0 {
-		return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+
+	if word != 0 {
+		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 	}
 
 	for x--; x >= 0; x-- {
-		w = b.set[x]
-		w = ^w
-		if w != 0 {
-			return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+		word = b.set[x]
+		word = ^word
+		if word != 0 {
+			return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 		}
 	}
 	return 0, false
