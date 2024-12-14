@@ -509,11 +509,8 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 	}
 
 	// process the following full words until next bit is set
+	// x < len(b.set), no out-of-bounds panic in following slice expression
 	x++
-	if x >= len(b.set) {
-		return 0, false
-	}
-
 	for idx, word := range b.set[x:] {
 		if word != 0 {
 			return uint((x+idx)<<log2WordSize + bits.TrailingZeros64(word)), true
@@ -570,6 +567,7 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	}
 
 	// process the following full words
+	// x < len(b.set), no out-of-bounds panic in following slice expression
 	x++
 	for idx, word := range b.set[x:] {
 		for word != 0 {
