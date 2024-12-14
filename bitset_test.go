@@ -1530,13 +1530,13 @@ func TestMarshalUnmarshalBinaryByLittleEndian(t *testing.T) {
 func copyBinary(t *testing.T, from encoding.BinaryMarshaler, to encoding.BinaryUnmarshaler) {
 	data, err := from.MarshalBinary()
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 		return
 	}
 
 	err = to.UnmarshalBinary(data)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 		return
 	}
 }
@@ -1547,14 +1547,14 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 		a.Set(10).Set(1001)
 		data, err := json.Marshal(a)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err.Error())
 			return
 		}
 
 		b := new(BitSet)
 		err = json.Unmarshal(data, b)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err.Error())
 			return
 		}
 
@@ -1568,14 +1568,14 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 		a := New(1010).Set(10).Set(1001)
 		data, err := json.Marshal(a)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err.Error())
 			return
 		}
 
 		b := new(BitSet)
 		err = json.Unmarshal(data, b)
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err.Error())
 			return
 		}
 
@@ -1591,7 +1591,7 @@ func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {
 	a := New(1010).Set(10).Set(1001)
 	data, err := json.Marshal(a)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 		return
 	}
 
@@ -1602,7 +1602,7 @@ func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {
 	b := new(BitSet)
 	err = json.Unmarshal(data, b)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 		return
 	}
 
@@ -1619,14 +1619,14 @@ func TestMarshalUnmarshalJSONByStdEncoding(t *testing.T) {
 	a := New(1010).Set(10).Set(1001)
 	data, err := json.Marshal(a)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 		return
 	}
 
 	b := new(BitSet)
 	err = json.Unmarshal(data, b)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 		return
 	}
 
