@@ -49,7 +49,7 @@ import (
 )
 
 // the wordSize of a bit set
-const wordSize = uint(64)
+const wordSize = 64
 
 // the wordSize of a bit set in bytes
 const wordBytes = wordSize / 8
@@ -58,7 +58,7 @@ const wordBytes = wordSize / 8
 const wordMask = wordSize - 1
 
 // log2WordSize is lg(wordSize)
-const log2WordSize = uint(6)
+const log2WordSize = 6
 
 // allBits has every bit set
 const allBits uint64 = 0xffffffffffffffff
@@ -150,7 +150,7 @@ func wordsNeeded(i uint) int {
 // wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
 // This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing BitSet).
 func wordsNeededUnbound(i uint) int {
-	return int((i + (wordSize - 1)) >> log2WordSize)
+	return (int(i) + (wordSize - 1)) >> log2WordSize
 }
 
 // wordsIndex calculates the index of words in a `uint64`
@@ -611,7 +611,7 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	}
 	for x < len(b.set) {
 		if b.set[x] != allBits {
-			index = uint(x)*wordSize + uint(bits.TrailingZeros64(^b.set[x]))
+			index = uint(x*wordSize + bits.TrailingZeros64(^b.set[x]))
 			if index < b.length {
 				return index, true
 			}
@@ -1107,18 +1107,18 @@ func (b *BitSet) DumpAsBits() string {
 
 // BinaryStorageSize returns the binary storage requirements (see WriteTo) in bytes.
 func (b *BitSet) BinaryStorageSize() int {
-	return int(wordBytes + wordBytes*uint(b.wordCount()))
+	return wordBytes + wordBytes*b.wordCount()
 }
 
 func readUint64Array(reader io.Reader, data []uint64) error {
 	length := len(data)
 	bufferSize := 128
-	buffer := make([]byte, bufferSize*int(wordBytes))
+	buffer := make([]byte, bufferSize*wordBytes)
 	for i := 0; i < length; i += bufferSize {
 		end := i + bufferSize
 		if end > length {
 			end = length
-			buffer = buffer[:wordBytes*uint(end-i)]
+			buffer = buffer[:wordBytes*(end-i)]
 		}
 		chunk := data[i:end]
 		if _, err := io.ReadFull(reader, buffer); err != nil {
@@ -1133,12 +1133,12 @@ func readUint64Array(reader io.Reader, data []uint64) error {
 
 func writeUint64Array(writer io.Writer, data []uint64) error {
 	bufferSize := 128
-	buffer := make([]byte, bufferSize*int(wordBytes))
+	buffer := make([]byte, bufferSize*wordBytes)
 	for i := 0; i < len(data); i += bufferSize {
 		end := i + bufferSize
 		if end > len(data) {
 			end = len(data)
-			buffer = buffer[:wordBytes*uint(end-i)]
+			buffer = buffer[:wordBytes*(end-i)]
 		}
 		chunk := data[i:end]
 		for i, x := range chunk {
@@ -1343,7 +1343,7 @@ func (b *BitSet) top() (uint, bool) {
 		return 0, false
 	}
 
-	return uint(idx)*wordSize + uint(bits.Len64(b.set[idx])) - 1, true
+	return uint(idx*wordSize+bits.Len64(b.set[idx])) - 1, true
 }
 
 // ShiftLeft shifts the bitset like << operation would do.
