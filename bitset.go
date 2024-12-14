@@ -501,23 +501,25 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
-	w = w >> wordsIndex(i)
-	if w != 0 {
-		return i + uint(bits.TrailingZeros64(w)), true
+
+	// process first (partial) word
+	word := b.set[x] >> wordsIndex(i)
+	if word != 0 {
+		return i + uint(bits.TrailingZeros64(word)), true
 	}
+
+	// process the following full words until next bit is set
 	x++
-	// bounds check elimination in the loop
-	if x < 0 {
+	if x >= len(b.set) {
 		return 0, false
 	}
-	for x < len(b.set) {
-		if b.set[x] != 0 {
-			return uint(x)*wordSize + uint(bits.TrailingZeros64(b.set[x])), true
-		}
-		x++
 
+	for idx, word := range b.set[x:] {
+		if word != 0 {
+			return uint((x+idx)<<log2WordSize + bits.TrailingZeros64(word)), true
+		}
 	}
+
 	return 0, false
 }
 
@@ -543,44 +545,50 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 // However if bitmap.Count() is large, it might be preferable to
 // use several calls to NextSetMany, for performance reasons.
 func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
-	myanswer := buffer
 	capacity := cap(buffer)
+	result := buffer[:capacity]
+
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) || capacity == 0 {
-		return 0, myanswer[:0]
+		return 0, result[:0]
 	}
-	skip := wordsIndex(i)
-	word := b.set[x] >> skip
-	myanswer = myanswer[:capacity]
-	size := int(0)
+
+	// process first (partial) word
+	word := b.set[x] >> wordsIndex(i)
+
+	size := 0
 	for word != 0 {
-		r := uint(bits.TrailingZeros64(word))
-		t := word & ((^word) + 1)
-		myanswer[size] = r + i
+		result[size] = i + uint(bits.TrailingZeros64(word))
+
 		size++
 		if size == capacity {
-			goto End
+			return result[size-1], result[:size]
 		}
-		word = word ^ t
+
+		// clear the rightmost set bit
+		word &= word - 1
 	}
+
+	// process the following full words
 	x++
 	for idx, word := range b.set[x:] {
 		for word != 0 {
-			r := uint(bits.TrailingZeros64(word))
-			t := word & ((^word) + 1)
-			myanswer[size] = r + (uint(x+idx) << 6)
+			result[size] = uint((x+idx)<<log2WordSize + bits.TrailingZeros64(word))
+
 			size++
 			if size == capacity {
-				goto End
+				return result[size-1], result[:size]
 			}
-			word = word ^ t
+
+			// clear the rightmost set bit
+			word &= word - 1
 		}
 	}
-End:
+
 	if size > 0 {
-		return myanswer[size-1], myanswer[:size]
+		return result[size-1], result[:size]
 	}
-	return 0, myanswer[:0]
+	return 0, result[:0]
 }
 
 // NextClear returns the next clear bit from the specified index,

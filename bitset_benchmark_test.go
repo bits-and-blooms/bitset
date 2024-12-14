@@ -283,7 +283,7 @@ func BenchmarkLemireIterateManyb(b *testing.B) {
 }
 
 func setRnd(bits []uint64, halfings int) {
-	var rnd = rand.NewSource(0).(rand.Source64)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := range bits {
 		bits[i] = 0xFFFFFFFFFFFFFFFF
 		for j := 0; j < halfings; j++ {
@@ -294,14 +294,14 @@ func setRnd(bits []uint64, halfings int) {
 
 // go test -bench=BenchmarkFlorianUekermannIterateMany
 func BenchmarkFlorianUekermannIterateMany(b *testing.B) {
-	var input = make([]uint64, 68)
+	input := make([]uint64, 68)
 	setRnd(input, 4)
-	var bitmap = From(input)
+	bitmap := From(input)
 	buffer := make([]uint, 256)
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
-		var last, batch = bitmap.NextSetMany(0, buffer)
+		last, batch := bitmap.NextSetMany(0, buffer)
 		for len(batch) > 0 {
 			for _, idx := range batch {
 				checksum += idx
@@ -315,11 +315,11 @@ func BenchmarkFlorianUekermannIterateMany(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannIterateManyReg(b *testing.B) {
-	var input = make([]uint64, 68)
+	input := make([]uint64, 68)
 	setRnd(input, 4)
-	var bitmap = From(input)
+	bitmap := From(input)
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
 			checksum += j
@@ -333,11 +333,11 @@ func BenchmarkFlorianUekermannIterateManyReg(b *testing.B) {
 // function provided by FlorianUekermann
 func good(set []uint64) (checksum uint) {
 	for wordIdx, word := range set {
-		var wordIdx = uint(wordIdx * 64)
+		wordIdx := uint(wordIdx * 64)
 		for word != 0 {
-			var bitIdx = uint(bits.TrailingZeros64(word))
+			bitIdx := uint(bits.TrailingZeros64(word))
 			word ^= 1 << bitIdx
-			var index = wordIdx + bitIdx
+			index := wordIdx + bitIdx
 			checksum += index
 		}
 	}
@@ -345,10 +345,10 @@ func good(set []uint64) (checksum uint) {
 }
 
 func BenchmarkFlorianUekermannIterateManyComp(b *testing.B) {
-	var input = make([]uint64, 68)
+	input := make([]uint64, 68)
 	setRnd(input, 4)
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		checksum += good(input)
 	}
@@ -361,15 +361,15 @@ func BenchmarkFlorianUekermannIterateManyComp(b *testing.B) {
 
 // go test -bench=BenchmarkFlorianUekermannLowDensityIterateMany
 func BenchmarkFlorianUekermannLowDensityIterateMany(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 50000; i++ {
 		input[rnd.Uint64()%1000000] = 1
 	}
-	var bitmap = From(input)
+	bitmap := From(input)
 	buffer := make([]uint, 256)
 	b.ResetTimer()
-	var sum = uint(0)
+	sum := uint(0)
 	for i := 0; i < b.N; i++ {
 		j := uint(0)
 		j, buffer = bitmap.NextSetMany(j, buffer)
@@ -386,14 +386,14 @@ func BenchmarkFlorianUekermannLowDensityIterateMany(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannLowDensityIterateManyReg(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 50000; i++ {
 		input[rnd.Uint64()%1000000] = 1
 	}
-	var bitmap = From(input)
+	bitmap := From(input)
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
 			checksum += j
@@ -405,13 +405,13 @@ func BenchmarkFlorianUekermannLowDensityIterateManyReg(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannLowDensityIterateManyComp(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 50000; i++ {
 		input[rnd.Uint64()%1000000] = 1
 	}
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		checksum += good(input)
 	}
@@ -424,12 +424,12 @@ func BenchmarkFlorianUekermannLowDensityIterateManyComp(b *testing.B) {
 
 // go test -bench=BenchmarkFlorianUekermannMidDensityIterateMany
 func BenchmarkFlorianUekermannMidDensityIterateMany(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 3000000; i++ {
 		input[rnd.Uint64()%1000000] |= uint64(1) << (rnd.Uint64() % 64)
 	}
-	var bitmap = From(input)
+	bitmap := From(input)
 	buffer := make([]uint, 256)
 	b.ResetTimer()
 	sum := uint(0)
@@ -450,14 +450,14 @@ func BenchmarkFlorianUekermannMidDensityIterateMany(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannMidDensityIterateManyReg(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 3000000; i++ {
 		input[rnd.Uint64()%1000000] |= uint64(1) << (rnd.Uint64() % 64)
 	}
-	var bitmap = From(input)
+	bitmap := From(input)
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
 			checksum += j
@@ -469,13 +469,13 @@ func BenchmarkFlorianUekermannMidDensityIterateManyReg(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannMidDensityIterateManyComp(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 3000000; i++ {
 		input[rnd.Uint64()%1000000] |= uint64(1) << (rnd.Uint64() % 64)
 	}
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		checksum += good(input)
 	}
@@ -487,12 +487,12 @@ func BenchmarkFlorianUekermannMidDensityIterateManyComp(b *testing.B) {
 ////////// High density
 
 func BenchmarkFlorianUekermannMidStrongDensityIterateMany(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 20000000; i++ {
 		input[rnd.Uint64()%1000000] |= uint64(1) << (rnd.Uint64() % 64)
 	}
-	var bitmap = From(input)
+	bitmap := From(input)
 	buffer := make([]uint, 256)
 	b.ResetTimer()
 	sum := uint(0)
@@ -513,14 +513,14 @@ func BenchmarkFlorianUekermannMidStrongDensityIterateMany(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannMidStrongDensityIterateManyReg(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 20000000; i++ {
 		input[rnd.Uint64()%1000000] |= uint64(1) << (rnd.Uint64() % 64)
 	}
-	var bitmap = From(input)
+	bitmap := From(input)
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		for j, e := bitmap.NextSet(0); e; j, e = bitmap.NextSet(j + 1) {
 			checksum += j
@@ -532,13 +532,13 @@ func BenchmarkFlorianUekermannMidStrongDensityIterateManyReg(b *testing.B) {
 }
 
 func BenchmarkFlorianUekermannMidStrongDensityIterateManyComp(b *testing.B) {
-	var input = make([]uint64, 1000000)
-	var rnd = rand.NewSource(0).(rand.Source64)
+	input := make([]uint64, 1000000)
+	rnd := rand.NewSource(0).(rand.Source64)
 	for i := 0; i < 20000000; i++ {
 		input[rnd.Uint64()%1000000] |= uint64(1) << (rnd.Uint64() % 64)
 	}
 	b.ResetTimer()
-	var checksum = uint(0)
+	checksum := uint(0)
 	for i := 0; i < b.N; i++ {
 		checksum += good(input)
 	}
@@ -634,4 +634,27 @@ func BenchmarkIsSuperSet(b *testing.B) {
 		bench(fmt.Sprintf("superset, len=%d, diff=%d, strict", len, diff),
 			len, len, density, overrideS, overrideSS, fStrict)
 	}
+}
+
+// clear the right most bit (C-RMS)
+// test two different algorithms
+func BenchmarkClearRMS(b *testing.B) {
+	var word uint64
+
+	// cryptic
+	b.Run("cryptic", func(b *testing.B) {
+		word = 0xaaaa_aaaa_aaaa_aaaa
+		for i := 0; i < b.N; i++ {
+			t := word & ((^word) + 1)
+			word = word ^ t
+		}
+	})
+
+	// less cryptic
+	b.Run("simple", func(b *testing.B) {
+		word = 0xaaaa_aaaa_aaaa_aaaa
+		for i := 0; i < b.N; i++ {
+			word &= word - 1
+		}
+	})
 }
