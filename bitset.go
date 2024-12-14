@@ -628,27 +628,29 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
-	w = w >> wordsIndex(i)
-	wA := allBits >> wordsIndex(i)
-	index := i + uint(bits.TrailingZeros64(^w))
-	if w != wA && index < b.length {
+
+	// process first (maybe partial) word
+	word := b.set[x]
+	word = word >> wordsIndex(i)
+	wordAll := allBits >> wordsIndex(i)
+
+	index := i + uint(bits.TrailingZeros64(^word))
+	if word != wordAll && index < b.length {
 		return index, true
 	}
+
+	// process the following full words until next bit is cleared
+	// x < len(b.set), no out-of-bounds panic in following slice expression
 	x++
-	// bounds check elimination in the loop
-	if x < 0 {
-		return 0, false
-	}
-	for x < len(b.set) {
-		if b.set[x] != allBits {
-			index = uint(x*wordSize + bits.TrailingZeros64(^b.set[x]))
+	for idx, word := range b.set[x:] {
+		if word != allBits {
+			index = uint((x+idx)*wordSize + bits.TrailingZeros64(^word))
 			if index < b.length {
 				return index, true
 			}
 		}
-		x++
 	}
+
 	return 0, false
 }
 
