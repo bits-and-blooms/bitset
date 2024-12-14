@@ -141,21 +141,21 @@ func (b *BitSet) Words() []uint64 {
 
 // wordsNeeded calculates the number of words needed for i bits
 func wordsNeeded(i uint) int {
-	if i > (Cap() - wordSize + 1) {
+	if i > (Cap() - wordMask) {
 		return int(Cap() >> log2WordSize)
 	}
-	return int((i + (wordSize - 1)) >> log2WordSize)
+	return int((i + wordMask) >> log2WordSize)
 }
 
 // wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
 // This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing BitSet).
 func wordsNeededUnbound(i uint) int {
-	return (int(i) + (wordSize - 1)) >> log2WordSize
+	return (int(i) + wordMask) >> log2WordSize
 }
 
 // wordsIndex calculates the index of words in a `uint64`
 func wordsIndex(i uint) uint {
-	return i & (wordSize - 1)
+	return i & wordMask
 }
 
 // New creates a new BitSet with a hint that length bits will be required.
@@ -322,7 +322,7 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 			data[i] = ^data[i]
 		}
 	}
-	if end&(wordSize-1) != 0 {
+	if end&wordMask != 0 {
 		b.set[endWord] ^= ^uint64(0) >> wordsIndex(-end)
 	}
 	return b
