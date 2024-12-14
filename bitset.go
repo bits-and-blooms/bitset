@@ -308,23 +308,54 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	if start >= end {
 		return b
 	}
+
 	if end-1 >= b.length { // if we need more bits, make 'em
 		b.extendSet(end - 1)
 	}
-	var startWord uint = start >> log2WordSize
-	var endWord uint = end >> log2WordSize
+
+	startWord := int(start >> log2WordSize)
+	endWord := int(end >> log2WordSize)
+
+	// b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
+	//  e.g:
+	//  start = 71,
+	//  startWord = 1
+	//  wordsIndex(start) = 71 % 64 = 7
+	//   (^uint64(0) << 7) = 0b111111....11110000000
+	//
+	//  mask = ^(^uint64(0) << 7) = 0b000000....00001111111
+	//
+	// flips the first 7 bits in b.set[1] and
+	// in the range loop, the b.set[1] gets again flipped
+	// so the two expressions flip results in a flip
+	// in b.set[1] from [7,63]
+	//
+	// handle starWword special, get's reflipped in range loop
 	b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
-	if endWord > 0 {
-		// bounds check elimination
-		data := b.set
-		_ = data[endWord-1]
-		for i := startWord; i < endWord; i++ {
-			data[i] = ^data[i]
-		}
+
+	for idx := range b.set[startWord:endWord] {
+		b.set[startWord+idx] = ^b.set[startWord+idx]
 	}
-	if end&wordMask != 0 {
-		b.set[endWord] ^= ^uint64(0) >> wordsIndex(-end)
+
+	// handle endWord special
+	//  e.g.
+	// end = 135
+	//  endWord = 2
+	//
+	//  wordsIndex(-7) = 57
+	//  see the golang spec:
+	//   "For unsigned integer values, the operations +, -, *, and << are computed
+	//   modulo 2n, where n is the bit width of the unsigned integer's type."
+	//
+	//   mask = ^uint64(0) >> 57 = 0b00000....0001111111
+	//
+	// flips in b.set[2] from [0,7]
+	//
+	// is end at word boundary?
+	if idx := wordsIndex(-end); idx != 0 {
+		b.set[endWord] ^= ^uint64(0) >> wordsIndex(idx)
 	}
+
 	return b
 }
 
