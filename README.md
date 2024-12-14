@@ -25,7 +25,7 @@ It provides methods for setting, clearing, flipping, and testing individual inte
 
 But it also provides set intersection, union, difference, complement, and symmetric operations, as well as tests to check whether any, all, or no bits are set, and querying a bitset's current length and number of positive bits.
 
-BitSets are expanded to the size of the largest set bit; the memory allocation is approximately Max bits, where Max is the largest set bit. BitSets are never shrunk. On creation, a hint can be given for the number of bits that will be used.
+BitSets are expanded to the size of the largest set bit; the memory allocation is approximately Max bits, where Max is the largest set bit. BitSets are never shrunk automatically, but `Shrink` and `Compact` methods are available. On creation, a hint can be given for the number of bits that will be used.
 
 Many of the methods, including Set, Clear, and Flip, return a BitSet pointer, which allows for chaining.
 
@@ -136,19 +136,9 @@ The `roaring` library allows you to go back and forth between compressed Roaring
 
 ### Goroutine safety
 
-In general, it not safe to access
-the same BitSet using different goroutines--they are
-unsynchronized for performance. Should you want to access
-a BitSet from more than one goroutine, you should
-provide synchronization. Typically this is done by using channels to pass
-the *BitSet around (in Go style; so there is only ever one owner),
-or by using `sync.Mutex` to serialize operations on BitSets.
+In general, it's not safe to access the same BitSet using different goroutines--they are unsynchronized for performance.
 
-## Implementation Note
-
-Go 1.9 introduced a native `math/bits` library. We provide backward compatibility to Go 1.7, which might be removed.
-
-It is possible that a later version will match the `math/bits` return signature for counts (which is `int`, rather than our library's `uint64`). If so, the version will be bumped.
+Should you want to access a BitSet from more than one goroutine, you should provide synchronization. Typically this is done by using channels to pass the *BitSet around (in Go style; so there is only ever one owner), or by using `sync.Mutex` to serialize operations on BitSets.
 
 ## Installation
 
