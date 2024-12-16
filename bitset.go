@@ -49,7 +49,7 @@ import (
 )
 
 // the wordSize of a bit set
-const wordSize = uint(64)
+const wordSize = 64
 
 // the wordSize of a bit set in bytes
 const wordBytes = wordSize / 8
@@ -58,7 +58,7 @@ const wordBytes = wordSize / 8
 const wordMask = wordSize - 1
 
 // log2WordSize is lg(wordSize)
-const log2WordSize = uint(6)
+const log2WordSize = 6
 
 // allBits has every bit set
 const allBits uint64 = 0xffffffffffffffff
@@ -141,21 +141,21 @@ func (b *BitSet) Words() []uint64 {
 
 // wordsNeeded calculates the number of words needed for i bits
 func wordsNeeded(i uint) int {
-	if i > (Cap() - wordSize + 1) {
+	if i > (Cap() - wordMask) {
 		return int(Cap() >> log2WordSize)
 	}
-	return int((i + (wordSize - 1)) >> log2WordSize)
+	return int((i + wordMask) >> log2WordSize)
 }
 
 // wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
 // This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing BitSet).
 func wordsNeededUnbound(i uint) int {
-	return int((i + (wordSize - 1)) >> log2WordSize)
+	return (int(i) + wordMask) >> log2WordSize
 }
 
 // wordsIndex calculates the index of words in a `uint64`
 func wordsIndex(i uint) uint {
-	return i & (wordSize - 1)
+	return i & wordMask
 }
 
 // New creates a new BitSet with a hint that length bits will be required.
@@ -308,23 +308,54 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	if start >= end {
 		return b
 	}
+
 	if end-1 >= b.length { // if we need more bits, make 'em
 		b.extendSet(end - 1)
 	}
-	var startWord uint = start >> log2WordSize
-	var endWord uint = end >> log2WordSize
+
+	startWord := int(start >> log2WordSize)
+	endWord := int(end >> log2WordSize)
+
+	// b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
+	//  e.g:
+	//  start = 71,
+	//  startWord = 1
+	//  wordsIndex(start) = 71 % 64 = 7
+	//   (^uint64(0) << 7) = 0b111111....11110000000
+	//
+	//  mask = ^(^uint64(0) << 7) = 0b000000....00001111111
+	//
+	// flips the first 7 bits in b.set[1] and
+	// in the range loop, the b.set[1] gets again flipped
+	// so the two expressions flip results in a flip
+	// in b.set[1] from [7,63]
+	//
+	// handle startWord special, get's reflipped in range loop
 	b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
-	if endWord > 0 {
-		// bounds check elimination
-		data := b.set
-		_ = data[endWord-1]
-		for i := startWord; i < endWord; i++ {
-			data[i] = ^data[i]
-		}
+
+	for idx := range b.set[startWord:endWord] {
+		b.set[startWord+idx] = ^b.set[startWord+idx]
 	}
-	if end&(wordSize-1) != 0 {
-		b.set[endWord] ^= ^uint64(0) >> wordsIndex(-end)
+
+	// handle endWord special
+	//  e.g.
+	// end = 135
+	//  endWord = 2
+	//
+	//  wordsIndex(-7) = 57
+	//  see the golang spec:
+	//   "For unsigned integer values, the operations +, -, *, and << are computed
+	//   modulo 2n, where n is the bit width of the unsigned integer's type."
+	//
+	//   mask = ^uint64(0) >> 57 = 0b00000....0001111111
+	//
+	// flips in b.set[2] from [0,7]
+	//
+	// is end at word boundary?
+	if idx := wordsIndex(-end); idx != 0 {
+		b.set[endWord] ^= ^uint64(0) >> wordsIndex(idx)
 	}
+
 	return b
 }
 
@@ -597,27 +628,29 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
-	w = w >> wordsIndex(i)
-	wA := allBits >> wordsIndex(i)
-	index := i + uint(bits.TrailingZeros64(^w))
-	if w != wA && index < b.length {
+
+	// process first (maybe partial) word
+	word := b.set[x]
+	word = word >> wordsIndex(i)
+	wordAll := allBits >> wordsIndex(i)
+
+	index := i + uint(bits.TrailingZeros64(^word))
+	if word != wordAll && index < b.length {
 		return index, true
 	}
+
+	// process the following full words until next bit is cleared
+	// x < len(b.set), no out-of-bounds panic in following slice expression
 	x++
-	// bounds check elimination in the loop
-	if x < 0 {
-		return 0, false
-	}
-	for x < len(b.set) {
-		if b.set[x] != allBits {
-			index = uint(x)*wordSize + uint(bits.TrailingZeros64(^b.set[x]))
+	for idx, word := range b.set[x:] {
+		if word != allBits {
+			index = uint((x+idx)*wordSize + bits.TrailingZeros64(^word))
 			if index < b.length {
 				return index, true
 			}
 		}
-		x++
 	}
+
 	return 0, false
 }
 
@@ -629,16 +662,18 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
+	word := b.set[x]
+
 	// Clear the bits above the index
-	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
-	if w != 0 {
-		return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+	if word != 0 {
+		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 	}
+
 	for x--; x >= 0; x-- {
-		w = b.set[x]
-		if w != 0 {
-			return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+		word = b.set[x]
+		if word != 0 {
+			return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 		}
 	}
 	return 0, false
@@ -652,20 +687,23 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 	if x >= len(b.set) {
 		return 0, false
 	}
-	w := b.set[x]
+	word := b.set[x]
+
 	// Flip all bits and find the highest one bit
-	w = ^w
+	word = ^word
+
 	// Clear the bits above the index
-	w = w & ((1 << (wordsIndex(i) + 1)) - 1)
-	if w != 0 {
-		return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+
+	if word != 0 {
+		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 	}
 
 	for x--; x >= 0; x-- {
-		w = b.set[x]
-		w = ^w
-		if w != 0 {
-			return uint(x<<log2WordSize) + uint(bits.Len64(w)) - 1, true
+		word = b.set[x]
+		word = ^word
+		if word != 0 {
+			return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 		}
 	}
 	return 0, false
@@ -1107,18 +1145,18 @@ func (b *BitSet) DumpAsBits() string {
 
 // BinaryStorageSize returns the binary storage requirements (see WriteTo) in bytes.
 func (b *BitSet) BinaryStorageSize() int {
-	return int(wordBytes + wordBytes*uint(b.wordCount()))
+	return wordBytes + wordBytes*b.wordCount()
 }
 
 func readUint64Array(reader io.Reader, data []uint64) error {
 	length := len(data)
 	bufferSize := 128
-	buffer := make([]byte, bufferSize*int(wordBytes))
+	buffer := make([]byte, bufferSize*wordBytes)
 	for i := 0; i < length; i += bufferSize {
 		end := i + bufferSize
 		if end > length {
 			end = length
-			buffer = buffer[:wordBytes*uint(end-i)]
+			buffer = buffer[:wordBytes*(end-i)]
 		}
 		chunk := data[i:end]
 		if _, err := io.ReadFull(reader, buffer); err != nil {
@@ -1133,12 +1171,12 @@ func readUint64Array(reader io.Reader, data []uint64) error {
 
 func writeUint64Array(writer io.Writer, data []uint64) error {
 	bufferSize := 128
-	buffer := make([]byte, bufferSize*int(wordBytes))
+	buffer := make([]byte, bufferSize*wordBytes)
 	for i := 0; i < len(data); i += bufferSize {
 		end := i + bufferSize
 		if end > len(data) {
 			end = len(data)
-			buffer = buffer[:wordBytes*uint(end-i)]
+			buffer = buffer[:wordBytes*(end-i)]
 		}
 		chunk := data[i:end]
 		for i, x := range chunk {
@@ -1343,7 +1381,7 @@ func (b *BitSet) top() (uint, bool) {
 		return 0, false
 	}
 
-	return uint(idx)*wordSize + uint(bits.Len64(b.set[idx])) - 1, true
+	return uint(idx*wordSize+bits.Len64(b.set[idx])) - 1, true
 }
 
 // ShiftLeft shifts the bitset like << operation would do.
