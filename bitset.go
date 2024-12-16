@@ -330,7 +330,7 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 	// so the two expressions flip results in a flip
 	// in b.set[1] from [7,63]
 	//
-	// handle starWword special, get's reflipped in range loop
+	// handle startWord special, get's reflipped in range loop
 	b.set[startWord] ^= ^(^uint64(0) << wordsIndex(start))
 
 	for idx := range b.set[startWord:endWord] {
