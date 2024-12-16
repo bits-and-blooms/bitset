@@ -525,8 +525,11 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 //
 // See also [BitSet.AsSlice] and [BitSet.NextSetMany].
 func (b *BitSet) AppendTo(buf []uint) []uint {
+	// In theory, we could overflow uint, but in practice, we will not.
 	for idx, word := range b.set {
 		for word != 0 {
+			// In theory idx<<log2WordSize could overflow, but it will not overflow
+			// in practice.
 			buf = append(buf, uint(idx<<log2WordSize+bits.TrailingZeros64(word)))
 
 			// clear the rightmost set bit
@@ -548,6 +551,8 @@ func (b *BitSet) AsSlice(buf []uint) []uint {
 	for idx, word := range b.set {
 		for ; word != 0; size++ {
 			// panics if capacity of buf is exceeded.
+			// In theory idx<<log2WordSize could overflow, but it will not overflow
+			// in practice.
 			buf[size] = uint(idx<<log2WordSize + bits.TrailingZeros64(word))
 
 			// clear the rightmost set bit
@@ -615,6 +620,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 // However if Count() is large, it might be preferable to
 // use several calls to NextSetMany for memory reasons.
 func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
+	// In theory, we could overflow uint, but in practice, we will not.
 	capacity := cap(buffer)
 	result := buffer[:capacity]
 
