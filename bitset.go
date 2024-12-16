@@ -520,6 +520,45 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 	return b
 }
 
+// AppendTo appends all set bits to buf and returns the (maybe extended) buf.
+// In case of allocation failure, the function will panic.
+//
+// See also [BitSet.AsSlice] and [BitSet.NextSetMany].
+func (b *BitSet) AppendTo(buf []uint) []uint {
+	for idx, word := range b.set {
+		for word != 0 {
+			buf = append(buf, uint(idx<<log2WordSize+bits.TrailingZeros64(word)))
+
+			// clear the rightmost set bit
+			word &= word - 1
+		}
+	}
+
+	return buf
+}
+
+// AsSlice returns all set bits as slice.
+// It panics if the capacity of buf is < b.Count()
+//
+// See also [BitSet.AppendTo] and [BitSet.NextSetMany].
+func (b *BitSet) AsSlice(buf []uint) []uint {
+	buf = buf[:cap(buf)] // len = cap
+
+	size := 0
+	for idx, word := range b.set {
+		for ; word != 0; size++ {
+			// panics if capacity of buf is exceeded.
+			buf[size] = uint(idx<<log2WordSize + bits.TrailingZeros64(word))
+
+			// clear the rightmost set bit
+			word &= word - 1
+		}
+	}
+
+	buf = buf[:size]
+	return buf
+}
+
 // NextSet returns the next bit set from the specified index,
 // including possibly the current index
 // along with an error code (true = valid, false = no set bit found)
@@ -570,8 +609,11 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 //	indices := make([]uint, bitmap.Count())
 //	bitmap.NextSetMany(0, indices)
 //
-// However if bitmap.Count() is large, it might be preferable to
-// use several calls to NextSetMany, for performance reasons.
+// It is also possible to retrieve all set bits with [BitSet.AppendTo]
+// or [BitSet.AsSlice].
+//
+// However if Count() is large, it might be preferable to
+// use several calls to NextSetMany for memory reasons.
 func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	capacity := cap(buffer)
 	result := buffer[:capacity]

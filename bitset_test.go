@@ -507,6 +507,104 @@ func TestNextSetMany(t *testing.T) {
 	}
 }
 
+func TestAppendTo(t *testing.T) {
+	testCases := []struct {
+		name string
+		set  []uint
+		buf  []uint
+	}{
+		{
+			name: "null",
+			set:  nil,
+			buf:  nil,
+		},
+		{
+			name: "one",
+			set:  []uint{42},
+			buf:  make([]uint, 0, 5),
+		},
+		{
+			name: "many",
+			set:  []uint{1, 42, 55, 258, 7211, 54666},
+			buf:  make([]uint, 0),
+		},
+	}
+
+	for _, tc := range testCases {
+		var b BitSet
+		for _, u := range tc.set {
+			b.Set(u)
+		}
+
+		tc.buf = b.AppendTo(tc.buf)
+
+		if !reflect.DeepEqual(tc.buf, tc.set) {
+			t.Errorf("AppendTo, %s: returned buf is not equal as expected:\ngot:  %v\nwant: %v",
+				tc.name, tc.buf, tc.set)
+		}
+	}
+}
+
+func TestAsSlice(t *testing.T) {
+	testCases := []struct {
+		name string
+		set  []uint
+		buf  []uint
+	}{
+		{
+			name: "null",
+			set:  nil,
+			buf:  nil,
+		},
+		{
+			name: "one",
+			set:  []uint{42},
+			buf:  make([]uint, 1),
+		},
+		{
+			name: "many",
+			set:  []uint{1, 42, 55, 258, 7211, 54666},
+			buf:  make([]uint, 6),
+		},
+	}
+
+	for _, tc := range testCases {
+		var b BitSet
+		for _, u := range tc.set {
+			b.Set(u)
+		}
+
+		tc.buf = b.AsSlice(tc.buf)
+
+		if !reflect.DeepEqual(tc.buf, tc.set) {
+			t.Errorf("AsSlice, %s: returned buf is not equal as expected:\ngot:  %v\nwant: %v",
+				tc.name, tc.buf, tc.set)
+		}
+	}
+}
+
+func TestPanicAppendTo(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error("AppendTo with empty buf should not have caused a panic")
+		}
+	}()
+	v := New(1000)
+	v.Set(1000)
+	_ = v.AppendTo(nil)
+}
+
+func TestPanicAsSlice(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("AsSlice with buf too small should have caused a panic")
+		}
+	}()
+	v := New(1000)
+	v.Set(1000)
+	_ = v.AsSlice(nil)
+}
+
 func TestSetTo(t *testing.T) {
 	v := New(1000)
 	v.SetTo(100, true)
