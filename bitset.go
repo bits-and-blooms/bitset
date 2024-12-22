@@ -1418,18 +1418,13 @@ func (b *BitSet) Select(index uint) uint {
 
 // top detects the top bit set
 func (b *BitSet) top() (uint, bool) {
-	panicIfNull(b)
-
-	idx := len(b.set) - 1
-	for ; idx >= 0 && b.set[idx] == 0; idx-- {
+	for idx := len(b.set) - 1; idx >= 0; idx-- {
+		if word := b.set[idx]; word != 0 {
+			return uint(idx<<log2WordSize+bits.Len64(word)) - 1, true
+		}
 	}
 
-	// no set bits
-	if idx < 0 {
-		return 0, false
-	}
-
-	return uint(idx*wordSize+bits.Len64(b.set[idx])) - 1, true
+	return 0, false
 }
 
 // ShiftLeft shifts the bitset like << operation would do.
