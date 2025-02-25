@@ -59,7 +59,7 @@ func BenchmarkCount(b *testing.B) {
 	}
 }
 
-// go test -bench=Iterate
+// go test -bench=BenchmarkIter
 func BenchmarkIterate(b *testing.B) {
 	b.StopTimer()
 	s := New(10000)
@@ -70,6 +70,21 @@ func BenchmarkIterate(b *testing.B) {
 	for j := 0; j < b.N; j++ {
 		c := uint(0)
 		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {
+			c++
+		}
+	}
+}
+
+func BenchmarkIter(b *testing.B) {
+	b.StopTimer()
+	s := New(10000)
+	for i := 0; i < 10000; i += 3 {
+		s.Set(uint(i))
+	}
+	b.StartTimer()
+	for j := 0; j < b.N; j++ {
+		c := uint(0)
+		for range s.EachSet() {
 			c++
 		}
 	}

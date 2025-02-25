@@ -44,6 +44,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math/bits"
 	"strconv"
 )
@@ -562,6 +563,21 @@ func (b *BitSet) AsSlice(buf []uint) []uint {
 
 	buf = buf[:size]
 	return buf
+}
+
+// EachSet returns an iterator over all set bits in the BitSet.
+func (b *BitSet) EachSet() iter.Seq[uint] {
+	return func(yield func(uint) bool) {
+		for wordIndex, word := range b.set {
+			idx := 0
+			for trail := bits.TrailingZeros64(word); trail != 64; trail = bits.TrailingZeros64(word >> idx) {
+				if !yield(uint(wordIndex<<log2WordSize + idx + trail)) {
+					return
+				}
+				idx += trail + 1
+			}
+		}
+	}
 }
 
 // NextSet returns the next bit set from the specified index,

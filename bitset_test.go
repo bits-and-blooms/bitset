@@ -3035,3 +3035,11 @@ func BenchmarkBitSetExtractDeposit(b *testing.B) {
 		})
 	}
 }
+
+func TestIter(t *testing.T) {
+	var b BitSet
+	b.Set(0).Set(3).Set(5).Set(6).Set(63).Set(64).Set(65).Set(127).Set(128).Set(1000000)
+	for i := range b.EachSet() {
+		fmt.Println(i)
+	}
+}
