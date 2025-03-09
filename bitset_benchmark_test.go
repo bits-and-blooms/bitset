@@ -658,3 +658,19 @@ func BenchmarkClearRMS(b *testing.B) {
 		}
 	})
 }
+
+// go test -bench=Rank
+func BenchmarkRank(b *testing.B) {
+	s := New(100000)
+	for i := 0; i < 100000; i += 100 {
+		s.Set(uint(i))
+	}
+	for _, u := range []uint{1, 20, 50, 100, 200, 500, 1_000, 10_000, 20_000, 50_000, 100_000, 200_000} {
+		b.Run(fmt.Sprintf("Rank(%d)", u), func(b *testing.B) {
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = s.Rank(u)
+			}
+		})
+	}
+}
