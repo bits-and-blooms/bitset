@@ -1385,16 +1385,36 @@ func (b *BitSet) UnmarshalJSON(data []byte) error {
 // Rank returns the number of set bits up to and including the index
 // that are set in the bitset.
 // See https://en.wikipedia.org/wiki/Ranking#Ranking_in_statistics
-func (b *BitSet) Rank(index uint) uint {
-	if index >= b.length {
-		return b.Count()
+func (b *BitSet) Rank(index uint) (rank uint) {
+	index++ // Rank is up to and including
+
+	// needed more than once
+	length := len(b.set)
+
+	// TODO: built-in min requires go1.21 or later
+	// idx := min(int(index>>6), len(b.set))
+	idx := int(index >> 6)
+	if idx > length {
+		idx = length
 	}
-	leftover := (index + 1) & 63
-	answer := uint(popcntSlice(b.set[:(index+1)>>6]))
-	if leftover != 0 {
-		answer += uint(bits.OnesCount64(b.set[(index+1)>>6] << (64 - leftover)))
+
+	// sum up the popcounts until idx ...
+	// TODO: cannot range over idx (...): requires go1.22 or later
+	// for j := range idx {
+	for j := 0; j < idx; j++ {
+		if w := b.set[j]; w != 0 {
+			rank += uint(bits.OnesCount64(w))
+		}
 	}
-	return answer
+
+	// ... plus partial word at idx,
+	// make Rank inlineable and faster in the end
+	// don't test index&63 != 0, just add, less branching
+	if idx < length {
+		rank += uint(bits.OnesCount64(b.set[idx] << (64 - index&63)))
+	}
+
+	return
 }
 
 // Select returns the index of the jth set bit, where j is the argument.
