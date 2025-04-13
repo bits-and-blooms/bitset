@@ -2,58 +2,41 @@ package bitset
 
 import "math/bits"
 
-func popcntSlice(s []uint64) uint64 {
-	var cnt int
+func popcntSlice(s []uint64) (cnt uint64) {
 	for _, x := range s {
-		cnt += bits.OnesCount64(x)
+		cnt += uint64(bits.OnesCount64(x))
 	}
-	return uint64(cnt)
+	return
 }
 
-func popcntMaskSlice(s, m []uint64) uint64 {
-	var cnt int
-	// this explicit check eliminates a bounds check in the loop
-	if len(m) < len(s) {
-		panic("mask slice is too short")
-	}
+func popcntMaskSlice(s, m []uint64) (cnt uint64) {
+	_ = m[len(s)-1] // BCE
 	for i := range s {
-		cnt += bits.OnesCount64(s[i] &^ m[i])
+		cnt += uint64(bits.OnesCount64(s[i] &^ m[i]))
 	}
-	return uint64(cnt)
+	return
 }
 
-func popcntAndSlice(s, m []uint64) uint64 {
-	var cnt int
-	// this explicit check eliminates a bounds check in the loop
-	if len(m) < len(s) {
-		panic("mask slice is too short")
-	}
+func popcntAndSlice(s, m []uint64) (cnt uint64) {
+	_ = m[len(s)-1] // BCE
 	for i := range s {
-		cnt += bits.OnesCount64(s[i] & m[i])
+		cnt += uint64(bits.OnesCount64(s[i] & m[i]))
 	}
-	return uint64(cnt)
+	return
 }
 
-func popcntOrSlice(s, m []uint64) uint64 {
-	var cnt int
-	// this explicit check eliminates a bounds check in the loop
-	if len(m) < len(s) {
-		panic("mask slice is too short")
-	}
+func popcntOrSlice(s, m []uint64) (cnt uint64) {
+	_ = m[len(s)-1] // BCE
 	for i := range s {
-		cnt += bits.OnesCount64(s[i] | m[i])
+		cnt += uint64(bits.OnesCount64(s[i] | m[i]))
 	}
-	return uint64(cnt)
+	return
 }
 
-func popcntXorSlice(s, m []uint64) uint64 {
-	var cnt int
-	// this explicit check eliminates a bounds check in the loop
-	if len(m) < len(s) {
-		panic("mask slice is too short")
-	}
+func popcntXorSlice(s, m []uint64) (cnt uint64) {
+	_ = m[len(s)-1] // BCE
 	for i := range s {
-		cnt += bits.OnesCount64(s[i] ^ m[i])
+		cnt += uint64(bits.OnesCount64(s[i] ^ m[i]))
 	}
-	return uint64(cnt)
+	return
 }
