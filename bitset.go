@@ -1473,7 +1473,7 @@ func (b *BitSet) ShiftLeft(bits uint) {
 	dst := b.set
 
 	// not using extendSet() to avoid unneeded data copying
-	nsize := wordsNeeded(top + bits)
+	nsize := wordsNeeded(top + bits + 1)
 	if len(b.set) < nsize {
 		dst = make([]uint64, nsize)
 	}
