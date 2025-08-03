@@ -1302,6 +1302,14 @@ func TestUnion(t *testing.T) {
 	}
 }
 
+func TestEmptyUnionCardinality(t *testing.T) {
+	a := New(0)
+	b := New(0)
+	if a.UnionCardinality(b) != 0 {
+		t.Error("UnionCardinality should be zero")
+	}
+}
+
 func TestInPlaceUnion(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -1350,6 +1358,14 @@ func TestIntersection(t *testing.T) {
 	}
 	if !c.Equal(d) {
 		t.Errorf("Intersection should be symmetric")
+	}
+}
+
+func TestEmptyIntersectionCardinality(t *testing.T) {
+	a := New(0)
+	b := New(0)
+	if a.IntersectionCardinality(b) != 0 {
+		t.Error("IntersectionCardinality should be zero")
 	}
 }
 
@@ -1408,6 +1424,14 @@ func TestDifference(t *testing.T) {
 	}
 }
 
+func TestEmptyDifferenceCardinality(t *testing.T) {
+	a := New(0)
+	b := New(0)
+	if a.DifferenceCardinality(b) != 0 {
+		t.Error("DifferenceCardinality should be zero")
+	}
+}
+
 func TestInPlaceDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
@@ -1460,6 +1484,14 @@ func TestSymmetricDifference(t *testing.T) {
 	}
 	if !c.Equal(d) {
 		t.Errorf("SymmetricDifference should be symmetric")
+	}
+}
+
+func TestEmptySymmetricDifferenceCardinality(t *testing.T) {
+	a := New(0)
+	b := New(0)
+	if a.SymmetricDifferenceCardinality(b) != 0 {
+		t.Error("SymmetricDifferenceCardinality should be zero")
 	}
 }
 
