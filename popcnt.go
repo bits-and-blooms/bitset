@@ -10,7 +10,6 @@ func popcntSlice(s []uint64) (cnt uint64) {
 }
 
 func popcntMaskSlice(s, m []uint64) (cnt uint64) {
-	_ = m[len(s)-1] // BCE
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] &^ m[i]))
 	}
@@ -18,7 +17,6 @@ func popcntMaskSlice(s, m []uint64) (cnt uint64) {
 }
 
 func popcntAndSlice(s, m []uint64) (cnt uint64) {
-	_ = m[len(s)-1] // BCE
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] & m[i]))
 	}
@@ -26,7 +24,6 @@ func popcntAndSlice(s, m []uint64) (cnt uint64) {
 }
 
 func popcntOrSlice(s, m []uint64) (cnt uint64) {
-	_ = m[len(s)-1] // BCE
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] | m[i]))
 	}
@@ -34,7 +31,6 @@ func popcntOrSlice(s, m []uint64) (cnt uint64) {
 }
 
 func popcntXorSlice(s, m []uint64) (cnt uint64) {
-	_ = m[len(s)-1] // BCE
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] ^ m[i]))
 	}
