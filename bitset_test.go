@@ -2330,7 +2330,7 @@ func TestSetAll(t *testing.T) {
 }
 
 func TestShiftLeft(t *testing.T) {
-	data := []uint{5, 28, 45, 72, 89}
+	data := []uint{5, 28, 45, 72, 89, 560}
 
 	test := func(name string, bits uint) {
 		t.Run(name, func(t *testing.T) {
@@ -2360,6 +2360,7 @@ func TestShiftLeft(t *testing.T) {
 	test("no page split", 80)
 	test("with page split", 114)
 	test("with extension", 242)
+	test("with extra word", 16)
 }
 
 func TestShiftRight(t *testing.T) {
