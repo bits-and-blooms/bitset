@@ -2409,7 +2409,7 @@ func TestShiftRight(t *testing.T) {
 
 			count := 0
 			for _, i := range data {
-				if i > bits {
+				if i >= bits {
 					count++
 
 					if !b.Test(i - bits) {
@@ -2419,7 +2419,7 @@ func TestShiftRight(t *testing.T) {
 			}
 
 			if int(b.Count()) != count {
-				t.Error("bad bits count")
+				t.Errorf("bad bits count: expected %d, got %d", count, b.Count())
 			}
 		})
 	}
@@ -2432,6 +2432,43 @@ func TestShiftRight(t *testing.T) {
 	test("with extension", 70)
 	test("full shift", 89)
 	test("remove all", 242)
+}
+
+func TestShiftRightFull(t *testing.T) {
+	testCases := []struct{
+		data []uint
+		shiftDistance uint
+	}{
+		{
+			[]uint{20}, 20,
+		},
+		{
+			[]uint{0, 20, 40, 1260, 1280}, 1,
+		},
+		{
+			[]uint{0, 20, 40, 1260, 1280}, 1281,
+		},
+	}
+
+	test := func(data []uint, shiftDistance uint) {
+		b := New(0)
+		for i := range data {
+			b.Set(data[i])
+		}
+		b.ShiftRight(shiftDistance)
+		for i := range data {
+			shiftedBit := int(data[i])-int(shiftDistance)
+			if shiftedBit >= 0 {
+				if !b.Test(uint(shiftedBit)) {
+					t.Errorf("bit %d should be set after ShiftRight(%d) if bit %d was set prior", data[i]-shiftDistance, shiftDistance, data[i])
+				}
+			}
+		}
+	}
+
+	for i := range testCases {
+		test(testCases[i].data, testCases[i].shiftDistance)
+	}
 }
 
 func TestWord(t *testing.T) {
