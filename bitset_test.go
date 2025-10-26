@@ -2490,7 +2490,7 @@ func TestWord(t *testing.T) {
 			expected: 0,
 		},
 		"way off the edge": {
-			index:    6346235235,
+			index:    63235235,
 			expected: 0,
 		},
 		"split between two words": {
