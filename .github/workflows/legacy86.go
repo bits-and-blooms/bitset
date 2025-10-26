@@ -1,4 +1,3 @@
-
 name: Go-legacy-CI
 
 on: [push, pull_request]
