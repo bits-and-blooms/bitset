@@ -2448,6 +2448,9 @@ func TestShiftRightFull(t *testing.T) {
 		{
 			[]uint{0, 20, 40, 1260, 1280}, 1281,
 		},
+		{
+			[]uint{961}, 64,
+		},
 	}
 
 	test := func(data []uint, shiftDistance uint) {
