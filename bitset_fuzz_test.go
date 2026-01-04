@@ -394,6 +394,38 @@ func FuzzModification(f *testing.F) {
 	})
 }
 
+func FuzzSelect(f *testing.F) {
+	// Add seed corpus
+	f.Add([]byte{0xFF, 0x00}, uint(0))
+	f.Add([]byte{0x0F, 0xF0}, uint(4))
+	f.Add([]byte{0xAA, 0x55}, uint(7))
+
+	f.Fuzz(func(t *testing.T, data []byte, j uint) {
+		if len(data) == 0 || len(data) > maxBytes {
+			return
+		}
+
+		// Convert byte data to bit positions
+		b := New(0)
+		var rawBits []uint
+		for i, byt := range data {
+			for bit := 0; bit < 8; bit++ {
+				if byt&(1<<bit) != 0 {
+					b.Set(uint(i*8 + bit))
+					rawBits = append(rawBits, uint(i*8+bit))
+				}
+			}
+		}
+
+		for bitIdx, bitPos := range rawBits {
+			actualBitPos := b.Select(uint(bitIdx))
+			if bitPos != actualBitPos {
+				t.Errorf("Select(%d) failed: expected %d, got %d", bitIdx, bitPos, actualBitPos)
+			}
+		}
+	})
+}
+
 // FuzzCopy tests clone and copy operations
 func FuzzCopy(f *testing.F) {
 	// Add seed corpus
@@ -519,7 +551,7 @@ func FuzzSerialization(f *testing.F) {
 // FuzzRandomOperations performs random sequences of operations
 func FuzzRandomOperations(f *testing.F) {
 	// Add seed corpus
-	f.Add([]byte{1, 2, 3, 4, 5}) // operations: 0=Set, 1=Clear, 2=Flip, 3=Test, 4=Count
+	f.Add([]byte{1, 2, 3, 4, 5, 6, 7}) // operations: 0=Set, 1=Clear, 2=Flip, 3=Test, 4=Count, 5=NextSet, 6=PreviousSet, 7=Select
 	f.Add([]byte{1, 1, 1, 4, 5})
 	f.Add([]byte{2, 2, 2, 4, 5})
 
@@ -566,6 +598,12 @@ func FuzzRandomOperations(f *testing.F) {
 
 			case 5: // NextSet - just ensure it doesn't panic
 				_, _ = b.NextSet(pos)
+
+			case 6: // PreviousSet - just ensure it doesn't panic
+				_, _ = b.PreviousSet(pos)
+
+			case 7: // Select - just ensure it doesn't panic
+				_ = b.Select(pos)
 			}
 		}
 
