@@ -1,7 +1,3 @@
-// Copyright 2014 Will Fitzgerald. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 // This file tests bit sets
 
 package bitset
@@ -2435,8 +2431,8 @@ func TestShiftRight(t *testing.T) {
 }
 
 func TestShiftRightFull(t *testing.T) {
-	testCases := []struct{
-		data []uint
+	testCases := []struct {
+		data          []uint
 		shiftDistance uint
 	}{
 		{
@@ -2460,7 +2456,7 @@ func TestShiftRightFull(t *testing.T) {
 		}
 		b.ShiftRight(shiftDistance)
 		for i := range data {
-			shiftedBit := int(data[i])-int(shiftDistance)
+			shiftedBit := int(data[i]) - int(shiftDistance)
 			if shiftedBit >= 0 {
 				if !b.Test(uint(shiftedBit)) {
 					t.Errorf("bit %d should be set after ShiftRight(%d) if bit %d was set prior", data[i]-shiftDistance, shiftDistance, data[i])
