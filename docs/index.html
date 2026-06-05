@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bitset — fast Go bitsets</title>
+<meta name="description" content="A high-performance Go library that maps between non-negative integers and boolean values. Set operations, serialization, and SIMD-accelerated routines.">
+<meta name="theme-color" content="#0d1117">
+
+<!-- Open Graph -->
+<meta property="og:title" content="bitset — fast Go bitsets">
+<meta property="og:description" content="A high-performance Go library mapping non-negative integers to boolean values, with rich set operations and portable serialization.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bits-and-blooms.github.io/bitset/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav" id="top">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <span class="brand-name">bitset</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#usage">Usage</a>
+      <a href="#serialization">Serialization</a>
+      <a href="#usedby">Used by</a>
+      <a class="nav-cta" href="https://github.com/bits-and-blooms/bitset" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">Go library · BSD-style license</p>
+      <h1>Bitsets, done <span class="grad">fast</span> in&nbsp;Go.</h1>
+      <p class="lede">
+        A compact, high-performance mapping between non-negative integers and boolean
+        values — far leaner than <code>map[uint]bool</code>. Set, clear, flip, test,
+        and run union / intersection / difference at native speed.
+      </p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#usage">Get started</a>
+        <a class="btn btn-ghost" href="https://pkg.go.dev/github.com/bits-and-blooms/bitset?tab=doc" target="_blank" rel="noopener">API docs ↗</a>
+      </div>
+
+      <div class="install">
+        <code id="installCmd">go get github.com/bits-and-blooms/bitset</code>
+        <button class="copy" data-copy="go get github.com/bits-and-blooms/bitset" aria-label="Copy install command">Copy</button>
+      </div>
+
+      <div class="badges">
+        <a href="https://github.com/bits-and-blooms/bitset/actions?query=workflow%3ATest" target="_blank" rel="noopener">
+          <img src="https://github.com/bits-and-blooms/bitset/workflows/Test/badge.svg" alt="Test status" loading="lazy"></a>
+        <a href="https://goreportcard.com/report/github.com/bits-and-blooms/bitset" target="_blank" rel="noopener">
+          <img src="https://goreportcard.com/badge/github.com/bits-and-blooms/bitset" alt="Go Report Card" loading="lazy"></a>
+        <a href="https://pkg.go.dev/github.com/bits-and-blooms/bitset?tab=doc" target="_blank" rel="noopener">
+          <img src="https://pkg.go.dev/badge/github.com/bits-and-blooms/bitset?tab=doc" alt="Go Reference" loading="lazy"></a>
+      </div>
+    </div>
+
+    <div class="hero-card" aria-hidden="false">
+      <div class="code-card">
+        <div class="code-head">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="code-file">main.go</span>
+        </div>
+<pre><code class="language-go">var b bitset.BitSet
+b.Set(10).Set(11).Set(1000)
+
+if b.Test(11) {
+    fmt.Println("bit 11 is set")
+}
+
+// rich set algebra
+hits := b.Intersection(other).Count()
+
+// iterate set bits (Go 1.23+)
+for i := range b.EachSet() {
+    fmt.Println("set:", i)
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap stats">
+    <div class="stat"><span class="num">1 bit</span><span class="lbl">per element</span></div>
+    <div class="stat"><span class="num">60+</span><span class="lbl">methods</span></div>
+    <div class="stat"><span class="num">SIMD</span><span class="lbl">accelerated</span></div>
+    <div class="stat"><span class="num">Go 1.16+</span><span class="lbl">supported</span></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="section">
+  <div class="wrap">
+    <p class="kicker">Why bitset</p>
+    <h2 class="section-title">Everything you need to push bits around</h2>
+    <div class="grid features">
+
+      <article class="feat">
+        <div class="feat-ico">⚡</div>
+        <h3>Memory efficient</h3>
+        <p>Roughly one bit of storage per element — orders of magnitude smaller than a hash map of booleans, with cache-friendly word layout.</p>
+      </article>
+
+      <article class="feat">
+        <div class="feat-ico">🧮</div>
+        <h3>Full set algebra</h3>
+        <p>Union, intersection, difference, symmetric difference and complement — each with in-place and cardinality-only variants.</p>
+      </article>
+
+      <article class="feat">
+        <div class="feat-ico">🔗</div>
+        <h3>Chainable API</h3>
+        <p><code>Set</code>, <code>Clear</code>, and <code>Flip</code> return the bitset, so mutations read naturally: <code>b.Set(10).Set(11)</code>.</p>
+      </article>
+
+      <article class="feat">
+        <div class="feat-ico">🔁</div>
+        <h3>Fast iteration</h3>
+        <p>Walk set or clear bits with <code>NextSet</code> / <code>NextClear</code>, or range over <code>EachSet()</code> on Go 1.23+.</p>
+      </article>
+
+      <article class="feat">
+        <div class="feat-ico">💾</div>
+        <h3>Portable serialization</h3>
+        <p><code>WriteTo</code> / <code>ReadFrom</code> give a stable byte layout across platforms, plus <code>MarshalBinary</code> and JSON support.</p>
+      </article>
+
+      <article class="feat">
+        <div class="feat-ico">🚀</div>
+        <h3>Battle-tested</h3>
+        <p>Fuzz-tested and used in production by databases, search engines, blockchains and CNCF projects worldwide.</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- USAGE -->
+<section id="usage" class="section section-alt">
+  <div class="wrap">
+    <p class="kicker">Quick start</p>
+    <h2 class="section-title">From zero to bits in seconds</h2>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-n">1</span>
+        <div>
+          <h3>Install</h3>
+          <div class="code-card mini">
+<pre><code class="language-bash">go get github.com/bits-and-blooms/bitset</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="step-n">2</span>
+        <div>
+          <h3>Use it</h3>
+          <div class="code-card mini">
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "math/rand"
+
+    "github.com/bits-and-blooms/bitset"
+)
+
+func main() {
+    var b bitset.BitSet
+
+    // play some Go Fish
+    for i := 0; i &lt; 100; i++ {
+        card1 := uint(rand.Intn(52))
+        card2 := uint(rand.Intn(52))
+        b.Set(card1)
+        if b.Test(card2) {
+            fmt.Println("Go Fish!")
+        }
+        b.Clear(card1)
+    }
+
+    // chaining
+    b.Set(10).Set(11)
+
+    for i, e := b.NextSet(0); e; i, e = b.NextSet(i + 1) {
+        fmt.Println("the following bit is set:", i)
+    }
+
+    if b.Intersection(bitset.New(100).Set(10)).Count() == 1 {
+        fmt.Println("intersection works.")
+    }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERIALIZATION -->
+<section id="serialization" class="section">
+  <div class="wrap two-col">
+    <div class="two-col-text">
+      <p class="kicker">Serialization</p>
+      <h2 class="section-title">Save and restore, portably</h2>
+      <p class="prose">
+        Serialize a bitset to a stable, platform-independent stream of bytes with
+        <code>WriteTo</code>, then read it back with <code>ReadFrom</code> — which
+        reuses the existing instance to minimize allocations.
+      </p>
+      <p class="prose tip">
+        <strong>Performance tip:</strong> wrap files and network connections in
+        <code>bufio</code> readers and writers for the best throughput.
+      </p>
+      <a class="btn btn-ghost" href="https://pkg.go.dev/github.com/bits-and-blooms/bitset?tab=doc" target="_blank" rel="noopener">Full API reference ↗</a>
+    </div>
+    <div class="two-col-code">
+      <div class="code-card">
+        <div class="code-head">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="code-file">serialize.go</span>
+        </div>
+<pre><code class="language-go">bs := bitset.New(9585)
+for i := uint(0); i &lt; 9585; i += 97 {
+    bs = bs.Set(i)
+}
+
+// write
+var buf bytes.Buffer
+n, err := bs.WriteTo(&amp;buf)
+
+// read back into an existing bitset
+bs = bitset.New()
+n, err = bs.ReadFrom(&amp;buf)</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USED BY -->
+<section id="usedby" class="section section-alt">
+  <div class="wrap">
+    <p class="kicker">In production</p>
+    <h2 class="section-title">Trusted by demanding systems</h2>
+    <p class="prose center">
+      Part of the <a href="https://github.com/avelino/awesome-go" target="_blank" rel="noopener">awesome-go</a>
+      collection and depended on across databases, search, blockchain and infrastructure.
+    </p>
+
+    <div class="grid logos">
+      <a class="logo" href="https://github.com/milvus-io/milvus" target="_blank" rel="noopener"><b>Milvus</b><span>Vector database</span></a>
+      <a class="logo" href="https://github.com/blevesearch/bleve" target="_blank" rel="noopener"><b>Bleve</b><span>Full-text search</span></a>
+      <a class="logo" href="https://github.com/consensys/gnark" target="_blank" rel="noopener"><b>gnark</b><span>zk-SNARKs</span></a>
+      <a class="logo" href="https://github.com/cosmos/cosmos-sdk" target="_blank" rel="noopener"><b>Cosmos SDK</b><span>Blockchain SDK</span></a>
+      <a class="logo" href="https://github.com/gohugoio/hugo" target="_blank" rel="noopener"><b>Hugo</b><span>Static sites</span></a>
+      <a class="logo" href="https://github.com/moby/swarmkit" target="_blank" rel="noopener"><b>SwarmKit</b><span>Docker Swarm</span></a>
+      <a class="logo" href="https://github.com/apache/pulsar-client-go" target="_blank" rel="noopener"><b>Apache Pulsar</b><span>Messaging</span></a>
+      <a class="logo" href="https://github.com/cubefs/cubefs" target="_blank" rel="noopener"><b>CubeFS</b><span>CNCF storage</span></a>
+      <a class="logo" href="https://github.com/NVIDIA/dcgm-exporter" target="_blank" rel="noopener"><b>NVIDIA DCGM</b><span>GPU metrics</span></a>
+      <a class="logo" href="https://github.com/pomerium/pomerium" target="_blank" rel="noopener"><b>Pomerium</b><span>Access proxy</span></a>
+      <a class="logo" href="https://github.com/RoaringBitmap/roaring" target="_blank" rel="noopener"><b>Roaring</b><span>Compressed bitmaps</span></a>
+      <a class="logo" href="https://github.com/zhenghaoz/gorse" target="_blank" rel="noopener"><b>gorse</b><span>Recommenders</span></a>
+    </div>
+    <p class="prose center muted small">…and many more across the Go ecosystem.</p>
+  </div>
+</section>
+
+<!-- MEMORY / ROARING NOTE -->
+<section class="section">
+  <div class="wrap callout">
+    <div>
+      <h2 class="section-title small-title">Working with billions of bits?</h2>
+      <p class="prose">
+        A bitset of <code>N</code> bits uses at least <code>N/8</code> bytes and grows to fit the
+        largest index you touch. For very large, sparse sets, consider compressed
+        <a href="https://roaringbitmap.org" target="_blank" rel="noopener">Roaring bitmaps</a> — you can convert
+        freely between the two.
+      </p>
+    </div>
+    <a class="btn btn-primary" href="https://github.com/RoaringBitmap/roaring" target="_blank" rel="noopener">Roaring for Go ↗</a>
+  </div>
+</section>
+
+<!-- BOOK AD -->
+<section class="section section-alt" id="book">
+  <div class="wrap book">
+    <a class="book-cover" href="https://www.amazon.com/dp/B0FMPGSWR5" target="_blank" rel="noopener">
+      <img src="https://m.media-amazon.com/images/I/61feneHS7kL._SL1499_.jpg"
+           alt="Mastering Programming: From Testing to Performance in Go — book cover">
+    </a>
+    <div class="book-copy">
+      <p class="kicker">Go deeper</p>
+      <h2 class="section-title small-title">Mastering Programming:<br>From Testing to Performance in Go</h2>
+      <p class="prose">
+        Want to write Go like the code behind <strong>bitset</strong>? This book takes you
+        from solid testing practices all the way to squeezing real performance out of Go —
+        the same techniques used to keep this library fast.
+      </p>
+      <a class="btn btn-primary" href="https://www.amazon.com/dp/B0FMPGSWR5" target="_blank" rel="noopener">Get the book on Amazon ↗</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark small" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <div>
+        <strong>bitset</strong>
+        <p class="muted small">Map non-negative integers to booleans, fast.</p>
+      </div>
+    </div>
+    <nav class="footer-links">
+      <a href="https://github.com/bits-and-blooms/bitset" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://pkg.go.dev/github.com/bits-and-blooms/bitset?tab=doc" target="_blank" rel="noopener">Documentation</a>
+      <a href="https://github.com/bits-and-blooms/bitset/issues" target="_blank" rel="noopener">Issues</a>
+      <a href="https://github.com/bits-and-blooms/bitset/blob/master/LICENSE" target="_blank" rel="noopener">License</a>
+    </nav>
+  </div>
+  <div class="wrap footer-bottom">
+    <p class="muted small">BSD-style license</p>
+  </div>
+</footer>
+
+<a class="totop" href="#top" id="toTop" aria-label="Back to top">↑</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
