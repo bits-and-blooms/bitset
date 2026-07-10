@@ -53,4 +53,7 @@ jobs:
       # coverage, which the "test" job already covers. All of these work on
       # every matrix entry (-shuffle needs Go 1.17+).
       - name: Test
+        # Force bash so the comma in -tags is not parsed as a PowerShell array
+        # operator on the Windows runners (their default shell is pwsh).
+        shell: bash
         run: go test -shuffle=on -tags=unit,benchmark -bench=. -benchtime=1x -failfast -v ./...

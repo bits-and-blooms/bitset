@@ -160,7 +160,7 @@ func FuzzSetOperations(f *testing.F) {
 
 		// Test Intersection
 		intersection := b1.Intersection(b2)
-		for i := uint(0); i < max(b1.Len(), b2.Len()); i++ {
+		for i := uint(0); i < maxUint(b1.Len(), b2.Len()); i++ {
 			expected := b1.Test(i) && b2.Test(i)
 			if intersection.Test(i) != expected {
 				t.Errorf("Intersection failed at bit %d: expected %v, got %v", i, expected, intersection.Test(i))
@@ -169,7 +169,7 @@ func FuzzSetOperations(f *testing.F) {
 
 		// Test Difference
 		difference := b1.Difference(b2)
-		for i := uint(0); i < max(b1.Len(), b2.Len()); i++ {
+		for i := uint(0); i < maxUint(b1.Len(), b2.Len()); i++ {
 			expected := b1.Test(i) && !b2.Test(i)
 			if difference.Test(i) != expected {
 				t.Errorf("Difference failed at bit %d: expected %v, got %v", i, expected, difference.Test(i))
@@ -178,7 +178,7 @@ func FuzzSetOperations(f *testing.F) {
 
 		// Test SymmetricDifference
 		symDiff := b1.SymmetricDifference(b2)
-		for i := uint(0); i < max(b1.Len(), b2.Len()); i++ {
+		for i := uint(0); i < maxUint(b1.Len(), b2.Len()); i++ {
 			expected := b1.Test(i) != b2.Test(i)
 			if symDiff.Test(i) != expected {
 				t.Errorf("SymmetricDifference failed at bit %d: expected %v, got %v", i, expected, symDiff.Test(i))
@@ -869,7 +869,7 @@ func FuzzStringRepresentations(f *testing.F) {
 		if len(bytes) > 0 {
 			b2 := From(bytes)
 			// Check that they have the same set bits, accounting for potential length differences
-			maxLen := min(b2.Len(), b.Len())
+			maxLen := minUint(b2.Len(), b.Len())
 
 			for i := uint(0); i < maxLen; i++ {
 				if b.Test(i) != b2.Test(i) {
@@ -878,4 +878,24 @@ func FuzzStringRepresentations(f *testing.F) {
 			}
 		}
 	})
+}
+
+// maxUint returns the larger of two uint values. It exists because the min/max
+// builtins require the go1.21 language version, but this package targets go1.17.
+func maxUint(a, b uint) uint {
+	if a > b {
+		return a
+	}
+
+	return b
+}
+
+// minUint returns the smaller of two uint values. See maxUint for why the min
+// builtin is not used.
+func minUint(a, b uint) uint {
+	if a < b {
+		return a
+	}
+
+	return b
 }
