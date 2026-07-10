@@ -552,8 +552,8 @@ func BenchmarkBitsetReadWrite(b *testing.B) {
 	temp := New(100000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.WriteTo(&buffer)
-		temp.ReadFrom(&buffer)
+		_, _ = s.WriteTo(&buffer)
+		_, _ = temp.ReadFrom(&buffer)
 		buffer.Reset()
 	}
 }

@@ -2006,7 +2006,7 @@ func TestCopyUnaligned(t *testing.T) {
 		t.Errorf("targets copied set count: %d, want %d", b.Count(), expectedCount)
 	}
 
-	if !(b.Test(0) && b.Test(3) && b.Test(4) && b.Test(16) && b.Test(17)) {
+	if !b.Test(0) || !b.Test(3) || !b.Test(4) || !b.Test(16) || !b.Test(17) {
 		t.Errorf("expected set bits are not set: %+v", b)
 	}
 }
@@ -2207,8 +2207,12 @@ func TestWriteTo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		gz.Write(buf.Bytes())
-		gz.Close()
+		if _, err := gz.Write(buf.Bytes()); err != nil {
+			t.Fatal(err)
+		}
+		if err := gz.Close(); err != nil {
+			t.Fatal(err)
+		}
 		t.Log("Encoded:", base64.StdEncoding.EncodeToString(gzout.Bytes()))
 	}
 
