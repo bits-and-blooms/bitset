@@ -1,21 +1,56 @@
 name: Test
 
 on: [push, pull_request]
+
 permissions:
   contents: read
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: stable
+          check-latest: true
+          cache: true
+      - name: Lint
+        run: make mod deps linter GOPATH=$(go env GOPATH)
+
   test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: stable
+          check-latest: true
+          cache: true
+      - name: Unit tests (race detector, coverage, benchmarks)
+        run: make mod deps test GOPATH=$(go env GOPATH)
+
+  # Verify the library still builds and passes tests on every supported Go
+  # version and OS.
+  compatibility:
     strategy:
       matrix:
-        go-version: [1.16.x, 1.17.x, 1.18.x, 1.19.x,1.20.x,1.21.x,1.22.x,1.23.x,1.24.x]
+        go-version: [1.17.x, 1.18.x, 1.19.x, 1.20.x, 1.21.x, 1.22.x, 1.23.x, 1.24.x, 1.25.x, 1.26.x]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - name: Install Go
-      uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c #v6.1.0
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 #v4.0.0
-    - name: Test
-      run: go test ./...
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: ${{ matrix.go-version }}
+      # Mirror the flags of the Makefile "test" target, minus race and
+      # coverage, which the "test" job already covers. All of these work on
+      # every matrix entry (-shuffle needs Go 1.17+).
+      - name: Test
+        run: go test -shuffle=on -tags=unit,benchmark -bench=. -benchtime=1x -failfast -v ./...
