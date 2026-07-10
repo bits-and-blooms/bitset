@@ -15,7 +15,7 @@ Please use the following contact information for reporting a vulnerability:
 In your report, please include:
 
 - A description of the vulnerability and its impact
-- How to reproduce the it
+- How to reproduce it
 - Affected versions
 
 This project is maintained by a team of volunteers on a reasonable-effort basis. As such, please give us at least 90 days to work on a fix before public exposure.
