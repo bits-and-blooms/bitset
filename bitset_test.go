@@ -3470,6 +3470,14 @@ func TestFromWithLengthShortSlicePanics(t *testing.T) {
 }
 
 func TestNewAllocationFailure(t *testing.T) {
+	// New(Cap()) can only be forced to fail its backing allocation on 64-bit
+	// platforms, where Cap() implies an astronomically large slice. On 32-bit
+	// platforms wordsNeeded caps the backing slice at about 512 MiB, which
+	// usually allocates successfully, so the recover path cannot be exercised.
+	if bits.UintSize < 64 {
+		t.Skip("allocation failure cannot be forced on 32-bit platforms")
+	}
+
 	b := New(Cap())
 	if b.Len() != 0 {
 		t.Errorf("expected an empty BitSet on allocation failure, got length %d", b.Len())
