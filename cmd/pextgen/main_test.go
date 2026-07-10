@@ -56,24 +56,31 @@ func TestPextPdepRoundTrip(t *testing.T) {
 
 func TestGenerateTable(t *testing.T) {
 	var single [256]uint8
+
 	single[0] = 1
+
 	out := generateTable("popLUT", single, "population counts")
 	if !strings.Contains(out, "// population counts\n") {
 		t.Errorf("expected the comment in the output, got %q", out[:40])
 	}
+
 	if !strings.Contains(out, "var popLUT = [256]uint8{") {
 		t.Error("expected a [256]uint8 table declaration in the output")
 	}
+
 	if !strings.Contains(out, "1,") {
 		t.Error("expected the table values in the output")
 	}
 
 	var double [256][256]uint8
+
 	double[0][0] = 7
+
 	out = generateTable("pextLUT", double, "")
 	if !strings.Contains(out, "var pextLUT = [256][256]uint8{") {
 		t.Error("expected a [256][256]uint8 table declaration in the output")
 	}
+
 	if !strings.Contains(out, "7,") {
 		t.Error("expected the table values in the output")
 	}
@@ -83,10 +90,13 @@ func TestGenerateTable(t *testing.T) {
 // main() can be invoked more than once.
 func setArgs(t *testing.T, args ...string) {
 	t.Helper()
+
 	oldArgs, oldCommandLine := os.Args, flag.CommandLine
+
 	t.Cleanup(func() {
 		os.Args, flag.CommandLine = oldArgs, oldCommandLine
 	})
+
 	os.Args = args
 	flag.CommandLine = flag.NewFlagSet(args[0], flag.ContinueOnError)
 }
@@ -98,15 +108,20 @@ func TestMainMissingPackageName(t *testing.T) {
 
 func TestMainGeneratesFile(t *testing.T) {
 	dir := t.TempDir()
+
 	oldwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chdir(dir); err != nil {
+
+	err = os.Chdir(dir)
+	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
-		if err := os.Chdir(oldwd); err != nil {
+		err := os.Chdir(oldwd)
+		if err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -118,10 +133,12 @@ func TestMainGeneratesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected main to generate pext.gen.go: %v", err)
 	}
+
 	content := string(data)
 	if !strings.Contains(content, "package bitset") {
 		t.Error("expected the generated file to declare the requested package")
 	}
+
 	for _, table := range []string{"pextLUT", "pdepLUT", "popLUT"} {
 		if !strings.Contains(content, "var "+table+" = ") {
 			t.Errorf("expected the generated file to contain the %s table", table)

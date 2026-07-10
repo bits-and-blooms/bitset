@@ -1,0 +1,104 @@
+version: "2"
+run:
+  issues-exit-code: 1
+  tests: true
+output:
+  formats:
+    text:
+      path: stdout
+linters:
+  default: all
+  disable:
+    - depguard
+    - err113
+    - exhaustruct
+    - goconst
+    - gomodguard
+    - ireturn
+    - lll
+    - mnd
+    - musttag
+    - nlreturn
+    - nonamedreturns # pervasive: named returns are used throughout, some load-bearing (New's defer/recover)
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - wsl
+  settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - $all
+            - '!$test'
+          allow:
+            - $gostd
+            - github.com/bits-and-blooms
+        test:
+          files:
+            - $test
+          allow:
+            - $gostd
+            - github.com/stretchr
+    funlen:
+      lines: 100
+      statements: 50
+      ignore-comments: true
+    gocognit:
+      min-complexity: 10
+    gocyclo:
+      min-complexity: 10
+    gosec:
+      excludes:
+        - G115
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: var-naming
+          disabled: false
+    whitespace:
+      multi-if: false
+      multi-func: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - cyclop # table-driven and fuzz tests are inherently branch-heavy
+          - dupl
+          - forcetypeassert # type assertions on known-safe types (e.g. rand.Source64) in tests
+          - funlen
+          - gocognit # table-driven and fuzz tests are inherently branch-heavy
+          - gocyclo # table-driven and fuzz tests are inherently branch-heavy
+          - paralleltest # not parallelizing the suite avoids flakiness/timing side effects
+        path: _test.go
+    paths:
+      - .github
+      - .githook
+      - third_party$
+      - builtin$
+      - examples$
+      - mock_test.go$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - .github
+      - .githook
+      - third_party$
+      - builtin$
+      - examples$
+      - mock_test.go$

@@ -9,68 +9,84 @@ import (
 	"os"
 )
 
-// pextByte handles single-byte PEXT operation
+// pextByte handles single-byte PEXT operation.
 func pextByte(b, m uint8) uint8 {
 	var result, bitPos uint8
+
 	for i := uint8(0); i < 8; i++ {
 		if m&(1<<i) != 0 {
 			if b&(1<<i) != 0 {
 				result |= 1 << bitPos
 			}
+
 			bitPos++
 		}
 	}
+
 	return result
 }
 
-// pdepByte handles single-byte PDEP operation
+// pdepByte handles single-byte PDEP operation.
 func pdepByte(b, m uint8) uint8 {
 	var result, bitPos uint8
+
 	for i := uint8(0); i < 8; i++ {
 		if m&(1<<i) != 0 {
 			if b&(1<<bitPos) != 0 {
 				result |= 1 << i
 			}
+
 			bitPos++
 		}
 	}
+
 	return result
 }
 
-func generateTable(name string, data interface{}, comment string) string {
+func generateTable(name string, data interface{}, comment string) string { //nolint:gocognit // straight-line code generator; splitting would obscure the emitted output
 	var buf bytes.Buffer
 
 	if comment != "" {
 		fmt.Fprintf(&buf, "// %s\n", comment)
 	}
+
 	fmt.Fprintf(&buf, "var %s = ", name)
 
 	switch v := data.(type) {
 	case [256]uint8:
 		buf.WriteString("[256]uint8{")
+
 		for i, val := range v {
 			if i%16 == 0 {
 				buf.WriteString("\n\t")
 			}
+
 			fmt.Fprintf(&buf, "%d,", val)
 		}
+
 		buf.WriteString("\n}")
 
 	case [256][256]uint8:
 		buf.WriteString("[256][256]uint8{")
+
 		for i, row := range v {
 			if i%4 == 0 {
 				buf.WriteString("\n\t")
 			}
+
 			buf.WriteString("{")
+
 			for j, val := range row {
 				if j%16 == 0 {
 					buf.WriteString("\n\t\t")
 				}
+
 				fmt.Fprintf(&buf, "%d,", val)
 			}
+
 			buf.WriteString("\n\t},")
 		}
+
 		buf.WriteString("\n}")
 	}
 
@@ -79,6 +95,7 @@ func generateTable(name string, data interface{}, comment string) string {
 
 func main() {
 	packageName := flag.String("pkg", "", "package name for generated code")
+
 	flag.Parse()
 
 	if *packageName == "" {
@@ -87,9 +104,11 @@ func main() {
 	}
 
 	// Initialize lookup tables
-	var pextLUT [256][256]uint8
-	var pdepLUT [256][256]uint8
-	var popLUT [256]uint8
+	var (
+		pextLUT [256][256]uint8
+		pdepLUT [256][256]uint8
+		popLUT  [256]uint8
+	)
 
 	for b := 0; b < 256; b++ {
 		popLUT[b] = uint8(bits.OnesCount8(uint8(b)))
@@ -131,7 +150,7 @@ func main() {
 	}
 
 	// Write to tables.go
-	err = os.WriteFile("pext.gen.go", formatted, 0644)
+	err = os.WriteFile("pext.gen.go", formatted, 0o644) //nolint:gosec // generated Go source is meant to be world-readable
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to write file: %v\n", err)
 		os.Exit(1)

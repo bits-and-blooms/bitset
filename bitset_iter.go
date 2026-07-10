@@ -1,5 +1,4 @@
 //go:build go1.23
-// +build go1.23
 
 package bitset
 
@@ -16,6 +15,7 @@ func (b *BitSet) EachSet() iter.Seq[uint] {
 				if !yield(uint(wordIndex<<log2WordSize + idx + trail)) {
 					return
 				}
+
 				idx += trail + 1
 			}
 		}

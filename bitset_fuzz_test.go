@@ -1,5 +1,4 @@
 //go:build go1.18
-// +build go1.18
 
 package bitset
 
@@ -9,13 +8,13 @@ import (
 )
 
 const (
-	// max bit position to avoid excessive memory usage
+	// max bit position to avoid excessive memory usage.
 	maxBitPosition = 100000
 	maxBytes       = maxBitPosition / 8
 	maxOperations  = 1000
 )
 
-// FuzzBasicOps tests basic set, clear, test operations
+// FuzzBasicOps tests basic set, clear, test operations.
 func FuzzBasicOps(f *testing.F) {
 	// Add seed corpus
 	f.Add(uint(0), uint(1), true)
@@ -32,18 +31,21 @@ func FuzzBasicOps(f *testing.F) {
 
 		// Test Set operation
 		b.Set(bit1)
+
 		if !b.Test(bit1) {
 			t.Errorf("Set(%d) failed: bit should be set", bit1)
 		}
 
 		// Test SetTo operation
 		b.SetTo(bit2, setValue)
+
 		if b.Test(bit2) != setValue {
 			t.Errorf("SetTo(%d, %v) failed: expected %v, got %v", bit2, setValue, setValue, b.Test(bit2))
 		}
 
 		// Test Clear operation
 		b.Clear(bit1)
+
 		if b.Test(bit1) {
 			t.Errorf("Clear(%d) failed: bit should be clear", bit1)
 		}
@@ -51,6 +53,7 @@ func FuzzBasicOps(f *testing.F) {
 		// Test Flip operation
 		originalState := b.Test(bit2)
 		b.Flip(bit2)
+
 		if b.Test(bit2) == originalState {
 			t.Errorf("Flip(%d) failed: bit state should have changed", bit2)
 		}
@@ -65,7 +68,7 @@ func FuzzBasicOps(f *testing.F) {
 	})
 }
 
-// FuzzRange tests range operations like FlipRange
+// FuzzRange tests range operations like FlipRange.
 func FuzzRange(f *testing.F) {
 	// Add seed corpus
 	f.Add(uint(0), uint(10))
@@ -77,6 +80,7 @@ func FuzzRange(f *testing.F) {
 		if start > end {
 			start, end = end, start
 		}
+
 		if end > maxBitPosition {
 			return
 		}
@@ -97,12 +101,14 @@ func FuzzRange(f *testing.F) {
 		if start > 0 && b.Test(start-1) {
 			t.Errorf("FlipRange(%d, %d) affected bit outside range: %d", start, end, start-1)
 		}
+
 		if end < b.Len() && b.Test(end) {
 			t.Errorf("FlipRange(%d, %d) affected bit outside range: %d", start, end, end)
 		}
 
 		// Test FlipRange again (should clear all bits in range)
 		b.FlipRange(start, end)
+
 		for i := start; i < end; i++ {
 			if b.Test(i) {
 				t.Errorf("Second FlipRange(%d, %d) failed: bit %d should be clear", start, end, i)
@@ -111,7 +117,7 @@ func FuzzRange(f *testing.F) {
 	})
 }
 
-// FuzzSetOperations tests set operations like Union, Intersection, Difference
+// FuzzSetOperations tests set operations like Union, Intersection, Difference.
 func FuzzSetOperations(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0x0F}, []byte{0xF0})
@@ -202,7 +208,7 @@ func FuzzSetOperations(f *testing.F) {
 	})
 }
 
-// FuzzNavigation tests Next/Previous operations
+// FuzzNavigation tests Next/Previous operations.
 func FuzzNavigation(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0, 5, 10, 63, 64, 128}, uint(7))
@@ -215,6 +221,7 @@ func FuzzNavigation(f *testing.F) {
 		}
 
 		b := New(0)
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -224,7 +231,7 @@ func FuzzNavigation(f *testing.F) {
 		}
 
 		if b.Count() > 0 {
-			startPos = startPos % b.Count()
+			startPos %= b.Count()
 		}
 
 		// Test NextSet
@@ -277,7 +284,7 @@ func FuzzNavigation(f *testing.F) {
 	})
 }
 
-// FuzzShift tests shift operations
+// FuzzShift tests shift operations.
 func FuzzShift(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0, 1, 2, 63, 64}, uint(1))
@@ -290,7 +297,9 @@ func FuzzShift(f *testing.F) {
 		}
 
 		b1 := New(0)
+
 		var rawBits []uint
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -299,6 +308,7 @@ func FuzzShift(f *testing.F) {
 				}
 			}
 		}
+
 		originalCount := b1.Count()
 		b1.ShiftLeft(shiftAmount)
 
@@ -314,6 +324,7 @@ func FuzzShift(f *testing.F) {
 				if !b1.Test(newBit) {
 					t.Errorf("ShiftLeft(%d) failed: bit %d should be set after shifting from %d", shiftAmount, newBit, originalBit)
 				}
+
 				if originalBit < shiftAmount && b1.Test(originalBit) {
 					t.Errorf("ShiftLeft(%d) failed: original bit %d should be clear", shiftAmount, originalBit)
 				}
@@ -340,7 +351,7 @@ func FuzzShift(f *testing.F) {
 	})
 }
 
-// FuzzModification tests insert/delete operations
+// FuzzModification tests insert/delete operations.
 func FuzzModification(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0, 2, 4, 6}, uint(3))
@@ -353,7 +364,9 @@ func FuzzModification(f *testing.F) {
 		}
 
 		b1 := New(0)
+
 		var rawBits []uint
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -410,7 +423,9 @@ func FuzzSelect(f *testing.F) {
 
 		// Convert byte data to bit positions
 		b := New(0)
+
 		var rawBits []uint
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -429,7 +444,7 @@ func FuzzSelect(f *testing.F) {
 	})
 }
 
-// FuzzCopy tests clone and copy operations
+// FuzzCopy tests clone and copy operations.
 func FuzzCopy(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0, 1, 63, 64, 127, 128})
@@ -443,7 +458,9 @@ func FuzzCopy(f *testing.F) {
 
 		// Convert byte data to bit positions
 		b := New(0)
+
 		var rawBits []uint
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -463,6 +480,7 @@ func FuzzCopy(f *testing.F) {
 		if len(rawBits) > 0 {
 			testBit := rawBits[0]
 			clone.Clear(testBit)
+
 			if !b.Test(testBit) {
 				t.Errorf("Clone() failed: modifying clone affected original")
 			}
@@ -471,12 +489,14 @@ func FuzzCopy(f *testing.F) {
 		// Test CopyFull
 		dest := New(0)
 		b.CopyFull(dest)
+
 		if !b.Equal(dest) {
 			t.Errorf("CopyFull() failed: destination is not equal to source")
 		}
 
 		// Test Copy with different sizes
 		smallDest := New(10)
+
 		count := b.Copy(smallDest)
 		if count > 10 && smallDest.Len() != 10 {
 			t.Errorf("Copy() to smaller destination failed")
@@ -484,15 +504,7 @@ func FuzzCopy(f *testing.F) {
 	})
 }
 
-// Helper function for max
-func max(a, b uint) uint {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-// FuzzSerialization tests JSON marshaling/unmarshaling and other serialization
+// FuzzSerialization tests JSON marshaling/unmarshaling and other serialization.
 func FuzzSerialization(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0, 1, 63, 64})
@@ -505,6 +517,7 @@ func FuzzSerialization(f *testing.F) {
 		}
 
 		b := New(0)
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -520,6 +533,7 @@ func FuzzSerialization(f *testing.F) {
 		}
 
 		b2 := New(0)
+
 		err = b2.UnmarshalJSON(data)
 		if err != nil {
 			t.Errorf("UnmarshalJSON() failed: %v", err)
@@ -536,6 +550,7 @@ func FuzzSerialization(f *testing.F) {
 		}
 
 		b3 := New(0)
+
 		err = b3.UnmarshalBinary(binData)
 		if err != nil {
 			t.Errorf("UnmarshalBinary() failed: %v", err)
@@ -551,7 +566,7 @@ func FuzzSerialization(f *testing.F) {
 	})
 }
 
-// FuzzRandomOperations performs random sequences of operations
+// FuzzRandomOperations performs random sequences of operations.
 func FuzzRandomOperations(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{1, 2, 3, 4, 5, 6, 7}) // operations: 0=Set, 1=Clear, 2=Flip, 3=Test, 4=Count, 5=NextSet, 6=PreviousSet, 7=Select
@@ -564,7 +579,7 @@ func FuzzRandomOperations(f *testing.F) {
 		}
 
 		b := New(0)
-		rng := rand.New(rand.NewSource(int64(len(operations))))
+		rng := rand.New(rand.NewSource(int64(len(operations)))) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 
 		for i, op := range operations {
 			pos := uint(rng.Intn(maxBitPosition))
@@ -572,12 +587,14 @@ func FuzzRandomOperations(f *testing.F) {
 			switch op % 6 {
 			case 0: // Set
 				b.Set(pos)
+
 				if !b.Test(pos) {
 					t.Errorf("Operation %d: Set(%d) failed", i, pos)
 				}
 
 			case 1: // Clear
 				b.Clear(pos)
+
 				if b.Test(pos) {
 					t.Errorf("Operation %d: Clear(%d) failed", i, pos)
 				}
@@ -585,6 +602,7 @@ func FuzzRandomOperations(f *testing.F) {
 			case 2: // Flip
 				before := b.Test(pos)
 				b.Flip(pos)
+
 				after := b.Test(pos)
 				if before == after {
 					t.Errorf("Operation %d: Flip(%d) failed", i, pos)
@@ -612,18 +630,20 @@ func FuzzRandomOperations(f *testing.F) {
 
 		// Final consistency check
 		manualCount := uint(0)
+
 		for i := uint(0); i < b.Len(); i++ {
 			if b.Test(i) {
 				manualCount++
 			}
 		}
+
 		if b.Count() != manualCount {
 			t.Errorf("Final consistency check failed: Count()=%d, manual count=%d", b.Count(), manualCount)
 		}
 	})
 }
 
-// FuzzCapacityAndGrowth tests capacity management and memory growth
+// FuzzCapacityAndGrowth tests capacity management and memory growth.
 func FuzzCapacityAndGrowth(f *testing.F) {
 	// Add seed corpus for growth testing
 	f.Add(uint(0), []byte{1, 2, 3})
@@ -639,6 +659,7 @@ func FuzzCapacityAndGrowth(f *testing.F) {
 
 		// Test growth by setting bits at increasing positions
 		var rawBits []uint
+
 		for i, growth := range growthPattern {
 			// Calculate next bit position
 			nextBit := uint(i*256) + uint(growth)
@@ -675,6 +696,7 @@ func FuzzCapacityAndGrowth(f *testing.F) {
 		// Test compact operation
 		originalCount := b.Count()
 		b.Compact()
+
 		if b.Count() != originalCount {
 			t.Errorf("Compact should not change count: expected %d, got %d", originalCount, b.Count())
 		}
@@ -688,7 +710,7 @@ func FuzzCapacityAndGrowth(f *testing.F) {
 	})
 }
 
-// FuzzIterationConsistency tests that iteration methods return consistent results
+// FuzzIterationConsistency tests that iteration methods return consistent results.
 func FuzzIterationConsistency(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{1, 5, 10, 20, 50, 100})
@@ -701,7 +723,9 @@ func FuzzIterationConsistency(f *testing.F) {
 		}
 
 		b := New(0)
+
 		var rawBits []uint
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
@@ -744,6 +768,7 @@ func FuzzIterationConsistency(f *testing.F) {
 			if i >= len(resultBits) {
 				break
 			}
+
 			if resultSlice[i] != resultBits[i] {
 				t.Errorf("AsSlice[%d]=%d doesn't match NextSetMany[%d]=%d", i, resultSlice[i], i, resultBits[i])
 			}
@@ -751,11 +776,13 @@ func FuzzIterationConsistency(f *testing.F) {
 
 		// Test manual iteration with NextSet
 		var manualBits []uint
+
 		for i := uint(0); i < b.Len(); {
 			next, found := b.NextSet(i)
 			if !found {
 				break
 			}
+
 			manualBits = append(manualBits, next)
 			i = next + 1
 		}
@@ -769,6 +796,7 @@ func FuzzIterationConsistency(f *testing.F) {
 			if i >= len(resultBits) {
 				break
 			}
+
 			if manualBits[i] != resultBits[i] {
 				t.Errorf("Manual iteration[%d]=%d doesn't match NextSetMany[%d]=%d", i, manualBits[i], i, resultBits[i])
 			}
@@ -776,7 +804,7 @@ func FuzzIterationConsistency(f *testing.F) {
 	})
 }
 
-// FuzzStringRepresentations tests string and dump operations
+// FuzzStringRepresentations tests string and dump operations.
 func FuzzStringRepresentations(f *testing.F) {
 	// Add seed corpus
 	f.Add([]byte{0xFF, 0x00, 0xFF}) // Alternating pattern
@@ -789,11 +817,14 @@ func FuzzStringRepresentations(f *testing.F) {
 		}
 
 		b := New(0)
+
 		var setBitsCount uint
+
 		for i, byt := range data {
 			for bit := 0; bit < 8; bit++ {
 				if byt&(1<<bit) != 0 {
 					b.Set(uint(i*8 + bit))
+
 					setBitsCount++
 				}
 			}
@@ -817,6 +848,7 @@ func FuzzStringRepresentations(f *testing.F) {
 
 		// Test that DumpAsBits contains the right number of '1' characters
 		oneCount := 0
+
 		for _, char := range bitStr {
 			if char == '1' {
 				oneCount++
@@ -837,10 +869,8 @@ func FuzzStringRepresentations(f *testing.F) {
 		if len(bytes) > 0 {
 			b2 := From(bytes)
 			// Check that they have the same set bits, accounting for potential length differences
-			maxLen := b.Len()
-			if b2.Len() < maxLen {
-				maxLen = b2.Len()
-			}
+			maxLen := min(b2.Len(), b.Len())
+
 			for i := uint(0); i < maxLen; i++ {
 				if b.Test(i) != b2.Test(i) {
 					t.Errorf("Bit %d differs between original (%t) and reconstructed (%t)", i, b.Test(i), b2.Test(i))

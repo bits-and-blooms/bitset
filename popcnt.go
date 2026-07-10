@@ -7,7 +7,9 @@ func popcntSlice(s []uint64) (cnt uint64) {
 	// dependency chain on cnt and let the CPU run multiple popcounts in
 	// parallel.
 	var c0, c1, c2, c3 uint64
+
 	n := len(s)
+
 	i := 0
 	for ; i <= n-4; i += 4 {
 		c0 += uint64(bits.OnesCount64(s[i]))
@@ -15,10 +17,12 @@ func popcntSlice(s []uint64) (cnt uint64) {
 		c2 += uint64(bits.OnesCount64(s[i+2]))
 		c3 += uint64(bits.OnesCount64(s[i+3]))
 	}
+
 	cnt = c0 + c1 + c2 + c3
 	for ; i < n; i++ {
 		cnt += uint64(bits.OnesCount64(s[i]))
 	}
+
 	return
 }
 
@@ -28,7 +32,9 @@ func popcntMaskSlice(s, m []uint64) (cnt uint64) {
 	// Four independent accumulators break the dependency chain on cnt
 	// so the CPU can run multiple popcounts in parallel.
 	var c0, c1, c2, c3 uint64
+
 	n := len(s)
+
 	i := 0
 	for ; i <= n-4; i += 4 {
 		c0 += uint64(bits.OnesCount64(s[i] &^ m[i]))
@@ -36,10 +42,12 @@ func popcntMaskSlice(s, m []uint64) (cnt uint64) {
 		c2 += uint64(bits.OnesCount64(s[i+2] &^ m[i+2]))
 		c3 += uint64(bits.OnesCount64(s[i+3] &^ m[i+3]))
 	}
+
 	cnt = c0 + c1 + c2 + c3
 	for ; i < n; i++ {
 		cnt += uint64(bits.OnesCount64(s[i] &^ m[i]))
 	}
+
 	return
 }
 
@@ -51,6 +59,7 @@ func popcntAndSlice(s, m []uint64) (cnt uint64) {
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] & m[i]))
 	}
+
 	return
 }
 
@@ -62,6 +71,7 @@ func popcntOrSlice(s, m []uint64) (cnt uint64) {
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] | m[i]))
 	}
+
 	return
 }
 
@@ -73,5 +83,6 @@ func popcntXorSlice(s, m []uint64) (cnt uint64) {
 	for i := range s {
 		cnt += uint64(bits.OnesCount64(s[i] ^ m[i]))
 	}
+
 	return
 }

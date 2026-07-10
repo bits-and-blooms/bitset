@@ -1,5 +1,4 @@
 //go:build go1.23
-// +build go1.23
 
 package bitset
 
@@ -31,6 +30,7 @@ func TestIter(t *testing.T) {
 			t.Errorf("Missing expected value %d at position %d", want, i)
 			continue
 		}
+
 		if got[i] != want {
 			t.Errorf("At position %d: expected %d, got %d", i, want, got[i])
 		}
@@ -58,14 +58,17 @@ func TestIterEarlyStop(t *testing.T) {
 		t.Errorf("Expected [2 7], got %v", got)
 	}
 }
+
 func BenchmarkIter(b *testing.B) {
 	b.StopTimer()
+
 	s := New(10000)
 	for i := 0; i < 10000; i += 3 {
 		s.Set(uint(i))
 	}
 
 	b.StartTimer()
+
 	for j := 0; j < b.N; j++ {
 		c := uint(0)
 		for range s.EachSet() {
@@ -76,12 +79,14 @@ func BenchmarkIter(b *testing.B) {
 
 func BenchmarkNonInter(b *testing.B) {
 	b.StopTimer()
+
 	s := New(10000)
 	for i := 0; i < 10000; i += 3 {
 		s.Set(uint(i))
 	}
 
 	b.StartTimer()
+
 	for j := 0; j < b.N; j++ {
 		c := uint(0)
 		for i, e := s.NextSet(0); e; i, e = s.NextSet(i + 1) {

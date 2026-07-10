@@ -26,6 +26,7 @@ func TestStringer(t *testing.T) {
 	for i := uint(0); i < 10; i++ {
 		v.Set(i)
 	}
+
 	if v.String() != "{0,1,2,3,4,5,6,7,8,9}" {
 		t.Error("bad string output")
 	}
@@ -36,6 +37,7 @@ func TestStringLong(t *testing.T) {
 	for i := uint(0); i < 262145; i++ {
 		v.Set(i)
 	}
+
 	str := v.String()
 	if len(str) != 1723903 {
 		t.Error("Unexpected string length: ", len(str))
@@ -48,6 +50,7 @@ func TestEmptyBitSet(t *testing.T) {
 			t.Error("A zero-length bitset should be fine")
 		}
 	}()
+
 	b := New(0)
 	if b.Len() != 0 {
 		t.Errorf("Empty set should have capacity 0, not %d", b.Len())
@@ -60,6 +63,7 @@ func TestZeroValueBitSet(t *testing.T) {
 			t.Error("A zero-length bitset should be fine")
 		}
 	}()
+
 	var b BitSet
 	if b.Len() != 0 {
 		t.Errorf("Empty set should have capacity 0, not %d", b.Len())
@@ -94,16 +98,19 @@ func TestLenIsNumberOfBitsNotBytes(t *testing.T) {
 	}
 
 	b.Set(0)
+
 	if b.Len() != 1 {
 		t.Errorf("bitset with first bit set should have Len 1, got %v", b.Len())
 	}
 
 	b.Set(8)
+
 	if b.Len() != 9 {
 		t.Errorf("bitset with 0th and 8th bit set should have Len 9, got %v", b.Len())
 	}
 
 	b.Set(1)
+
 	if b.Len() != 9 {
 		t.Errorf("bitset with 0th, 1st and 8th bit set should have Len 9, got %v", b.Len())
 	}
@@ -130,11 +137,13 @@ func TestBitSetIsClear(t *testing.T) {
 
 func TestExtendOnBoundary(t *testing.T) {
 	v := New(32)
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Border out of index error should not have caused a panic")
 		}
 	}()
+
 	v.Set(32)
 }
 
@@ -144,20 +153,24 @@ func TestExceedCap(t *testing.T) {
 			t.Error("Set to capacity should have caused a panic")
 		}
 	}()
+
 	NumHosts := uint(32768)
 	bmp := New(NumHosts)
 	bmp.ClearAll()
+
 	d := Cap()
 	bmp.Set(d)
 }
 
 func TestExpand(t *testing.T) {
 	v := New(0)
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Expansion should not have caused a panic")
 		}
 	}()
+
 	for i := uint(0); i < 1000; i++ {
 		v.Set(i)
 	}
@@ -166,6 +179,7 @@ func TestExpand(t *testing.T) {
 func TestBitSetAndGet(t *testing.T) {
 	v := New(1000)
 	v.Set(100)
+
 	if !v.Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
@@ -174,6 +188,7 @@ func TestBitSetAndGet(t *testing.T) {
 func TestNextClear(t *testing.T) {
 	v := New(1000)
 	v.Set(0).Set(1)
+
 	next, found := v.NextClear(0)
 	if !found || next != 2 {
 		t.Errorf("Found next clear bit as %d, it should have been 2", next)
@@ -183,6 +198,7 @@ func TestNextClear(t *testing.T) {
 	for i := uint(0); i < 66; i++ {
 		v.Set(i)
 	}
+
 	next, found = v.NextClear(0)
 	if !found || next != 66 {
 		t.Errorf("Found next clear bit as %d, it should have been 66", next)
@@ -192,8 +208,10 @@ func TestNextClear(t *testing.T) {
 	for i := uint(0); i < 64; i++ {
 		v.Set(i)
 	}
+
 	v.Clear(45)
 	v.Clear(52)
+
 	next, found = v.NextClear(10)
 	if !found || next != 45 {
 		t.Errorf("Found next clear bit as %d, it should have been 45", next)
@@ -203,8 +221,10 @@ func TestNextClear(t *testing.T) {
 	for i := uint(0); i < 128; i++ {
 		v.Set(i)
 	}
+
 	v.Clear(73)
 	v.Clear(99)
+
 	next, found = v.NextClear(10)
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
@@ -214,16 +234,19 @@ func TestNextClear(t *testing.T) {
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
 	}
+
 	next, found = v.NextClear(73)
 	if !found || next != 73 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
 	}
+
 	next, found = v.NextClear(74)
 	if !found || next != 99 {
 		t.Errorf("Found next clear bit as %d, it should have been 73", next)
 	}
 
 	v = New(128)
+
 	next, found = v.NextClear(0)
 	if !found || next != 0 {
 		t.Errorf("Found next clear bit as %d, it should have been 0", next)
@@ -232,12 +255,14 @@ func TestNextClear(t *testing.T) {
 	for i := uint(0); i < 128; i++ {
 		v.Set(i)
 	}
+
 	_, found = v.NextClear(0)
 	if found {
 		t.Errorf("There are not clear bits")
 	}
 
 	b := new(BitSet)
+
 	c, d := b.NextClear(1)
 	if c != 0 || d {
 		t.Error("Unexpected values")
@@ -248,6 +273,7 @@ func TestNextClear(t *testing.T) {
 	for i := uint(0); i != 100; i++ {
 		v.Set(i)
 	}
+
 	next, found = v.NextClear(0)
 	if found || next != 0 {
 		t.Errorf("Found next clear bit as %d, it should have return (0, false)", next)
@@ -259,41 +285,54 @@ func TestIterate(t *testing.T) {
 	v.Set(0)
 	v.Set(1)
 	v.Set(2)
+
 	data := make([]uint, 3)
+
 	c := 0
 	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
+
 	if data[0] != 0 {
 		t.Errorf("bug 0")
 	}
+
 	if data[1] != 1 {
 		t.Errorf("bug 1")
 	}
+
 	if data[2] != 2 {
 		t.Errorf("bug 2")
 	}
+
 	v.Set(10)
 	v.Set(2000)
+
 	data = make([]uint, 5)
+
 	c = 0
 	for i, e := v.NextSet(0); e; i, e = v.NextSet(i + 1) {
 		data[c] = i
 		c++
 	}
+
 	if data[0] != 0 {
 		t.Errorf("bug 0")
 	}
+
 	if data[1] != 1 {
 		t.Errorf("bug 1")
 	}
+
 	if data[2] != 2 {
 		t.Errorf("bug 2")
 	}
+
 	if data[3] != 10 {
 		t.Errorf("bug 3")
 	}
+
 	if data[4] != 2000 {
 		t.Errorf("bug 4")
 	}
@@ -378,6 +417,7 @@ func TestNextSet(t *testing.T) {
 		if ok != tc.wantOk {
 			t.Errorf("NextSet, %s: got ok: %v, want: %v", tc.name, ok, tc.wantOk)
 		}
+
 		if idx != tc.wantIdx {
 			t.Errorf("NextSet, %s: got next idx: %d, want: %d", tc.name, idx, tc.wantIdx)
 		}
@@ -585,6 +625,7 @@ func TestPanicAppendTo(t *testing.T) {
 			t.Error("AppendTo with empty buf should not have caused a panic")
 		}
 	}()
+
 	v := New(1000)
 	v.Set(1000)
 	_ = v.AppendTo(nil)
@@ -596,6 +637,7 @@ func TestPanicAsSlice(t *testing.T) {
 			t.Error("AsSlice with buf too small should have caused a panic")
 		}
 	}()
+
 	v := New(1000)
 	v.Set(1000)
 	_ = v.AsSlice(nil)
@@ -604,10 +646,13 @@ func TestPanicAsSlice(t *testing.T) {
 func TestSetTo(t *testing.T) {
 	v := New(1000)
 	v.SetTo(100, true)
+
 	if !v.Test(100) {
 		t.Errorf("Bit %d is clear, and it shouldn't be.", 100)
 	}
+
 	v.SetTo(100, false)
+
 	if v.Test(100) {
 		t.Errorf("Bit %d is set, and it shouldn't be.", 100)
 	}
@@ -621,21 +666,25 @@ func TestChain(t *testing.T) {
 
 func TestOutOfBoundsLong(t *testing.T) {
 	v := New(64)
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Long distance out of index error should not have caused a panic")
 		}
 	}()
+
 	v.Set(1000)
 }
 
 func TestOutOfBoundsClose(t *testing.T) {
 	v := New(65)
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Local out of index error should not have caused a panic")
 		}
 	}()
+
 	v.Set(66)
 }
 
@@ -643,75 +692,90 @@ func TestCount(t *testing.T) {
 	tot := uint(64*4 + 11) // just some multi unit64 number
 	v := New(tot)
 	checkLast := true
+
 	for i := uint(0); i < tot; i++ {
-		sz := uint(v.Count())
+		sz := v.Count()
 		if sz != i {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
+
 			checkLast = false
+
 			break
 		}
+
 		v.Set(i)
 	}
+
 	if checkLast {
-		sz := uint(v.Count())
+		sz := v.Count()
 		if sz != tot {
 			t.Errorf("After all bits set, size reported as %d, but it should be %d", sz, tot)
 		}
 	}
 }
 
-// test setting every 3rd bit, just in case something odd is happening
+// test setting every 3rd bit, just in case something odd is happening.
 func TestCount2(t *testing.T) {
 	tot := uint(64*4 + 11) // just some multi unit64 number
+
 	v := New(tot)
 	for i := uint(0); i < tot; i += 3 {
-		sz := uint(v.Count())
+		sz := v.Count()
 		if sz != i/3 {
 			t.Errorf("Count reported as %d, but it should be %d", sz, i)
 			break
 		}
+
 		v.Set(i)
 	}
 }
 
-// nil tests
+// nil tests.
 func TestNullTest(t *testing.T) {
 	var v *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Checking bit of null reference should have caused a panic")
 		}
 	}()
+
 	v.Test(66)
 }
 
 func TestNullSet(t *testing.T) {
 	var v *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Setting bit of null reference should have caused a panic")
 		}
 	}()
+
 	v.Set(66)
 }
 
 func TestNullClear(t *testing.T) {
 	var v *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Clearning bit of null reference should have caused a panic")
 		}
 	}()
+
 	v.Clear(66)
 }
 
 func TestNullCount(t *testing.T) {
 	var v *BitSet
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Counting null reference should not have caused a panic")
 		}
 	}()
+
 	cnt := v.Count()
 	if cnt != 0 {
 		t.Errorf("Count reported as %d, but it should be 0", cnt)
@@ -763,134 +827,167 @@ func TestPanicMustNew(t *testing.T) {
 			t.Error("length too big should have caused a panic")
 		}
 	}()
+
 	MustNew(Cap())
 }
 
 func TestPanicDifferenceBNil(t *testing.T) {
 	var b *BitSet
+
 	compare := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil First should should have caused a panic")
+			t.Error("Nil First should have caused a panic")
 		}
 	}()
+
 	b.Difference(compare)
 }
 
 func TestPanicDifferenceCompareNil(t *testing.T) {
 	var compare *BitSet
+
 	b := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil Second should should have caused a panic")
+			t.Error("Nil Second should have caused a panic")
 		}
 	}()
+
 	b.Difference(compare)
 }
 
 func TestPanicUnionBNil(t *testing.T) {
 	var b *BitSet
+
 	compare := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil First should should have caused a panic")
+			t.Error("Nil First should have caused a panic")
 		}
 	}()
+
 	b.Union(compare)
 }
 
 func TestPanicUnionCompareNil(t *testing.T) {
 	var compare *BitSet
+
 	b := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil Second should should have caused a panic")
+			t.Error("Nil Second should have caused a panic")
 		}
 	}()
+
 	b.Union(compare)
 }
 
 func TestPanicIntersectionBNil(t *testing.T) {
 	var b *BitSet
+
 	compare := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil First should should have caused a panic")
+			t.Error("Nil First should have caused a panic")
 		}
 	}()
+
 	b.Intersection(compare)
 }
 
 func TestPanicIntersectionCompareNil(t *testing.T) {
 	var compare *BitSet
+
 	b := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil Second should should have caused a panic")
+			t.Error("Nil Second should have caused a panic")
 		}
 	}()
+
 	b.Intersection(compare)
 }
 
 func TestPanicSymmetricDifferenceBNil(t *testing.T) {
 	var b *BitSet
+
 	compare := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil First should should have caused a panic")
+			t.Error("Nil First should have caused a panic")
 		}
 	}()
+
 	b.SymmetricDifference(compare)
 }
 
 func TestPanicSymmetricDifferenceCompareNil(t *testing.T) {
 	var compare *BitSet
+
 	b := New(10)
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil Second should should have caused a panic")
+			t.Error("Nil Second should have caused a panic")
 		}
 	}()
+
 	b.SymmetricDifference(compare)
 }
 
 func TestPanicComplementBNil(t *testing.T) {
 	var b *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil should should have caused a panic")
+			t.Error("Nil should have caused a panic")
 		}
 	}()
+
 	b.Complement()
 }
 
 func TestPanicAnytBNil(t *testing.T) {
 	var b *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil should should have caused a panic")
+			t.Error("Nil should have caused a panic")
 		}
 	}()
+
 	b.Any()
 }
 
 func TestPanicNonetBNil(t *testing.T) {
 	var b *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil should should have caused a panic")
+			t.Error("Nil should have caused a panic")
 		}
 	}()
+
 	b.None()
 }
 
 func TestPanicAlltBNil(t *testing.T) {
 	var b *BitSet
+
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Nil should should have caused a panic")
+			t.Error("Nil should have caused a panic")
 		}
 	}()
+
 	b.All()
 }
 
@@ -899,18 +996,23 @@ func TestAll(t *testing.T) {
 	if !v.All() {
 		t.Error("Empty sets should return true on All()")
 	}
+
 	v = New(2)
 	v.SetTo(0, true)
 	v.SetTo(1, true)
+
 	if !v.All() {
 		t.Error("Non-empty sets with all bits set should return true on All()")
 	}
+
 	v = New(2)
 	if v.All() {
 		t.Error("Non-empty sets with no bits set should return false on All()")
 	}
+
 	v = New(2)
 	v.SetTo(0, true)
+
 	if v.All() {
 		t.Error("Non-empty sets with some bits set should return false on All()")
 	}
@@ -920,10 +1022,12 @@ func TestShrink(t *testing.T) {
 	bs := New(10)
 	bs.Set(0)
 	bs.Shrink(63)
+
 	if !bs.Test(0) {
 		t.Error("0 should be set")
 		return
 	}
+
 	b := New(0)
 
 	b.Set(0)
@@ -932,44 +1036,54 @@ func TestShrink(t *testing.T) {
 	b.Set(3)
 	b.Set(64)
 	b.Compact()
+
 	if !b.Test(0) {
 		t.Error("0 should be set")
 		return
 	}
+
 	if !b.Test(1) {
 		t.Error("1 should be set")
 		return
 	}
+
 	if !b.Test(2) {
 		t.Error("2 should be set")
 		return
 	}
+
 	if !b.Test(3) {
 		t.Error("3 should be set")
 		return
 	}
+
 	if !b.Test(64) {
 		t.Error("64 should be set")
 		return
 	}
 
 	b.Shrink(2)
+
 	if !b.Test(0) {
 		t.Error("0 should be set")
 		return
 	}
+
 	if !b.Test(1) {
 		t.Error("1 should be set")
 		return
 	}
+
 	if !b.Test(2) {
 		t.Error("2 should be set")
 		return
 	}
+
 	if b.Test(3) {
 		t.Error("3 should not be set")
 		return
 	}
+
 	if b.Test(64) {
 		t.Error("64 should not be set")
 		return
@@ -977,6 +1091,7 @@ func TestShrink(t *testing.T) {
 
 	b.Set(24)
 	b.Shrink(100)
+
 	if !b.Test(24) {
 		t.Error("24 should be set")
 		return
@@ -986,28 +1101,34 @@ func TestShrink(t *testing.T) {
 	b.Set(128)
 	b.Set(129)
 	b.Compact()
+
 	if !b.Test(127) {
 		t.Error("127 should be set")
 		return
 	}
+
 	if !b.Test(128) {
 		t.Error("128 should be set")
 		return
 	}
+
 	if !b.Test(129) {
 		t.Error("129 be set")
 		return
 	}
 
 	b.Shrink(128)
+
 	if !b.Test(127) {
 		t.Error("127 should be set")
 		return
 	}
+
 	if !b.Test(128) {
 		t.Error("128 should be set")
 		return
 	}
+
 	if b.Test(129) {
 		t.Error("129 should not be set")
 		return
@@ -1015,6 +1136,7 @@ func TestShrink(t *testing.T) {
 
 	b.Set(129)
 	b.Shrink(129)
+
 	if !b.Test(129) {
 		t.Error("129 should be set")
 		return
@@ -1024,32 +1146,39 @@ func TestShrink(t *testing.T) {
 	b.Set(2000)
 	b.Set(3000)
 	b.Shrink(3000)
+
 	if len(b.set) != 3000/64+1 {
 		t.Error("Wrong length of BitSet.set")
 		return
 	}
+
 	if !b.Test(3000) {
 		t.Error("3000 should be set")
 		return
 	}
 
 	b.Shrink(2000)
+
 	if len(b.set) != 2000/64+1 {
 		t.Error("Wrong length of BitSet.set")
 		return
 	}
+
 	if b.Test(3000) {
 		t.Error("3000 should not be set")
 		return
 	}
+
 	if !b.Test(2000) {
 		t.Error("2000 should be set")
 		return
 	}
+
 	if !b.Test(1000) {
 		t.Error("1000 should be set")
 		return
 	}
+
 	if !b.Test(24) {
 		t.Error("24 should be set")
 		return
@@ -1058,6 +1187,7 @@ func TestShrink(t *testing.T) {
 	b = New(110)
 	b.Set(80)
 	b.Shrink(70)
+
 	for _, word := range b.set {
 		if word != 0 {
 			t.Error("word should be 0", word)
@@ -1074,26 +1204,32 @@ func TestInsertAtWithSet(t *testing.T) {
 	b.Set(65)
 
 	b.InsertAt(3)
+
 	if !b.Test(0) {
 		t.Error("0 should be set")
 		return
 	}
+
 	if !b.Test(1) {
 		t.Error("1 should be set")
 		return
 	}
+
 	if b.Test(3) {
 		t.Error("3 should not be set")
 		return
 	}
+
 	if !b.Test(64) {
 		t.Error("64 should be set")
 		return
 	}
+
 	if !b.Test(65) {
 		t.Error("65 should be set")
 		return
 	}
+
 	if !b.Test(66) {
 		t.Error("66 should be set")
 		return
@@ -1193,10 +1329,12 @@ func TestInsertAt(t *testing.T) {
 
 		b := From(input)
 		b.InsertAt(tc.insertIdx)
+
 		if len(b.set) != len(expected) {
 			t.Error("Length of sets should be equal")
 			return
 		}
+
 		for i := range b.set {
 			if b.set[i] != expected[i] {
 				t.Error("Unexpected results found in set")
@@ -1211,21 +1349,27 @@ func TestNone(t *testing.T) {
 	if !v.None() {
 		t.Error("Empty sets should return true on None()")
 	}
+
 	v = New(2)
 	v.SetTo(0, true)
 	v.SetTo(1, true)
+
 	if v.None() {
 		t.Error("Non-empty sets with all bits set should return false on None()")
 	}
+
 	v = New(2)
 	if !v.None() {
 		t.Error("Non-empty sets with no bits set should return true on None()")
 	}
+
 	v = New(2)
 	v.SetTo(0, true)
+
 	if v.None() {
 		t.Error("Non-empty sets with some bits set should return false on None()")
 	}
+
 	v = new(BitSet)
 	if !v.None() {
 		t.Error("Empty sets should return true on None()")
@@ -1236,36 +1380,51 @@ func TestEqual(t *testing.T) {
 	a := New(100)
 	b := New(99)
 	c := New(100)
+
 	if a.Equal(b) {
 		t.Error("Sets of different sizes should be not be equal")
 	}
+
 	if !a.Equal(c) {
 		t.Error("Two empty sets of the same size should be equal")
 	}
+
 	a.Set(99)
 	c.Set(0)
+
 	if a.Equal(c) {
 		t.Error("Two sets with differences should not be equal")
 	}
+
 	c.Set(99)
 	a.Set(0)
+
 	if !a.Equal(c) {
 		t.Error("Two sets with the same bits set should be equal")
 	}
+
 	if a.Equal(nil) {
 		t.Error("The sets should be different")
 	}
+
 	a = New(0)
+
 	b = New(0)
 	if !a.Equal(b) {
 		t.Error("Two empty set should be equal")
 	}
-	var x *BitSet
-	var y *BitSet
+
+	var (
+		x *BitSet
+		y *BitSet
+	)
+
 	z := New(0)
+
 	if !x.Equal(y) {
 		t.Error("Two nil bitsets should be equal")
 	}
+
 	if x.Equal(z) {
 		t.Error("Nil receiver bitset should not be equal to non-nil bitset")
 	}
@@ -1274,25 +1433,31 @@ func TestEqual(t *testing.T) {
 func TestUnion(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)
 		b.Set(i - 1)
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	if a.UnionCardinality(b) != 200 {
 		t.Errorf("Union should have 200 bits set, but had %d", a.UnionCardinality(b))
 	}
+
 	if a.UnionCardinality(b) != b.UnionCardinality(a) {
 		t.Errorf("Union should be symmetric")
 	}
 
 	c := a.Union(b)
 	d := b.Union(a)
+
 	if c.Count() != 200 {
 		t.Errorf("Union should have 200 bits set, but had %d", c.Count())
 	}
+
 	if !c.Equal(d) {
 		t.Errorf("Union should be symmetric")
 	}
@@ -1300,6 +1465,7 @@ func TestUnion(t *testing.T) {
 
 func TestEmptyUnionCardinality(t *testing.T) {
 	a := New(0)
+
 	b := New(0)
 	if a.UnionCardinality(b) != 0 {
 		t.Error("UnionCardinality should be zero")
@@ -1309,23 +1475,29 @@ func TestEmptyUnionCardinality(t *testing.T) {
 func TestInPlaceUnion(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)
 		b.Set(i - 1)
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	c := a.Clone()
 	c.InPlaceUnion(b)
 	d := b.Clone()
 	d.InPlaceUnion(a)
+
 	if c.Count() != 200 {
 		t.Errorf("Union should have 200 bits set, but had %d", c.Count())
 	}
+
 	if d.Count() != 200 {
 		t.Errorf("Union should have 200 bits set, but had %d", d.Count())
 	}
+
 	if !c.Equal(d) {
 		t.Errorf("Union should be symmetric")
 	}
@@ -1334,24 +1506,31 @@ func TestInPlaceUnion(t *testing.T) {
 func TestIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)
 		b.Set(i - 1).Set(i)
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	if a.IntersectionCardinality(b) != 50 {
 		t.Errorf("Intersection should have 50 bits set, but had %d", a.IntersectionCardinality(b))
 	}
+
 	if a.IntersectionCardinality(b) != b.IntersectionCardinality(a) {
 		t.Errorf("Intersection should be symmetric")
 	}
+
 	c := a.Intersection(b)
 	d := b.Intersection(a)
+
 	if c.Count() != 50 {
 		t.Errorf("Intersection should have 50 bits set, but had %d", c.Count())
 	}
+
 	if !c.Equal(d) {
 		t.Errorf("Intersection should be symmetric")
 	}
@@ -1359,6 +1538,7 @@ func TestIntersection(t *testing.T) {
 
 func TestEmptyIntersectionCardinality(t *testing.T) {
 	a := New(0)
+
 	b := New(0)
 	if a.IntersectionCardinality(b) != 0 {
 		t.Error("IntersectionCardinality should be zero")
@@ -1368,23 +1548,29 @@ func TestEmptyIntersectionCardinality(t *testing.T) {
 func TestInplaceIntersection(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)
 		b.Set(i - 1).Set(i)
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	c := a.Clone()
 	c.InPlaceIntersection(b)
 	d := b.Clone()
 	d.InPlaceIntersection(a)
+
 	if c.Count() != 50 {
 		t.Errorf("Intersection should have 50 bits set, but had %d", c.Count())
 	}
+
 	if d.Count() != 50 {
 		t.Errorf("Intersection should have 50 bits set, but had %d", d.Count())
 	}
+
 	if !c.Equal(d) {
 		t.Errorf("Intersection should be symmetric")
 	}
@@ -1393,28 +1579,35 @@ func TestInplaceIntersection(t *testing.T) {
 func TestDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)
 		b.Set(i - 1)
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	if a.DifferenceCardinality(b) != 50 {
 		t.Errorf("a-b Difference should have 50 bits set, but had %d", a.DifferenceCardinality(b))
 	}
+
 	if b.DifferenceCardinality(a) != 150 {
 		t.Errorf("b-a Difference should have 150 bits set, but had %d", b.DifferenceCardinality(a))
 	}
 
 	c := a.Difference(b)
 	d := b.Difference(a)
+
 	if c.Count() != 50 {
 		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
 	}
+
 	if d.Count() != 150 {
 		t.Errorf("b-a Difference should have 150 bits set, but had %d", d.Count())
 	}
+
 	if c.Equal(d) {
 		t.Errorf("Difference, here, should not be symmetric")
 	}
@@ -1422,6 +1615,7 @@ func TestDifference(t *testing.T) {
 
 func TestEmptyDifferenceCardinality(t *testing.T) {
 	a := New(0)
+
 	b := New(0)
 	if a.DifferenceCardinality(b) != 0 {
 		t.Error("DifferenceCardinality should be zero")
@@ -1431,23 +1625,29 @@ func TestEmptyDifferenceCardinality(t *testing.T) {
 func TestInPlaceDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)
 		b.Set(i - 1)
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	c := a.Clone()
 	c.InPlaceDifference(b)
 	d := b.Clone()
 	d.InPlaceDifference(a)
+
 	if c.Count() != 50 {
 		t.Errorf("a-b Difference should have 50 bits set, but had %d", c.Count())
 	}
+
 	if d.Count() != 150 {
 		t.Errorf("b-a Difference should have 150 bits set, but had %d", d.Count())
 	}
+
 	if c.Equal(d) {
 		t.Errorf("Difference, here, should not be symmetric")
 	}
@@ -1456,28 +1656,35 @@ func TestInPlaceDifference(t *testing.T) {
 func TestSymmetricDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)            // 01010101010 ... 0000000
 		b.Set(i - 1).Set(i) // 11111111111111111000000
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	if a.SymmetricDifferenceCardinality(b) != 150 {
 		t.Errorf("a^b Difference should have 150 bits set, but had %d", a.SymmetricDifferenceCardinality(b))
 	}
+
 	if b.SymmetricDifferenceCardinality(a) != 150 {
 		t.Errorf("b^a Difference should have 150 bits set, but had %d", b.SymmetricDifferenceCardinality(a))
 	}
 
 	c := a.SymmetricDifference(b)
 	d := b.SymmetricDifference(a)
+
 	if c.Count() != 150 {
 		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
 	}
+
 	if d.Count() != 150 {
 		t.Errorf("b^a Difference should have 150 bits set, but had %d", d.Count())
 	}
+
 	if !c.Equal(d) {
 		t.Errorf("SymmetricDifference should be symmetric")
 	}
@@ -1485,6 +1692,7 @@ func TestSymmetricDifference(t *testing.T) {
 
 func TestEmptySymmetricDifferenceCardinality(t *testing.T) {
 	a := New(0)
+
 	b := New(0)
 	if a.SymmetricDifferenceCardinality(b) != 0 {
 		t.Error("SymmetricDifferenceCardinality should be zero")
@@ -1494,23 +1702,29 @@ func TestEmptySymmetricDifferenceCardinality(t *testing.T) {
 func TestInPlaceSymmetricDifference(t *testing.T) {
 	a := New(100)
 	b := New(200)
+
 	for i := uint(1); i < 100; i += 2 {
 		a.Set(i)            // 01010101010 ... 0000000
 		b.Set(i - 1).Set(i) // 11111111111111111000000
 	}
+
 	for i := uint(100); i < 200; i++ {
 		b.Set(i)
 	}
+
 	c := a.Clone()
 	c.InPlaceSymmetricDifference(b)
 	d := b.Clone()
 	d.InPlaceSymmetricDifference(a)
+
 	if c.Count() != 150 {
 		t.Errorf("a^b Difference should have 150 bits set, but had %d", c.Count())
 	}
+
 	if d.Count() != 150 {
 		t.Errorf("b^a Difference should have 150 bits set, but had %d", d.Count())
 	}
+
 	if !c.Equal(d) {
 		t.Errorf("SymmetricDifference should be symmetric")
 	}
@@ -1518,12 +1732,15 @@ func TestInPlaceSymmetricDifference(t *testing.T) {
 
 func TestComplement(t *testing.T) {
 	a := New(50)
+
 	b := a.Complement()
 	if b.Count() != 50 {
 		t.Errorf("Complement failed, size should be 50, but was %d", b.Count())
 	}
+
 	a = New(50)
 	a.Set(10).Set(20).Set(42)
+
 	b = a.Complement()
 	if b.Count() != 47 {
 		t.Errorf("Complement failed, size should be 47, but was %d", b.Count())
@@ -1541,7 +1758,7 @@ func TestIsSuperSet(t *testing.T) {
 				l = lenSS
 			}
 
-			r := rand.New(rand.NewSource(42))
+			r := rand.New(rand.NewSource(42)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 			for i := 0; i < l; i++ {
 				bit := r.Intn(2) == 1
 				s.SetTo(uint(i), bit)
@@ -1551,6 +1768,7 @@ func TestIsSuperSet(t *testing.T) {
 			for i, v := range overrideS {
 				s.SetTo(uint(i), v)
 			}
+
 			for i, v := range overrideSS {
 				ss.SetTo(uint(i), v)
 			}
@@ -1558,6 +1776,7 @@ func TestIsSuperSet(t *testing.T) {
 			if got := ss.IsSuperSet(s); got != want {
 				t.Errorf("IsSuperSet() = %v, want %v", got, want)
 			}
+
 			if got := ss.IsStrictSuperSet(s); got != wantStrict {
 				t.Errorf("IsStrictSuperSet() = %v, want %v", got, wantStrict)
 			}
@@ -1582,11 +1801,14 @@ func TestIsSuperSet(t *testing.T) {
 
 func TestDumpAsBits(t *testing.T) {
 	a := New(10).Set(10)
+
 	astr := "0000000000000000000000000000000000000000000000000000010000000000."
 	if a.DumpAsBits() != astr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", astr, a.DumpAsBits())
 	}
+
 	var b BitSet // zero value (b.set == nil)
+
 	bstr := "."
 	if b.DumpAsBits() != bstr {
 		t.Errorf("DumpAsBits failed, output should be \"%s\" but was \"%s\"", bstr, b.DumpAsBits())
@@ -1599,7 +1821,7 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 
 	copyBinary(t, a, b)
 
-	// BitSets must be equal after marshalling and unmarshalling
+	// BitSets must be equal after marshaling and unmarshalling
 	if !a.Equal(b) {
 		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 		return
@@ -1622,6 +1844,7 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 	}
 
 	aExpectedMarshaledSize = 8 /* length: uint64 */ + 3*8 /* set : [3]uint64 */
+
 	aMarshaled, err = a.MarshalBinary()
 	if err != nil || aExpectedMarshaledSize != len(aMarshaled) || aExpectedMarshaledSize != a.BinaryStorageSize() {
 		t.Error("MarshalBinary failed to produce expected (", aExpectedMarshaledSize, ") number of bytes")
@@ -1637,16 +1860,18 @@ func TestMarshalUnmarshalBinary(t *testing.T) {
 
 func TestMarshalUnmarshalBinaryByLittleEndian(t *testing.T) {
 	LittleEndian()
+
 	defer func() {
 		// Revert when done.
 		binaryOrder = binary.BigEndian
 	}()
+
 	a := New(1010).Set(10).Set(1001)
 	b := new(BitSet)
 
 	copyBinary(t, a, b)
 
-	// BitSets must be equal after marshalling and unmarshalling
+	// BitSets must be equal after marshaling and unmarshalling
 	if !a.Equal(b) {
 		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 		return
@@ -1654,6 +1879,8 @@ func TestMarshalUnmarshalBinaryByLittleEndian(t *testing.T) {
 }
 
 func copyBinary(t *testing.T, from encoding.BinaryMarshaler, to encoding.BinaryUnmarshaler) {
+	t.Helper()
+
 	data, err := from.MarshalBinary()
 	if err != nil {
 		t.Error(err.Error())
@@ -1671,6 +1898,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	t.Run("value", func(t *testing.T) {
 		a := BitSet{}
 		a.Set(10).Set(1001)
+
 		data, err := json.Marshal(a)
 		if err != nil {
 			t.Error(err.Error())
@@ -1678,13 +1906,14 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 		}
 
 		b := new(BitSet)
+
 		err = json.Unmarshal(data, b)
 		if err != nil {
 			t.Error(err.Error())
 			return
 		}
 
-		// Bitsets must be equal after marshalling and unmarshalling
+		// Bitsets must be equal after marshaling and unmarshalling
 		if !a.Equal(b) {
 			t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 			return
@@ -1692,6 +1921,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	})
 	t.Run("pointer", func(t *testing.T) {
 		a := New(1010).Set(10).Set(1001)
+
 		data, err := json.Marshal(a)
 		if err != nil {
 			t.Error(err.Error())
@@ -1699,13 +1929,14 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 		}
 
 		b := new(BitSet)
+
 		err = json.Unmarshal(data, b)
 		if err != nil {
 			t.Error(err.Error())
 			return
 		}
 
-		// Bitsets must be equal after marshalling and unmarshalling
+		// Bitsets must be equal after marshaling and unmarshalling
 		if !a.Equal(b) {
 			t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 			return
@@ -1715,6 +1946,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 
 func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {
 	a := New(1010).Set(10).Set(1001)
+
 	data, err := json.Marshal(a)
 	if err != nil {
 		t.Error(err.Error())
@@ -1726,13 +1958,14 @@ func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {
 	data = append(data, []byte(`AAAAAAAAAA"`)...)
 
 	b := new(BitSet)
+
 	err = json.Unmarshal(data, b)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
 
-	// Bitsets must be equal after marshalling and unmarshalling
+	// Bitsets must be equal after marshaling and unmarshalling
 	// Do not over-reading when unmarshalling
 	if !a.Equal(b) {
 		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
@@ -1742,7 +1975,9 @@ func TestMarshalUnmarshalJSONWithTrailingData(t *testing.T) {
 
 func TestMarshalUnmarshalJSONByStdEncoding(t *testing.T) {
 	Base64StdEncoding()
+
 	a := New(1010).Set(10).Set(1001)
+
 	data, err := json.Marshal(a)
 	if err != nil {
 		t.Error(err.Error())
@@ -1750,13 +1985,14 @@ func TestMarshalUnmarshalJSONByStdEncoding(t *testing.T) {
 	}
 
 	b := new(BitSet)
+
 	err = json.Unmarshal(data, b)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
 
-	// Bitsets must be equal after marshalling and unmarshalling
+	// Bitsets must be equal after marshaling and unmarshalling
 	if !a.Equal(b) {
 		t.Error("Bitsets are not equal:\n\t", a.DumpAsBits(), "\n\t", b.DumpAsBits())
 		return
@@ -1767,11 +2003,13 @@ func TestSafeSet(t *testing.T) {
 	b := new(BitSet)
 	c := b.safeSet()
 	outType := fmt.Sprintf("%T", c)
+
 	expType := "[]uint64"
 	if outType != expType {
 		t.Error("Expecting type: ", expType, ", gotf:", outType)
 		return
 	}
+
 	if len(c) != 0 {
 		t.Error("The slice should be empty")
 		return
@@ -1783,6 +2021,7 @@ func TestSetBitsetFrom(t *testing.T) {
 	b := new(BitSet)
 	b.SetBitsetFrom(u)
 	outType := fmt.Sprintf("%T", b)
+
 	expType := "*bitset.BitSet"
 	if outType != expType {
 		t.Error("Expecting type: ", expType, ", gotf:", outType)
@@ -1794,6 +2033,7 @@ func TestIssue116(t *testing.T) {
 	a := []uint64{2, 3, 5, 7, 11}
 	b := []uint64{2, 3, 5, 7, 11, 0, 1}
 	bitset1 := FromWithLength(320, a)
+
 	bitset2 := FromWithLength(320, b)
 	if !bitset1.Equal(bitset2) || !bitset2.Equal(bitset1) {
 		t.Error("Bitsets should be equal irrespective of the underlying capacity")
@@ -1804,6 +2044,7 @@ func TestFrom(t *testing.T) {
 	u := []uint64{2, 3, 5, 7, 11}
 	b := From(u)
 	outType := fmt.Sprintf("%T", b)
+
 	expType := "*bitset.BitSet"
 	if outType != expType {
 		t.Error("Expecting type: ", expType, ", gotf:", outType)
@@ -1815,27 +2056,31 @@ func TestWords(t *testing.T) {
 	b := new(BitSet)
 	c := b.Words()
 	outType := fmt.Sprintf("%T", c)
+
 	expType := "[]uint64"
 	if outType != expType {
 		t.Error("Expecting type: ", expType, ", gotf:", outType)
 		return
 	}
+
 	if len(c) != 0 {
 		t.Error("The slice should be empty")
 		return
 	}
 }
 
-// Bytes is deprecated
+// Bytes is deprecated.
 func TestBytes(t *testing.T) {
 	b := new(BitSet)
 	c := b.Bytes()
 	outType := fmt.Sprintf("%T", c)
+
 	expType := "[]uint64"
 	if outType != expType {
 		t.Error("Expecting type: ", expType, ", gotf:", outType)
 		return
 	}
+
 	if len(c) != 0 {
 		t.Error("The slice should be empty")
 		return
@@ -1852,6 +2097,7 @@ func TestCap(t *testing.T) {
 
 func TestWordsNeededLong(t *testing.T) {
 	i := Cap()
+
 	out := wordsNeeded(i)
 	if out <= 0 {
 		t.Error("Unexpected value: ", out)
@@ -1869,6 +2115,7 @@ func TestTestTooLong(t *testing.T) {
 
 func TestClearTooLong(t *testing.T) {
 	b := new(BitSet)
+
 	c := b.Clear(1)
 	if b != c {
 		t.Error("Unexpected value")
@@ -1879,11 +2126,13 @@ func TestClearTooLong(t *testing.T) {
 func TestClearAll(t *testing.T) {
 	u := []uint64{2, 3, 5, 7, 11}
 	b := From(u)
+
 	c := b.ClearAll()
 	if c.length != 320 {
 		t.Error("Unexpected length: ", b.length)
 		return
 	}
+
 	if c.Test(0) || c.Test(1) || c.Test(2) || c.Test(3) || c.Test(4) || c.Test(5) {
 		t.Error("All bits should be unset")
 		return
@@ -1892,6 +2141,7 @@ func TestClearAll(t *testing.T) {
 
 func TestRankSelect(t *testing.T) {
 	u := []uint{2, 3, 5, 7, 11, 700, 1500}
+
 	b := BitSet{}
 	for _, v := range u {
 		b.Set(v)
@@ -1901,22 +2151,27 @@ func TestRankSelect(t *testing.T) {
 		t.Error("Unexpected rank")
 		return
 	}
+
 	if b.Rank(6) != 3 {
 		t.Error("Unexpected rank")
 		return
 	}
+
 	if b.Rank(1500) != 7 {
 		t.Error("Unexpected rank")
 		return
 	}
+
 	if b.Select(0) != 2 {
 		t.Error("Unexpected select")
 		return
 	}
+
 	if b.Select(1) != 3 {
 		t.Error("Unexpected select")
 		return
 	}
+
 	if b.Select(2) != 5 {
 		t.Error("Unexpected select")
 		return
@@ -1930,11 +2185,13 @@ func TestRankSelect(t *testing.T) {
 
 func TestFlip(t *testing.T) {
 	b := new(BitSet)
+
 	c := b.Flip(11)
 	if c.length != 12 {
 		t.Error("Unexpected value: ", c.length)
 		return
 	}
+
 	d := c.Flip(7)
 	if d.length != 12 {
 		t.Error("Unexpected value: ", d.length)
@@ -1945,11 +2202,13 @@ func TestFlip(t *testing.T) {
 func TestFlipRange(t *testing.T) {
 	b := new(BitSet)
 	b.Set(1).Set(3).Set(5).Set(7).Set(9).Set(11).Set(13).Set(15)
+
 	c := b.FlipRange(4, 25)
 	if c.length != 25 {
 		t.Error("Unexpected value: ", c.length)
 		return
 	}
+
 	d := c.FlipRange(8, 24)
 	if d.length != 25 {
 		t.Error("Unexpected value: ", d.length)
@@ -1960,6 +2219,7 @@ func TestFlipRange(t *testing.T) {
 		for j := uint(0); j <= i; j++ {
 			bits := New(i)
 			bits.FlipRange(0, j)
+
 			c := bits.Count()
 			if c != j {
 				t.Error("Unexpected value: ", c, " expected: ", j)
@@ -1975,7 +2235,9 @@ func TestCopy(t *testing.T) {
 		t.Error("No values should be copied")
 		return
 	}
+
 	a = New(10)
+
 	b := New(20)
 	if a.Copy(b) != 10 {
 		t.Error("Unexpected value")
@@ -1986,11 +2248,14 @@ func TestCopy(t *testing.T) {
 func TestCopyUnaligned(t *testing.T) {
 	a := New(16)
 	a.FlipRange(0, 16)
+
 	b := New(1)
 	a.Copy(b)
+
 	if b.Count() > b.Len() {
 		t.Errorf("targets copied set count (%d) should never be larger than target's length (%d)", b.Count(), b.Len())
 	}
+
 	if !b.Test(0) {
 		t.Errorf("first bit should still be set in copy: %+v", b)
 	}
@@ -1998,6 +2263,7 @@ func TestCopyUnaligned(t *testing.T) {
 	// Test a more complex scenario with a mix of bits set in the unaligned space to verify no bits are lost.
 	a = New(32)
 	a.Set(0).Set(3).Set(4).Set(16).Set(17).Set(29).Set(31)
+
 	b = New(19)
 	a.Copy(b)
 
@@ -2015,10 +2281,12 @@ func TestCopyFull(t *testing.T) {
 	a := New(10)
 	b := &BitSet{}
 	a.CopyFull(b)
+
 	if b.length != a.length || len(b.set) != len(a.set) {
 		t.Error("Expected full length copy")
 		return
 	}
+
 	for i, v := range a.set {
 		if v != b.set[i] {
 			t.Error("Unexpected value")
@@ -2029,6 +2297,7 @@ func TestCopyFull(t *testing.T) {
 
 func TestNextSetError(t *testing.T) {
 	b := new(BitSet)
+
 	c, d := b.NextSet(1)
 	if c != 0 || d {
 		t.Error("Unexpected values")
@@ -2129,10 +2398,12 @@ func TestDeleteWithBitStrings(t *testing.T) {
 
 		b := From(input)
 		b.DeleteAt(tc.deleteIdx)
+
 		if len(b.set) != len(expected) {
 			t.Errorf("Length of sets expected to be %d, but was %d", len(expected), len(b.set))
 			return
 		}
+
 		for i := range b.set {
 			if b.set[i] != expected[i] {
 				t.Errorf("Unexpected output\nExpected: %b\nGot:      %b", expected[i], b.set[i])
@@ -2180,8 +2451,11 @@ func TestDeleteWithBitSetInstance(t *testing.T) {
 }
 
 func TestWriteTo(t *testing.T) {
-	const length = 9585
-	const oneEvery = 97
+	const (
+		length   = 9585
+		oneEvery = 97
+	)
+
 	addBuf := []byte(`12345678`)
 	bs := New(length)
 	// Add some bits
@@ -2190,38 +2464,49 @@ func TestWriteTo(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
+
 	n, err := bs.WriteTo(&buf)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	wantSz := buf.Len() // Size of the serialized data in bytes.
 	if n != int64(wantSz) {
 		t.Errorf("want write size to be %d, got %d", wantSz, n)
 	}
+
 	buf.Write(addBuf) // Add additional data on stream.
 
 	// Generate test input for regression tests:
 	if false {
 		gzout := bytes.NewBuffer(nil)
+
 		gz, err := gzip.NewWriterLevel(gzout, 9)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := gz.Write(buf.Bytes()); err != nil {
+
+		_, err = gz.Write(buf.Bytes())
+		if err != nil {
 			t.Fatal(err)
 		}
-		if err := gz.Close(); err != nil {
+
+		err = gz.Close()
+		if err != nil {
 			t.Fatal(err)
 		}
+
 		t.Log("Encoded:", base64.StdEncoding.EncodeToString(gzout.Bytes()))
 	}
 
 	// Read back.
 	bs = New(length)
+
 	n, err = bs.ReadFrom(&buf)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if n != int64(wantSz) {
 		t.Errorf("want read size to be %d, got %d", wantSz, n)
 	}
@@ -2236,6 +2521,7 @@ func TestWriteTo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !bytes.Equal(more, addBuf) {
 		t.Fatalf("extra mismatch. got %v, want %v", more, addBuf)
 	}
@@ -2254,8 +2540,10 @@ func (ir *inCompleteRetBufReader) Read(b []byte) (n int, err error) {
 			b = b[:maxRead]
 		}
 	}
+
 	n, err = ir.reader.Read(b)
 	ir.offset += int64(n)
+
 	return
 }
 
@@ -2294,41 +2582,45 @@ func TestReadFrom(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			fatalErr := func(err error) {
 				t.Helper()
+
 				if err != nil {
 					t.Fatal(err)
 				}
 			}
 
 			var buf bytes.Buffer
+
 			b, err := base64.StdEncoding.DecodeString(test.input)
 			fatalErr(err)
 			gz, err := gzip.NewReader(bytes.NewBuffer(b))
 			fatalErr(err)
-			_, err = io.Copy(&buf, gz)
+			_, err = io.Copy(&buf, gz) //nolint:gosec // G110: decompressing a trusted, hardcoded test fixture
 			fatalErr(err)
 			fatalErr(gz.Close())
 
 			bs := New(test.length)
+
 			_, err = bs.ReadFrom(&inCompleteRetBufReader{returnEvery: test.returnEvery, reader: &buf})
 			if err != nil {
 				if errors.Is(err, test.wantErr) {
 					// Correct, nothing more we can test.
 					return
 				}
+
 				t.Fatalf("did not get expected error %v, got %v", test.wantErr, err)
-			} else {
-				if test.wantErr != nil {
-					t.Fatalf("did not get expected error %v", test.wantErr)
-				}
+			} else if test.wantErr != nil {
+				t.Fatalf("did not get expected error %v", test.wantErr)
 			}
+
 			fatalErr(err)
 
 			// Test if correct bits are set.
 			for i := uint(0); i < test.length; i++ {
 				want := i%test.oneEvery == 0
+
 				got := bs.Test(i)
 				if want != got {
 					t.Errorf("bit %d was %v, should be %v", i, got, want)
@@ -2349,6 +2641,7 @@ func TestSetAll(t *testing.T) {
 	test := func(name string, bs *BitSet, want uint) {
 		t.Run(name, func(t *testing.T) {
 			bs.SetAll()
+
 			if bs.Count() != want {
 				t.Errorf("expected %d bits to be set, got %d", want, bs.Count())
 			}
@@ -2356,6 +2649,7 @@ func TestSetAll(t *testing.T) {
 	}
 
 	test("nil", nil, 0)
+
 	for _, length := range []uint{0, 1, 10, 63, 64, 65, 100, 640} {
 		test(fmt.Sprintf("length %d", length), New(length), length)
 	}
@@ -2408,6 +2702,7 @@ func TestShiftRight(t *testing.T) {
 			b.ShiftRight(bits)
 
 			count := 0
+
 			for _, i := range data {
 				if i >= bits {
 					count++
@@ -2458,7 +2753,9 @@ func TestShiftRightFull(t *testing.T) {
 		for i := range data {
 			b.Set(data[i])
 		}
+
 		b.ShiftRight(shiftDistance)
+
 		for i := range data {
 			shiftedBit := int(data[i]) - int(shiftDistance)
 			if shiftedBit >= 0 {
@@ -2532,6 +2829,7 @@ func TestPreviousSet(t *testing.T) {
 	v.Set(2)
 	v.Set(4)
 	v.Set(120)
+
 	for _, tt := range []struct {
 		index     uint
 		want      uint
@@ -2555,7 +2853,9 @@ func TestPreviousSet(t *testing.T) {
 			}
 		})
 	}
+
 	v.ClearAll()
+
 	for _, tt := range []struct {
 		index     uint
 		want      uint
@@ -2580,6 +2880,7 @@ func TestPreviousClear(t *testing.T) {
 	v.Set(2)
 	v.Set(4)
 	v.Set(120)
+
 	for _, tt := range []struct {
 		index     uint
 		want      uint
@@ -2603,7 +2904,9 @@ func TestPreviousClear(t *testing.T) {
 			}
 		})
 	}
+
 	v.SetAll()
+
 	for _, tt := range []struct {
 		index     uint
 		want      uint
@@ -2651,8 +2954,9 @@ func TestBitSetOnesBetween(t *testing.T) {
 
 	// Property-based testing
 	const numTests = 1e5
+
 	seed := time.Now().UnixNano()
-	rng := rand.New(rand.NewSource(seed))
+	rng := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 	t.Logf("Seed: %d", seed)
 
 	for i := 0; i < numTests; i++ {
@@ -2671,6 +2975,7 @@ func TestBitSetOnesBetween(t *testing.T) {
 		// Compare with naive implementation
 		got := bs.OnesBetween(from, to)
 		want := uint(0)
+
 		for j := from; j < to; j++ {
 			if bs.Test(j) {
 				want++
@@ -2687,7 +2992,7 @@ func TestBitSetOnesBetween(t *testing.T) {
 func BenchmarkBitSetOnesBetween(b *testing.B) {
 	sizes := []int{64, 256, 1024, 4096, 16384}
 	densities := []float64{0.1, 0.5, 0.9} // Different bit densities to test
-	rng := rand.New(rand.NewSource(42))
+	rng := rand.New(rand.NewSource(42))   //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 
 	for _, size := range sizes {
 		for _, density := range densities {
@@ -2719,9 +3024,10 @@ func BenchmarkBitSetOnesBetween(b *testing.B) {
 func generatePextTestCases(n int) [][2]uint64 {
 	cases := make([][2]uint64, n)
 	for i := range cases {
-		cases[i][0] = rand.Uint64()
-		cases[i][1] = rand.Uint64()
+		cases[i][0] = rand.Uint64() //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
+		cases[i][1] = rand.Uint64() //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 	}
+
 	return cases
 }
 
@@ -2732,10 +3038,12 @@ func BenchmarkPEXT(b *testing.B) {
 	b.ResetTimer()
 
 	var r uint64
+
 	for i := 0; i < b.N; i++ {
 		tc := testCases[i%len(testCases)]
 		r = pext(tc[0], tc[1])
 	}
+
 	_ = r // prevent optimization
 }
 
@@ -2746,17 +3054,20 @@ func BenchmarkPDEP(b *testing.B) {
 	b.ResetTimer()
 
 	var r uint64
+
 	for i := 0; i < b.N; i++ {
 		tc := testCases[i%len(testCases)]
 		r = pdep(tc[0], tc[1])
 	}
+
 	_ = r // prevent optimization
 }
 
 func TestPext(t *testing.T) {
 	const numTests = 1e6
+
 	seed := time.Now().UnixNano()
-	rng := rand.New(rand.NewSource(seed))
+	rng := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 	t.Logf("Seed: %d", seed)
 
 	for i := 0; i < numTests; i++ {
@@ -2782,6 +3093,7 @@ func TestPext(t *testing.T) {
 		// 2. Get corresponding input bit from w (w>>j&1)
 		// 3. XOR them - if different, bits weren't preserved correctly
 		resultCopy := result
+
 		for j := 0; j < 64; j++ {
 			// Check if mask bit is set at position j
 			if m&(uint64(1)<<j) != 0 {
@@ -2800,8 +3112,9 @@ func TestPext(t *testing.T) {
 
 func TestPdep(t *testing.T) {
 	const numTests = 1e6
+
 	seed := time.Now().UnixNano()
-	rng := rand.New(rand.NewSource(seed))
+	rng := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 	t.Logf("Seed: %d", seed)
 
 	for i := 0; i < numTests; i++ {
@@ -2824,6 +3137,7 @@ func TestPdep(t *testing.T) {
 		// Verify by using PEXT to extract bits back
 		// The composition of PEXT(PDEP(x,m),m) should equal x masked to popcount bits
 		extracted := pext(result, m)
+
 		maskBits := (uint64(1) << popCount) - 1
 		if (extracted & maskBits) != (w & maskBits) {
 			t.Fatalf("Case %d: PEXT(PDEP(w,m),m) != w: got=%x, want=%x (w=%x, m=%x)",
@@ -2835,8 +3149,9 @@ func TestPdep(t *testing.T) {
 func TestBitSetExtract(t *testing.T) {
 	// Property-based tests
 	const numTests = 1e4
+
 	seed := time.Now().UnixNano()
-	rng := rand.New(rand.NewSource(seed))
+	rng := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 	t.Logf("Seed: %d", seed)
 
 	for i := 0; i < numTests; i++ {
@@ -2862,11 +3177,13 @@ func TestBitSetExtract(t *testing.T) {
 
 		// Test bits are properly extracted and packed
 		pos := uint(0)
+
 		for j := uint(0); j < size; j++ {
 			if mask.Test(j) {
 				if src.Test(j) != dst.Test(pos) {
 					t.Errorf("Case %d: bit ordering violation at source position %d", i, j)
 				}
+
 				pos++
 			}
 		}
@@ -2927,6 +3244,7 @@ func TestBitSetExtract(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dst := New(tc.expected.Len())
 			tc.src.ExtractTo(tc.mask, dst)
+
 			if !dst.Equal(tc.expected) {
 				t.Errorf("got %v, expected %v", dst, tc.expected)
 			}
@@ -2949,8 +3267,9 @@ func TestBitSetExtract(t *testing.T) {
 func TestBitSetDeposit(t *testing.T) {
 	// Property-based tests
 	const numTests = 1e4
+
 	seed := time.Now().UnixNano()
-	rng := rand.New(rand.NewSource(seed))
+	rng := rand.New(rand.NewSource(seed)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 	t.Logf("Seed: %d", seed)
 
 	for i := 0; i < numTests; i++ {
@@ -2981,12 +3300,15 @@ func TestBitSetDeposit(t *testing.T) {
 		// Extract bits back and verify
 		extracted := New(size)
 		dst.ExtractTo(mask, extracted)
+
 		maskBits := New(size)
 		for j := uint(0); j < mask.Count(); j++ {
 			maskBits.Set(j)
 		}
+
 		srcMasked := src.Clone()
 		srcMasked.InPlaceIntersection(maskBits)
+
 		if !extracted.Equal(srcMasked) {
 			t.Errorf("Case %d: ExtractTo(DepositTo(x,m),m) != x", i)
 		}
@@ -3054,7 +3376,9 @@ func TestBitSetDeposit(t *testing.T) {
 			} else {
 				dst = tc.dst.Clone()
 			}
+
 			tc.src.DepositTo(tc.mask, dst)
+
 			if !dst.Equal(tc.expected) {
 				t.Errorf("got %v, expected %v", dst, tc.expected)
 			}
@@ -3072,7 +3396,7 @@ func TestBitSetDeposit(t *testing.T) {
 
 func BenchmarkBitSetExtractDeposit(b *testing.B) {
 	sizes := []int{64, 256, 1024, 4096, 16384, 2 << 15}
-	rng := rand.New(rand.NewSource(42)) // fixed seed for reproducibility
+	rng := rand.New(rand.NewSource(42)) //nolint:gosec // G404: math/rand is intentional for tests, not security-sensitive
 
 	for _, size := range sizes {
 		// Create source with random bits
@@ -3089,8 +3413,10 @@ func BenchmarkBitSetExtractDeposit(b *testing.B) {
 
 		b.Run(fmt.Sprintf("size=%d/fn=ExtractTo", size), func(b *testing.B) {
 			dst := New(uint(size))
+
 			b.ReportAllocs()
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				src.ExtractTo(mask, dst)
 				dst.ClearAll()
@@ -3099,8 +3425,10 @@ func BenchmarkBitSetExtractDeposit(b *testing.B) {
 
 		b.Run(fmt.Sprintf("size=%d/fn=DepositTo", size), func(b *testing.B) {
 			dst := New(uint(size))
+
 			b.ReportAllocs()
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				src.DepositTo(mask, dst)
 				dst.ClearAll()
@@ -3113,14 +3441,19 @@ func TestBinaryOrder(t *testing.T) {
 	defer func() {
 		binaryOrder = binary.BigEndian
 	}()
+
 	if BinaryOrder() != binary.BigEndian {
 		t.Error("expected the default binary order to be big endian")
 	}
+
 	LittleEndian()
+
 	if BinaryOrder() != binary.LittleEndian {
 		t.Error("expected little endian binary order after calling LittleEndian()")
 	}
+
 	BigEndian()
+
 	if BinaryOrder() != binary.BigEndian {
 		t.Error("expected big endian binary order after calling BigEndian()")
 	}
@@ -3132,6 +3465,7 @@ func TestFromWithLengthShortSlicePanics(t *testing.T) {
 			t.Error("expected a panic when the slice is shorter than the requested length")
 		}
 	}()
+
 	FromWithLength(128, []uint64{0})
 }
 
@@ -3140,6 +3474,7 @@ func TestNewAllocationFailure(t *testing.T) {
 	if b.Len() != 0 {
 		t.Errorf("expected an empty BitSet on allocation failure, got length %d", b.Len())
 	}
+
 	if b.Count() != 0 {
 		t.Errorf("expected no bits set on allocation failure, got %d", b.Count())
 	}
@@ -3148,9 +3483,11 @@ func TestNewAllocationFailure(t *testing.T) {
 func TestCompactNoBitsSet(t *testing.T) {
 	b := New(1000)
 	b.Compact()
+
 	if b.Len() != 64 {
 		t.Errorf("expected Compact to preserve one word (64 bits), got length %d", b.Len())
 	}
+
 	if len(b.set) != 1 {
 		t.Errorf("expected a single backing word after Compact, got %d", len(b.set))
 	}
@@ -3160,6 +3497,7 @@ func TestNextClearShortBacking(t *testing.T) {
 	// A degenerate BitSet whose backing slice is shorter than its length
 	// must not panic.
 	b := &BitSet{length: 100, set: []uint64{}}
+
 	idx, found := b.NextClear(0)
 	if found || idx != 0 {
 		t.Errorf("expected (0, false) on a BitSet with a short backing slice, got (%d, %v)", idx, found)
@@ -3170,6 +3508,7 @@ func TestPreviousClearEarlierWord(t *testing.T) {
 	// The word containing the starting index is all ones, so the search
 	// must continue in the earlier words.
 	b := From([]uint64{^uint64(8), ^uint64(0)})
+
 	idx, found := b.PreviousClear(127)
 	if !found || idx != 3 {
 		t.Errorf("expected (3, true), got (%d, %v)", idx, found)
@@ -3180,6 +3519,7 @@ func TestCopyFullNilDestination(t *testing.T) {
 	b := New(100)
 	b.Set(5)
 	b.CopyFull(nil) // must be a no-op
+
 	if !b.Test(5) {
 		t.Error("expected the source BitSet to be unchanged")
 	}
@@ -3187,9 +3527,11 @@ func TestCopyFullNilDestination(t *testing.T) {
 
 func TestCopyFullEmptySource(t *testing.T) {
 	var b BitSet
+
 	c := New(100)
 	c.Set(5)
 	b.CopyFull(c)
+
 	if c.Len() != 0 || c.Count() != 0 {
 		t.Errorf("expected the destination to be emptied, got length %d with %d bits set", c.Len(), c.Count())
 	}
@@ -3199,6 +3541,7 @@ func TestCopyFullReuseCapacity(t *testing.T) {
 	b := From([]uint64{0xFF})
 	c := From([]uint64{0, 0}) // enough capacity, no allocation needed
 	b.CopyFull(c)
+
 	if c.Len() != 64 || len(c.set) != 1 || c.set[0] != 0xFF {
 		t.Errorf("expected an identical copy reusing the existing capacity, got length %d with %d words", c.Len(), len(c.set))
 	}
@@ -3208,6 +3551,7 @@ func TestEqualLengthOverflow(t *testing.T) {
 	// A degenerate length of Cap() makes the internal word count overflow
 	// to zero; Equal must still consider two such BitSets equal.
 	b := &BitSet{length: Cap()}
+
 	c := &BitSet{length: Cap()}
 	if !b.Equal(c) {
 		t.Error("expected two degenerate BitSets of maximal length to be equal")
@@ -3219,6 +3563,7 @@ func TestInPlaceDifferenceEmptyReceiver(t *testing.T) {
 	compare := New(100)
 	compare.Set(5)
 	b.InPlaceDifference(compare) // must be a no-op
+
 	if b.Count() != 0 {
 		t.Errorf("expected no bits set, got %d", b.Count())
 	}
@@ -3233,7 +3578,9 @@ func (w *failWriter) Write(p []byte) (int, error) {
 	if len(p) > w.limit {
 		return 0, errors.New("write failed")
 	}
+
 	w.limit -= len(p)
+
 	return len(p), nil
 }
 
@@ -3246,6 +3593,7 @@ func TestWriteToFailingWriter(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error when the length header cannot be written")
 	}
+
 	if n != 0 {
 		t.Errorf("expected 0 bytes written, got %d", n)
 	}
@@ -3255,6 +3603,7 @@ func TestWriteToFailingWriter(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error when the data words cannot be written")
 	}
+
 	if n != int64(wordBytes) {
 		t.Errorf("expected %d bytes written, got %d", wordBytes, n)
 	}
@@ -3263,14 +3612,19 @@ func TestWriteToFailingWriter(t *testing.T) {
 func TestReadFromTruncatedStream(t *testing.T) {
 	// A header declaring 64 bits, but no payload.
 	var buf bytes.Buffer
-	if err := binary.Write(&buf, binaryOrder, uint64(64)); err != nil {
+
+	err := binary.Write(&buf, binaryOrder, uint64(64))
+	if err != nil {
 		t.Fatal(err)
 	}
+
 	b := New(0)
-	_, err := b.ReadFrom(&buf)
-	if err != io.ErrUnexpectedEOF {
+
+	_, err = b.ReadFrom(&buf)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Errorf("expected io.ErrUnexpectedEOF, got %v", err)
 	}
+
 	if b.Len() != 0 || len(b.set) != 0 {
 		t.Errorf("expected the BitSet to be reset after a read failure, got length %d", b.Len())
 	}
@@ -3278,10 +3632,14 @@ func TestReadFromTruncatedStream(t *testing.T) {
 
 func TestUnmarshalJSONErrors(t *testing.T) {
 	var b BitSet
-	if err := b.UnmarshalJSON([]byte(`42`)); err == nil {
+
+	err := b.UnmarshalJSON([]byte(`42`))
+	if err == nil {
 		t.Error("expected an error when the JSON value is not a string")
 	}
-	if err := b.UnmarshalJSON([]byte(`"@invalid@"`)); err == nil {
+
+	err = b.UnmarshalJSON([]byte(`"@invalid@"`))
+	if err == nil {
 		t.Error("expected an error when the string is not valid base64")
 	}
 }
@@ -3290,6 +3648,7 @@ func TestRankBeyondLength(t *testing.T) {
 	b := New(64)
 	b.Set(0)
 	b.Set(63)
+
 	if r := b.Rank(1000); r != 2 {
 		t.Errorf("expected rank 2 for an index beyond the length, got %d", r)
 	}
@@ -3298,6 +3657,7 @@ func TestRankBeyondLength(t *testing.T) {
 func TestSelectOutOfRange(t *testing.T) {
 	b := New(100)
 	b.Set(10)
+
 	if s := b.Select(1); s != 100 {
 		t.Errorf("expected the length (100) for an out of range rank, got %d", s)
 	}
@@ -3306,10 +3666,13 @@ func TestSelectOutOfRange(t *testing.T) {
 func TestShiftEmptyBitSet(t *testing.T) {
 	b := New(100)
 	b.ShiftLeft(5)
+
 	if b.Count() != 0 {
 		t.Errorf("expected no bits set after shifting an empty BitSet left, got %d", b.Count())
 	}
+
 	b.ShiftRight(5)
+
 	if b.Count() != 0 {
 		t.Errorf("expected no bits set after shifting an empty BitSet right, got %d", b.Count())
 	}
@@ -3321,6 +3684,7 @@ func TestShiftLeftExceedsCapacityPanics(t *testing.T) {
 			t.Error("expected a panic when the shift exceeds the capacity")
 		}
 	}()
+
 	b := New(2)
 	b.Set(1)
 	b.ShiftLeft(Cap())
@@ -3351,6 +3715,7 @@ func TestExtractToEdgeCases(t *testing.T) {
 	b := From([]uint64{0xDA})
 	dst := New(64)
 	b.ExtractTo(New(0), dst)
+
 	if dst.Count() != 0 {
 		t.Errorf("expected no bits set with an empty mask, got %d", dst.Count())
 	}
@@ -3360,9 +3725,11 @@ func TestExtractToEdgeCases(t *testing.T) {
 	mask := From([]uint64{0x66, 0x1}) // 5 bits over two words, b has one word
 	small := New(0)
 	b.ExtractTo(mask, small)
+
 	if small.Len() != 5 {
 		t.Errorf("expected the destination to be extended to 5 bits, got %d", small.Len())
 	}
+
 	if small.set[0] != 0x9 {
 		t.Errorf("expected extracted word 0x9, got %#x", small.set[0])
 	}
@@ -3375,6 +3742,7 @@ func TestDepositToEdgeCases(t *testing.T) {
 	// An empty destination is a no-op.
 	empty := New(0)
 	b.DepositTo(mask, empty)
+
 	if empty.Count() != 0 {
 		t.Errorf("expected no bits set with an empty destination, got %d", empty.Count())
 	}
@@ -3383,6 +3751,7 @@ func TestDepositToEdgeCases(t *testing.T) {
 	dst := From([]uint64{0})
 	longMask := From([]uint64{0x66, 0xF0})
 	b.DepositTo(longMask, dst)
+
 	if dst.set[0] != 0x42 {
 		t.Errorf("expected deposited word 0x42, got %#x", dst.set[0])
 	}
@@ -3395,9 +3764,11 @@ func TestDepositToShortSource(t *testing.T) {
 	mask := From([]uint64{^uint64(0), 0x1})
 	dst := From([]uint64{0, 0})
 	b.DepositTo(mask, dst)
+
 	if dst.set[0] != 0xF {
 		t.Errorf("expected deposited word 0xF, got %#x", dst.set[0])
 	}
+
 	if dst.set[1] != 0 {
 		t.Errorf("expected the second word to be untouched, got %#x", dst.set[1])
 	}

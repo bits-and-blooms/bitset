@@ -48,34 +48,34 @@ import (
 	"strconv"
 )
 
-// the wordSize of a bit set
+// the wordSize of a bit set.
 const wordSize = 64
 
-// the wordSize of a bit set in bytes
+// the wordSize of a bit set in bytes.
 const wordBytes = wordSize / 8
 
-// wordMask is wordSize-1, used for bit indexing in a word
+// wordMask is wordSize-1, used for bit indexing in a word.
 const wordMask = wordSize - 1
 
-// log2WordSize is lg(wordSize)
+// log2WordSize is lg(wordSize).
 const log2WordSize = 6
 
-// allBits has every bit set
+// allBits has every bit set.
 const allBits uint64 = 0xffffffffffffffff
 
-// default binary BigEndian
-var binaryOrder binary.ByteOrder = binary.BigEndian
+// default binary BigEndian.
+var binaryOrder binary.ByteOrder = binary.BigEndian //nolint:gochecknoglobals // package-level Marshal config toggled by LittleEndian/BigEndian
 
-// default json encoding base64.URLEncoding
-var base64Encoding = base64.URLEncoding
+// default json encoding base64.URLEncoding.
+var base64Encoding = base64.URLEncoding //nolint:gochecknoglobals // package-level Marshal config toggled by Base64StdEncoding
 
-// Base64StdEncoding Marshal/Unmarshal BitSet with base64.StdEncoding(Default: base64.URLEncoding)
+// Base64StdEncoding Marshal/Unmarshal BitSet with base64.StdEncoding(Default: base64.URLEncoding).
 func Base64StdEncoding() { base64Encoding = base64.StdEncoding }
 
-// LittleEndian sets Marshal/Unmarshal Binary as Little Endian (Default: binary.BigEndian)
+// LittleEndian sets Marshal/Unmarshal Binary as Little Endian (Default: binary.BigEndian).
 func LittleEndian() { binaryOrder = binary.LittleEndian }
 
-// BigEndian sets Marshal/Unmarshal Binary as Big Endian (Default: binary.BigEndian)
+// BigEndian sets Marshal/Unmarshal Binary as Big Endian (Default: binary.BigEndian).
 func BigEndian() { binaryOrder = binary.BigEndian }
 
 // BinaryOrder returns the current binary order, see also LittleEndian()
@@ -91,21 +91,22 @@ type BitSet struct {
 // Error is used to distinguish errors (panics) generated in this package.
 type Error string
 
-// safeSet will fixup b.set to be non-nil and return the field value
-func (b *BitSet) safeSet() []uint64 {
+// safeSet will fixup b.set to be non-nil and return the field value.
+func (b *BitSet) safeSet() []uint64 { //nolint:funcorder // helper kept next to the accessors it supports
 	if b.set == nil {
 		b.set = make([]uint64, wordsNeeded(0))
 	}
+
 	return b.set
 }
 
-// SetBitsetFrom fills the bitset with an array of integers without creating a new BitSet instance
+// SetBitsetFrom fills the bitset with an array of integers without creating a new BitSet instance.
 func (b *BitSet) SetBitsetFrom(buf []uint64) {
 	b.length = uint(len(buf)) * 64
 	b.set = buf
 }
 
-// From is a constructor used to create a BitSet from an array of words
+// From is a constructor used to create a BitSet from an array of words.
 func From(buf []uint64) *BitSet {
 	return FromWithLength(uint(len(buf))*64, buf)
 }
@@ -120,6 +121,7 @@ func FromWithLength(length uint, set []uint64) *BitSet {
 	if len(set) < wordsNeeded(length) {
 		panic("BitSet.FromWithLength: slice is too short")
 	}
+
 	return &BitSet{length, set}
 }
 
@@ -139,11 +141,12 @@ func (b *BitSet) Words() []uint64 {
 	return b.set
 }
 
-// wordsNeeded calculates the number of words needed for i bits
+// wordsNeeded calculates the number of words needed for i bits.
 func wordsNeeded(i uint) int {
 	if i > (Cap() - wordMask) {
 		return int(Cap() >> log2WordSize)
 	}
+
 	return int((i + wordMask) >> log2WordSize)
 }
 
@@ -153,7 +156,7 @@ func wordsNeededUnbound(i uint) int {
 	return (int(i) + wordMask) >> log2WordSize
 }
 
-// wordsIndex calculates the index of words in a `uint64`
+// wordsIndex calculates the index of words in a `uint64`.
 func wordsIndex(i uint) uint {
 	return i & wordMask
 }
@@ -182,7 +185,7 @@ func New(length uint) (bset *BitSet) {
 
 // MustNew creates a new BitSet with the given length bits.
 // It panics if length exceeds the possible capacity or by a lack of memory.
-func MustNew(length uint) (bset *BitSet) {
+func MustNew(length uint) (bset *BitSet) { //nolint:funcorder // kept beside its sibling constructor New
 	if length >= Cap() {
 		panic("You are exceeding the capacity")
 	}
@@ -208,21 +211,24 @@ func (b *BitSet) Len() uint {
 	return b.length
 }
 
-// extendSet adds additional words to incorporate new bits if needed
-func (b *BitSet) extendSet(i uint) {
+// extendSet adds additional words to incorporate new bits if needed.
+func (b *BitSet) extendSet(i uint) { //nolint:funcorder // helper kept next to the growth logic it supports
 	if i >= Cap() {
 		panic("You are exceeding the capacity")
 	}
+
 	nsize := wordsNeeded(i + 1)
-	if b.set == nil {
+	switch {
+	case b.set == nil:
 		b.set = make([]uint64, nsize)
-	} else if cap(b.set) >= nsize {
+	case cap(b.set) >= nsize:
 		b.set = b.set[:nsize] // fast resize
-	} else if len(b.set) < nsize {
+	case len(b.set) < nsize:
 		newset := make([]uint64, nsize, 2*nsize) // increase capacity 2x
 		copy(newset, b.set)
 		b.set = newset
 	}
+
 	b.length = i + 1
 }
 
@@ -231,10 +237,11 @@ func (b *BitSet) Test(i uint) bool {
 	if i >= b.length {
 		return false
 	}
+
 	return b.set[i>>log2WordSize]&(1<<wordsIndex(i)) != 0
 }
 
-// GetWord64AtBit retrieves bits i through i+63 as a single uint64 value
+// GetWord64AtBit retrieves bits i through i+63 as a single uint64 value.
 func (b *BitSet) GetWord64AtBit(i uint) uint64 {
 	firstWordIndex := int(i >> log2WordSize)
 	subWordIndex := wordsIndex(i)
@@ -264,7 +271,9 @@ func (b *BitSet) Set(i uint) *BitSet {
 	if i >= b.length { // if we need more bits, make 'em
 		b.extendSet(i)
 	}
+
 	b.set[i>>log2WordSize] |= 1 << wordsIndex(i)
+
 	return b
 }
 
@@ -273,7 +282,9 @@ func (b *BitSet) Clear(i uint) *BitSet {
 	if i >= b.length {
 		return b
 	}
+
 	b.set[i>>log2WordSize] &^= 1 << wordsIndex(i)
+
 	return b
 }
 
@@ -285,6 +296,7 @@ func (b *BitSet) SetTo(i uint, value bool) *BitSet {
 	if value {
 		return b.Set(i)
 	}
+
 	return b.Clear(i)
 }
 
@@ -296,7 +308,9 @@ func (b *BitSet) Flip(i uint) *BitSet {
 	if i >= b.length {
 		return b.Set(i)
 	}
+
 	b.set[i>>log2WordSize] ^= 1 << wordsIndex(i)
+
 	return b
 }
 
@@ -376,18 +390,22 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 // If you are memory constrained, this function may cause a panic.
 func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
 	length := lastbitindex + 1
+
 	idx := wordsNeeded(length)
 	if idx > len(b.set) {
 		return b
 	}
+
 	shrunk := make([]uint64, idx)
 	copy(shrunk, b.set[:idx])
 	b.set = shrunk
 	b.length = length
+
 	lastWordUsedBits := length % 64
 	if lastWordUsedBits != 0 {
 		b.set[idx-1] &= allBits >> uint64(64-wordsIndex(lastWordUsedBits))
 	}
+
 	return b
 }
 
@@ -402,10 +420,12 @@ func (b *BitSet) Compact() *BitSet {
 	idx := len(b.set) - 1
 	for ; idx >= 0 && b.set[idx] == 0; idx-- {
 	}
+
 	newlength := uint((idx + 1) << log2WordSize)
 	if newlength >= b.length {
 		return b // nothing to do
 	}
+
 	if newlength > 0 {
 		return b.Shrink(newlength - 1)
 	}
@@ -462,24 +482,31 @@ func (b *BitSet) InsertAt(idx uint) *BitSet {
 func (b *BitSet) String() string {
 	// follows code from https://github.com/RoaringBitmap/roaring
 	var buffer bytes.Buffer
+
 	start := []byte("{")
 	buffer.Write(start)
+
 	counter := 0
+
 	i, e := b.NextSet(0)
 	for e {
-		counter = counter + 1
+		counter++
 		// to avoid exhausting the memory
 		if counter > 0x40000 {
 			buffer.WriteString("...")
 			break
 		}
+
 		buffer.WriteString(strconv.FormatInt(int64(i), 10))
+
 		i, e = b.NextSet(i + 1)
 		if e {
 			buffer.WriteString(",")
 		}
 	}
+
 	buffer.WriteString("}")
+
 	return buffer.String()
 }
 
@@ -488,7 +515,7 @@ func (b *BitSet) String() string {
 // All the bits residing on the left of the deleted bit get
 // shifted right by 1
 // The running time of this operation may potentially be
-// relatively slow, O(length)
+// relatively slow, O(length).
 func (b *BitSet) DeleteAt(i uint) *BitSet {
 	// the index of the slice element where we'll delete a bit
 	deleteAtElement := i >> log2WordSize
@@ -515,7 +542,7 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 		b.set[i] >>= 1
 	}
 
-	b.length = b.length - 1
+	b.length--
 
 	return b
 }
@@ -561,6 +588,7 @@ func (b *BitSet) AsSlice(buf []uint) []uint {
 	}
 
 	buf = buf[:size]
+
 	return buf
 }
 
@@ -619,7 +647,7 @@ func (b *BitSet) NextSet(i uint) (uint, bool) {
 //
 // However if Count() is large, it might be preferable to
 // use several calls to NextSetMany for memory reasons.
-func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
+func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) { //nolint:gocognit // hot path; kept as one linear scan for performance
 	// In theory, we could overflow uint, but in practice, we will not.
 	capacity := cap(buffer)
 	result := buffer[:capacity]
@@ -665,16 +693,18 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	if size > 0 {
 		return result[size-1], result[:size]
 	}
+
 	return 0, result[:0]
 }
 
 // NextClear returns the next clear bit from the specified index,
 // including possibly the current index
-// along with an error code (true = valid, false = no bit found i.e. all bits are set)
+// along with an error code (true = valid, false = no bit found i.e. all bits are set).
 func (b *BitSet) NextClear(i uint) (uint, bool) {
 	if i >= b.length {
 		return 0, false
 	}
+
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
@@ -682,7 +712,7 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 
 	// process first (maybe partial) word
 	word := b.set[x]
-	word = word >> wordsIndex(i)
+	word >>= wordsIndex(i)
 	wordAll := allBits >> wordsIndex(i)
 
 	index := i + uint(bits.TrailingZeros64(^word))
@@ -707,16 +737,17 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 
 // PreviousSet returns the previous set bit from the specified index,
 // including possibly the current index
-// along with an error code (true = valid, false = no bit found i.e. all bits are clear)
+// along with an error code (true = valid, false = no bit found i.e. all bits are clear).
 func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
 	}
+
 	word := b.set[x]
 
 	// Clear the bits above the index
-	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+	word &= (1 << (wordsIndex(i) + 1)) - 1
 	if word != 0 {
 		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 	}
@@ -727,24 +758,26 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 			return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 		}
 	}
+
 	return 0, false
 }
 
 // PreviousClear returns the previous clear bit from the specified index,
 // including possibly the current index
-// along with an error code (true = valid, false = no clear bit found i.e. all bits are set)
+// along with an error code (true = valid, false = no clear bit found i.e. all bits are set).
 func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
 	}
+
 	word := b.set[x]
 
 	// Flip all bits and find the highest one bit
 	word = ^word
 
 	// Clear the bits above the index
-	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+	word &= (1 << (wordsIndex(i) + 1)) - 1
 
 	if word != 0 {
 		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
@@ -752,11 +785,13 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 
 	for x--; x >= 0; x-- {
 		word = b.set[x]
+
 		word = ^word
 		if word != 0 {
 			return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 		}
 	}
+
 	return 0, false
 }
 
@@ -768,10 +803,11 @@ func (b *BitSet) ClearAll() *BitSet {
 			b.set[i] = 0
 		}
 	}
+
 	return b
 }
 
-// SetAll sets the entire BitSet
+// SetAll sets the entire BitSet.
 func (b *BitSet) SetAll() *BitSet {
 	if b != nil && b.set != nil {
 		for i := range b.set {
@@ -780,11 +816,12 @@ func (b *BitSet) SetAll() *BitSet {
 
 		b.cleanLastWord()
 	}
+
 	return b
 }
 
-// wordCount returns the number of words used in a bit set
-func (b *BitSet) wordCount() int {
+// wordCount returns the number of words used in a bit set.
+func (b *BitSet) wordCount() int { //nolint:funcorder // helper kept next to the code it supports
 	return wordsNeededUnbound(b.length)
 }
 
@@ -795,6 +832,7 @@ func (b *BitSet) Clone() *BitSet {
 	if b.set != nil { // Clone should not modify current object
 		copy(c.set, b.set)
 	}
+
 	return c
 }
 
@@ -806,9 +844,11 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
 	}
+
 	if b.set != nil { // Copy should not modify current object
 		copy(c.set, b.set)
 	}
+
 	count = c.length
 	if b.length < c.length {
 		count = b.length
@@ -816,6 +856,7 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	// Cleaning the last word is needed to keep the invariant that other functions, such as Count, require
 	// that any bits in the last word that would exceed the length of the bitmask are set to 0.
 	c.cleanLastWord()
+
 	return
 }
 
@@ -825,6 +866,7 @@ func (b *BitSet) CopyFull(c *BitSet) {
 	if c == nil {
 		return
 	}
+
 	c.length = b.length
 	if len(b.set) == 0 {
 		if c.set != nil {
@@ -836,6 +878,7 @@ func (b *BitSet) CopyFull(c *BitSet) {
 		} else {
 			c.set = c.set[:len(b.set)]
 		}
+
 		copy(c.set, b.set)
 	}
 }
@@ -846,34 +889,41 @@ func (b *BitSet) Count() uint {
 	if b != nil && b.set != nil {
 		return uint(popcntSlice(b.set))
 	}
+
 	return 0
 }
 
 // Equal tests the equivalence of two BitSets.
 // False if they are of different sizes, otherwise true
-// only if all the same bits are set
+// only if all the same bits are set.
 func (b *BitSet) Equal(c *BitSet) bool {
 	if c == nil || b == nil {
 		return c == b
 	}
+
 	if b.length != c.length {
 		return false
 	}
+
 	if b.length == 0 { // if they have both length == 0, then could have nil set
 		return true
 	}
+
 	wn := b.wordCount()
 	// bounds check elimination
 	if wn <= 0 {
 		return true
 	}
+
 	_ = b.set[wn-1]
+
 	_ = c.set[wn-1]
 	for p := 0; p < wn; p++ {
 		if c.set[p] != b.set[p] {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -884,52 +934,63 @@ func panicIfNull(b *BitSet) {
 }
 
 // Difference of base set and other set
-// This is the BitSet equivalent of &^ (and not)
+// This is the BitSet equivalent of &^ (and not).
 func (b *BitSet) Difference(compare *BitSet) (result *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	result = b.Clone() // clone b (in case b is bigger than compare)
+
 	l := compare.wordCount()
 	if l > b.wordCount() {
 		l = b.wordCount()
 	}
+
 	for i := 0; i < l; i++ {
 		result.set[i] = b.set[i] &^ compare.set[i]
 	}
+
 	return
 }
 
-// DifferenceCardinality computes the cardinality of the difference
+// DifferenceCardinality computes the cardinality of the difference.
 func (b *BitSet) DifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	l := compare.wordCount()
 	if l > b.wordCount() {
 		l = b.wordCount()
 	}
+
 	cnt := uint64(0)
 	if l > 0 {
 		cnt += popcntMaskSlice(b.set[:l], compare.set[:l])
 	}
+
 	cnt += popcntSlice(b.set[l:])
+
 	return uint(cnt)
 }
 
 // InPlaceDifference computes the difference of base set and other set
-// This is the BitSet equivalent of &^ (and not)
+// This is the BitSet equivalent of &^ (and not).
 func (b *BitSet) InPlaceDifference(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	l := compare.wordCount()
 	if l > b.wordCount() {
 		l = b.wordCount()
 	}
+
 	if l <= 0 {
 		return
 	}
 	// bounds check elimination
 	data, cmpData := b.set, compare.set
 	_ = data[l-1]
+
 	_ = cmpData[l-1]
 	for i := 0; i < l; i++ {
 		data[i] &^= cmpData[i]
@@ -937,13 +998,14 @@ func (b *BitSet) InPlaceDifference(compare *BitSet) {
 }
 
 // Convenience function: return two bitsets ordered by
-// increasing length. Note: neither can be nil
+// increasing length. Note: neither can be nil.
 func sortByLength(a *BitSet, b *BitSet) (ap *BitSet, bp *BitSet) {
 	if a.length <= b.length {
 		ap, bp = a, b
 	} else {
 		ap, bp = b, a
 	}
+
 	return
 }
 
@@ -954,35 +1016,42 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
+
 	result = New(b.length)
 	for i, word := range b.set {
 		result.set[i] = word & compare.set[i]
 	}
+
 	return
 }
 
-// IntersectionCardinality computes the cardinality of the intersection
+// IntersectionCardinality computes the cardinality of the intersection.
 func (b *BitSet) IntersectionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	if b.length == 0 || compare.length == 0 {
 		return 0
 	}
+
 	b, compare = sortByLength(b, compare)
 	cnt := popcntAndSlice(b.set, compare.set)
+
 	return uint(cnt)
 }
 
 // InPlaceIntersection destructively computes the intersection of
 // base set and the compare set.
-// This is the BitSet equivalent of & (and)
+// This is the BitSet equivalent of & (and).
 func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	l := compare.wordCount()
 	if l > b.wordCount() {
 		l = b.wordCount()
 	}
+
 	if l > 0 {
 		// bounds check elimination
 		data, cmpData := b.set, compare.set
@@ -993,11 +1062,13 @@ func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 			data[i] &= cmpData[i]
 		}
 	}
+
 	if l >= 0 {
 		for i := l; i < len(b.set); i++ {
 			b.set[i] = 0
 		}
 	}
+
 	if compare.length > 0 {
 		if compare.length-1 >= b.length {
 			b.extendSet(compare.length - 1)
@@ -1006,15 +1077,17 @@ func (b *BitSet) InPlaceIntersection(compare *BitSet) {
 }
 
 // Union of base set and other set
-// This is the BitSet equivalent of | (or)
+// This is the BitSet equivalent of | (or).
 func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
+
 	result = compare.Clone()
 	for i, word := range b.set {
 		result.set[i] = word | compare.set[i]
 	}
+
 	return
 }
 
@@ -1024,13 +1097,16 @@ func (b *BitSet) UnionCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
+
 	cnt := uint64(0)
 	if len(b.set) > 0 {
 		cnt += popcntOrSlice(b.set, compare.set)
 	}
+
 	if len(compare.set) > len(b.set) {
 		cnt += popcntSlice(compare.set[len(b.set):])
 	}
+
 	return uint(cnt)
 }
 
@@ -1039,13 +1115,16 @@ func (b *BitSet) UnionCardinality(compare *BitSet) uint {
 func (b *BitSet) InPlaceUnion(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	l := compare.wordCount()
 	if l > b.wordCount() {
 		l = b.wordCount()
 	}
+
 	if compare.length > 0 && compare.length-1 >= b.length {
 		b.extendSet(compare.length - 1)
 	}
+
 	if l > 0 {
 		// bounds check elimination
 		data, cmpData := b.set, compare.set
@@ -1056,6 +1135,7 @@ func (b *BitSet) InPlaceUnion(compare *BitSet) {
 			data[i] |= cmpData[i]
 		}
 	}
+
 	if len(compare.set) > l {
 		for i := l; i < len(compare.set); i++ {
 			b.set[i] = compare.set[i]
@@ -1064,7 +1144,7 @@ func (b *BitSet) InPlaceUnion(compare *BitSet) {
 }
 
 // SymmetricDifference of base set and other set
-// This is the BitSet equivalent of ^ (xor)
+// This is the BitSet equivalent of ^ (xor).
 func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
@@ -1074,45 +1154,54 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	for i, word := range b.set {
 		result.set[i] = word ^ compare.set[i]
 	}
+
 	return
 }
 
-// SymmetricDifferenceCardinality computes the cardinality of the symmetric difference
+// SymmetricDifferenceCardinality computes the cardinality of the symmetric difference.
 func (b *BitSet) SymmetricDifferenceCardinality(compare *BitSet) uint {
 	panicIfNull(b)
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
+
 	cnt := uint64(0)
 	if len(b.set) > 0 {
 		cnt += popcntXorSlice(b.set, compare.set)
 	}
+
 	if len(compare.set) > len(b.set) {
 		cnt += popcntSlice(compare.set[len(b.set):])
 	}
+
 	return uint(cnt)
 }
 
 // InPlaceSymmetricDifference creates the destructive SymmetricDifference of base set and other set
-// This is the BitSet equivalent of ^ (xor)
+// This is the BitSet equivalent of ^ (xor).
 func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 	panicIfNull(b)
 	panicIfNull(compare)
+
 	l := compare.wordCount()
 	if l > b.wordCount() {
 		l = b.wordCount()
 	}
+
 	if compare.length > 0 && compare.length-1 >= b.length {
 		b.extendSet(compare.length - 1)
 	}
+
 	if l > 0 {
 		// bounds check elimination
 		data, cmpData := b.set, compare.set
 		_ = data[l-1]
+
 		_ = cmpData[l-1]
 		for i := 0; i < l; i++ {
 			data[i] ^= cmpData[i]
 		}
 	}
+
 	if len(compare.set) > l {
 		for i := l; i < len(compare.set); i++ {
 			b.set[i] = compare.set[i]
@@ -1121,12 +1210,12 @@ func (b *BitSet) InPlaceSymmetricDifference(compare *BitSet) {
 }
 
 // Is the length an exact multiple of word sizes?
-func (b *BitSet) isLenExactMultiple() bool {
+func (b *BitSet) isLenExactMultiple() bool { //nolint:funcorder // helper kept next to cleanLastWord
 	return wordsIndex(b.length) == 0
 }
 
-// Clean last word by setting unused bits to 0
-func (b *BitSet) cleanLastWord() {
+// Clean last word by setting unused bits to 0.
+func (b *BitSet) cleanLastWord() { //nolint:funcorder // helper kept next to isLenExactMultiple
 	if !b.isLenExactMultiple() {
 		b.set[len(b.set)-1] &= allBits >> (wordSize - wordsIndex(b.length))
 	}
@@ -1136,11 +1225,14 @@ func (b *BitSet) cleanLastWord() {
 // In case of allocation failure, the function will return an empty BitSet.
 func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
+
 	result = New(b.length)
 	for i, word := range b.set {
 		result.set[i] = ^word
 	}
+
 	result.cleanLastWord()
+
 	return
 }
 
@@ -1155,6 +1247,7 @@ func (b *BitSet) All() bool {
 // empty sets.
 func (b *BitSet) None() bool {
 	panicIfNull(b)
+
 	if b != nil && b.set != nil {
 		for _, word := range b.set {
 			if word > 0 {
@@ -1162,30 +1255,33 @@ func (b *BitSet) None() bool {
 			}
 		}
 	}
+
 	return true
 }
 
-// Any returns true if any bit is set, false otherwise
+// Any returns true if any bit is set, false otherwise.
 func (b *BitSet) Any() bool {
 	panicIfNull(b)
 	return !b.None()
 }
 
-// IsSuperSet returns true if this is a superset of the other set
+// IsSuperSet returns true if this is a superset of the other set.
 func (b *BitSet) IsSuperSet(other *BitSet) bool {
 	l := other.wordCount()
 	if b.wordCount() < l {
 		l = b.wordCount()
 	}
+
 	for i, word := range other.set[:l] {
 		if b.set[i]&word != word {
 			return false
 		}
 	}
+
 	return popcntSlice(other.set[l:]) == 0
 }
 
-// IsStrictSuperSet returns true if this is a strict superset of the other set
+// IsStrictSuperSet returns true if this is a strict superset of the other set.
 func (b *BitSet) IsStrictSuperSet(other *BitSet) bool {
 	return b.Count() > other.Count() && b.IsSuperSet(other)
 }
@@ -1197,11 +1293,14 @@ func (b *BitSet) DumpAsBits() string {
 	if b.set == nil {
 		return "."
 	}
+
 	buffer := bytes.NewBufferString("")
+
 	i := len(b.set) - 1
 	for ; i >= 0; i-- {
 		fmt.Fprintf(buffer, "%064b.", b.set[i])
 	}
+
 	return buffer.String()
 }
 
@@ -1213,6 +1312,7 @@ func (b *BitSet) BinaryStorageSize() int {
 func readUint64Array(reader io.Reader, data []uint64) error {
 	length := len(data)
 	bufferSize := 128
+
 	buffer := make([]byte, bufferSize*wordBytes)
 	for i := 0; i < length; i += bufferSize {
 		end := i + bufferSize
@@ -1220,19 +1320,25 @@ func readUint64Array(reader io.Reader, data []uint64) error {
 			end = length
 			buffer = buffer[:wordBytes*(end-i)]
 		}
+
 		chunk := data[i:end]
-		if _, err := io.ReadFull(reader, buffer); err != nil {
-			return err
+
+		_, err := io.ReadFull(reader, buffer)
+		if err != nil {
+			return err //nolint:wrapcheck // propagate the reader error unchanged
 		}
+
 		for i := range chunk {
-			chunk[i] = uint64(binaryOrder.Uint64(buffer[8*i:]))
+			chunk[i] = binaryOrder.Uint64(buffer[8*i:])
 		}
 	}
+
 	return nil
 }
 
 func writeUint64Array(writer io.Writer, data []uint64) error {
 	bufferSize := 128
+
 	buffer := make([]byte, bufferSize*wordBytes)
 	for i := 0; i < len(data); i += bufferSize {
 		end := i + bufferSize
@@ -1240,15 +1346,18 @@ func writeUint64Array(writer io.Writer, data []uint64) error {
 			end = len(data)
 			buffer = buffer[:wordBytes*(end-i)]
 		}
+
 		chunk := data[i:end]
 		for i, x := range chunk {
 			binaryOrder.PutUint64(buffer[8*i:], x)
 		}
+
 		_, err := writer.Write(buffer)
 		if err != nil {
-			return err
+			return err //nolint:wrapcheck // propagate the writer error unchanged
 		}
 	}
+
 	return nil
 }
 
@@ -1281,12 +1390,14 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 		// return the number of bytes written.
 		return int64(0), err
 	}
+
 	err = writeUint64Array(stream, b.set[:b.wordCount()])
 	if err != nil {
 		// Upon failure, we do not guarantee that we
 		// return the number of bytes written.
 		return int64(wordBytes), err
 	}
+
 	return int64(b.BinaryStorageSize()), nil
 }
 
@@ -1309,19 +1420,23 @@ func (b *BitSet) WriteTo(stream io.Writer) (int64, error) {
 //	r := bufio.NewReader(f)
 func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 	var length uint64
+
 	err := binary.Read(stream, binaryOrder, &length)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
+
 		return 0, err
 	}
+
 	newlength := uint(length)
 
 	if uint64(newlength) != length {
 		return 0, errors.New("unmarshalling error: type mismatch")
 	}
-	nWords := wordsNeeded(uint(newlength))
+
+	nWords := wordsNeeded(newlength)
 	if cap(b.set) >= nWords {
 		b.set = b.set[:nWords]
 	} else {
@@ -1332,13 +1447,14 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 
 	err = readUint64Array(stream, b.set)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
 		// We do not want to leave the BitSet partially filled as
 		// it is error prone.
 		b.set = b.set[:0]
 		b.length = 0
+
 		return 0, err
 	}
 
@@ -1349,6 +1465,7 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 // Please see WriteTo for details.
 func (b *BitSet) MarshalBinary() ([]byte, error) {
 	var buf bytes.Buffer
+
 	_, err := b.WriteTo(&buf)
 	if err != nil {
 		return []byte{}, err
@@ -1362,37 +1479,41 @@ func (b *BitSet) MarshalBinary() ([]byte, error) {
 func (b *BitSet) UnmarshalBinary(data []byte) error {
 	buf := bytes.NewReader(data)
 	_, err := b.ReadFrom(buf)
+
 	return err
 }
 
-// MarshalJSON marshals a BitSet as a JSON structure
+// MarshalJSON marshals a BitSet as a JSON structure.
 func (b BitSet) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBuffer(make([]byte, 0, b.BinaryStorageSize()))
+
 	_, err := b.WriteTo(buffer)
 	if err != nil {
 		return nil, err
 	}
 
 	// URLEncode all bytes
-	return json.Marshal(base64Encoding.EncodeToString(buffer.Bytes()))
+	return json.Marshal(base64Encoding.EncodeToString(buffer.Bytes())) //nolint:wrapcheck // propagate the json error unchanged
 }
 
-// UnmarshalJSON unmarshals a BitSet from JSON created using MarshalJSON
+// UnmarshalJSON unmarshals a BitSet from JSON created using MarshalJSON.
 func (b *BitSet) UnmarshalJSON(data []byte) error {
 	// Unmarshal as string
 	var s string
+
 	err := json.Unmarshal(data, &s)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // propagate the json error unchanged
 	}
 
 	// URLDecode string
 	buf, err := base64Encoding.DecodeString(s)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // propagate the base64 error unchanged
 	}
 
 	_, err = b.ReadFrom(bytes.NewReader(buf))
+
 	return err
 }
 
@@ -1405,7 +1526,7 @@ func (b *BitSet) Rank(index uint) (rank uint) {
 	// needed more than once
 	length := len(b.set)
 
-	// TODO: built-in min requires go1.21 or later
+	// Note: built-in min requires go1.21 or later
 	// idx := min(int(index>>6), len(b.set))
 	idx := int(index >> 6)
 	if idx > length {
@@ -1413,7 +1534,7 @@ func (b *BitSet) Rank(index uint) (rank uint) {
 	}
 
 	// sum up the popcounts until idx ...
-	// TODO: cannot range over idx (...): requires go1.22 or later
+	// Note: cannot range over idx (...): requires go1.22 or later
 	// for j := range idx {
 	for j := 0; j < idx; j++ {
 		if w := b.set[j]; w != 0 {
@@ -1440,18 +1561,21 @@ func (b *BitSet) Rank(index uint) (rank uint) {
 // textbook definition of Select and Rank.
 func (b *BitSet) Select(index uint) uint {
 	leftover := index
+
 	for idx, word := range b.set {
 		w := uint(bits.OnesCount64(word))
 		if w > leftover {
 			return uint(idx)*64 + select64(word, leftover)
 		}
+
 		leftover -= w
 	}
+
 	return b.length
 }
 
-// top detects the top bit set
-func (b *BitSet) top() (uint, bool) {
+// top detects the top bit set.
+func (b *BitSet) top() (uint, bool) { //nolint:funcorder // helper kept next to the shift logic it supports
 	for idx := len(b.set) - 1; idx >= 0; idx-- {
 		if word := b.set[idx]; word != 0 {
 			return uint(idx<<log2WordSize+bits.Len64(word)) - 1, true
@@ -1466,7 +1590,7 @@ func (b *BitSet) top() (uint, bool) {
 // Left shift may require bitset size extension. We try to avoid the
 // unnecessary memory operations by detecting the leftmost set bit.
 // The function will panic if shift causes excess of capacity.
-func (b *BitSet) ShiftLeft(bits uint) {
+func (b *BitSet) ShiftLeft(bits uint) { //nolint:gocognit,gocyclo,cyclop // hot path; kept as one linear scan for performance
 	panicIfNull(b)
 
 	if bits == 0 {
@@ -1491,11 +1615,13 @@ func (b *BitSet) ShiftLeft(bits uint) {
 	if len(b.set) < nsize {
 		dst = make([]uint64, nsize)
 	}
+
 	if top+bits >= b.length {
 		b.length = top + bits + 1
 	}
 
 	pad, idx := top%wordSize, top>>log2WordSize
+
 	shift, pages := bits%wordSize, bits>>log2WordSize
 	if bits%wordSize == 0 { // happy case: just add pages
 		copy(dst[pages:nsize], b.set)
@@ -1522,7 +1648,7 @@ func (b *BitSet) ShiftLeft(bits uint) {
 }
 
 // ShiftRight shifts the bitset like >> operation would do.
-func (b *BitSet) ShiftRight(bits uint) {
+func (b *BitSet) ShiftRight(bits uint) { //nolint:gocognit // hot path; kept as one linear scan for performance
 	panicIfNull(b)
 
 	if bits == 0 {
@@ -1540,6 +1666,7 @@ func (b *BitSet) ShiftRight(bits uint) {
 	}
 
 	pad, idx := top%wordSize, top>>log2WordSize
+
 	shift, pages := bits%wordSize, bits>>log2WordSize
 	if bits%wordSize == 0 { // happy case: just clear pages
 		b.set = b.set[pages:]
@@ -1612,6 +1739,7 @@ func (b *BitSet) OnesBetween(from, to uint) uint {
 func (b *BitSet) Extract(mask *BitSet) *BitSet {
 	dst := New(mask.Count())
 	b.ExtractTo(mask, dst)
+
 	return dst
 }
 
@@ -1638,6 +1766,7 @@ func (b *BitSet) ExtractTo(mask *BitSet, dst *BitSet) {
 	}
 
 	outPos := uint(0)
+
 	length := len(mask.set)
 	if len(b.set) < length {
 		length = len(b.set)
@@ -1672,6 +1801,7 @@ func (b *BitSet) ExtractTo(mask *BitSet, dst *BitSet) {
 func (b *BitSet) Deposit(mask *BitSet) *BitSet {
 	dst := New(mask.length)
 	b.DepositTo(mask, dst)
+
 	return dst
 }
 
@@ -1681,7 +1811,7 @@ func (b *BitSet) Deposit(mask *BitSet) *BitSet {
 // For example, if mask has bits set at positions 1,4,5, then DepositTo will
 // take consecutive bits 0,1,2 from the source BitSet and place them into
 // positions 1,4,5 in the destination BitSet.
-func (b *BitSet) DepositTo(mask *BitSet, dst *BitSet) {
+func (b *BitSet) DepositTo(mask *BitSet, dst *BitSet) { //nolint:gocognit // hot path; kept as one linear scan for performance
 	panicIfNull(b)
 	panicIfNull(mask)
 	panicIfNull(dst)
@@ -1691,6 +1821,7 @@ func (b *BitSet) DepositTo(mask *BitSet, dst *BitSet) {
 	}
 
 	inPos := uint(0)
+
 	length := len(mask.set)
 	if len(dst.set) < length {
 		length = len(dst.set)
@@ -1710,6 +1841,7 @@ func (b *BitSet) DepositTo(mask *BitSet, dst *BitSet) {
 
 		// Get source bits, handling word boundary crossing
 		sourceBits := b.set[wordIdx]
+
 		bitOffset := inPos & wordMask
 		if wordIdx+1 < uint(len(b.set)) && bitOffset != 0 {
 			// Combine bits from current and next word

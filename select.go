@@ -6,12 +6,14 @@ func select64(w uint64, j uint) uint {
 	seen := 0
 	// Divide 64bit
 	part := w & 0xFFFFFFFF
+
 	n := uint(bits.OnesCount64(part))
 	if n <= j {
 		part = w >> 32
 		seen += 32
 		j -= n
 	}
+
 	ww := part
 
 	// Divide 32bit
@@ -23,16 +25,19 @@ func select64(w uint64, j uint) uint {
 		seen += 16
 		j -= n
 	}
+
 	ww = part
 
 	// Divide 16bit
 	part = ww & 0xFF
+
 	n = uint(bits.OnesCount64(part))
 	if n <= j {
 		part = ww >> 8
 		seen += 8
 		j -= n
 	}
+
 	ww = part
 
 	// Lookup in final byte
@@ -43,5 +48,6 @@ func select64(w uint64, j uint) uint {
 			break
 		}
 	}
+
 	return uint(seen + counter)
 }
