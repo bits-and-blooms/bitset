@@ -518,6 +518,20 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 
 	b.length = b.length - 1
 
+	// the bitset may now use one word less: shrink the slice so that
+	// len(b.set) keeps matching the number of words in use, as the rest
+	// of the package expects. Otherwise, functions that scan the whole
+	// slice (e.g., SetAll, Count) would operate on a word that lies
+	// beyond the length of the bitset.
+	if wordCount := b.wordCount(); wordCount < len(b.set) {
+		// the discarded words must be zeroed: extendSet may later revive
+		// them with a fast resize, and they must not carry stale bits.
+		for i := wordCount; i < len(b.set); i++ {
+			b.set[i] = 0
+		}
+		b.set = b.set[:wordCount]
+	}
+
 	return b
 }
 
