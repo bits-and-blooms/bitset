@@ -289,6 +289,48 @@ func (b *BitSet) SetTo(i uint, value bool) *BitSet {
 	return b.Clear(i)
 }
 
+// SetRange sets bits in [start, end) to 1, the capacity of the bitset is
+// automatically increased accordingly.
+// Warning: using a very large value for 'end'
+// may lead to a memory shortage and a panic: the caller is responsible
+// for providing sensible parameters in line with their memory capacity.
+func (b *BitSet) SetRange(start, end uint) *BitSet {
+	if start >= end {
+		return b
+	}
+
+	if end-1 >= b.length {
+		b.extendSet(end - 1)
+	}
+
+	startWord := start >> log2WordSize
+	endWord := (end - 1) >> log2WordSize // inclusive, the word holding bit end-1
+
+	// e.g. start = 71 -> wordsIndex(start) = 7
+	//  firstMask = ^uint64(0) << 7 = 0b111111....11110000000
+	// keeps the bits below start untouched
+	firstMask := ^uint64(0) << wordsIndex(start)
+
+	// e.g. end = 135 -> wordsIndex(-end) = 57, see FlipRange for the
+	// modular arithmetic of the unary minus
+	//  lastMask = ^uint64(0) >> 57 = 0b00000....0001111111
+	// keeps the bits from end on untouched
+	lastMask := ^uint64(0) >> wordsIndex(-end)
+
+	if startWord == endWord { // the whole range lives in a single word
+		b.set[startWord] |= firstMask & lastMask
+		return b
+	}
+
+	b.set[startWord] |= firstMask
+	for i := startWord + 1; i < endWord; i++ {
+		b.set[i] = ^uint64(0)
+	}
+	b.set[endWord] |= lastMask
+
+	return b
+}
+
 // Flip bit at i.
 // Warning: using a very large value for 'i'
 // may lead to a memory shortage and a panic: the caller is responsible

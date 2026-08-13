@@ -670,3 +670,28 @@ func BenchmarkRank(b *testing.B) {
 		})
 	}
 }
+
+func BenchmarkSetVsSetRange(b *testing.B) {
+	const (
+		sz         = 100_000
+		rangeStart = 5_000
+		rangeEnd   = 10_000
+	)
+
+	s := New(uint(sz))
+
+	b.Run("Set", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			s.ClearAll()
+			for j := uint(rangeStart); j < rangeEnd; j++ {
+				s.Set(j)
+			}
+		}
+	})
+	b.Run("SetRange", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			s.ClearAll()
+			s.SetRange(rangeStart, rangeEnd)
+		}
+	})
+}
