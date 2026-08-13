@@ -2222,6 +2222,36 @@ func TestDeleteWithBitSetInstance(t *testing.T) {
 	}
 }
 
+// DeleteAt reduces the length of the bitset, and it must shrink the
+// underlying slice accordingly, otherwise operations that scan the whole
+// slice see words beyond the length of the bitset. See issue #225.
+func TestDeleteAtKeepsWordCount(t *testing.T) {
+	for _, length := range []uint{1, 64, 65, 128, 129, 192, 256, 257} {
+		b := New(length - 1)
+		b.Set(length - 1) // b has 'length' bits, the last one set
+		b.DeleteAt(0)
+
+		if b.Len() != length-1 {
+			t.Fatalf("length %d: expected a length of %d, got %d", length, length-1, b.Len())
+		}
+		if len(b.set) != wordsNeeded(b.Len()) {
+			t.Errorf("length %d: expected %d words, got %d", length, wordsNeeded(b.Len()), len(b.set))
+		}
+
+		b.SetAll()
+		if !b.All() {
+			t.Errorf("length %d: All should be true after SetAll, %d bits set out of %d", length, b.Count(), b.Len())
+		}
+
+		// a word dropped by DeleteAt must not come back with stale bits
+		// when the bitset grows back to its former size
+		b.Set(length - 1)
+		if b.Count() != length {
+			t.Errorf("length %d: expected %d bits set, got %d", length, length, b.Count())
+		}
+	}
+}
+
 func TestWriteTo(t *testing.T) {
 	const length = 9585
 	const oneEvery = 97
