@@ -1999,7 +1999,7 @@ func TestSetRange(t *testing.T) {
 	}
 	// every sub-range of a 256-bit set, checked bit by bit
 	for start := uint(0); start < 256; start++ {
-		for end := start; end < 256; end++ {
+		for end := start; end <= 256; end++ {
 			bits := New(256)
 			bits.SetRange(start, end)
 			for i := uint(0); i < 256; i++ {
