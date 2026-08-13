@@ -1969,6 +1969,49 @@ func TestFlipRange(t *testing.T) {
 	}
 }
 
+func TestSetRange(t *testing.T) {
+	b := new(BitSet)
+	c := b.SetRange(4, 25)
+	if c.length != 25 {
+		t.Error("Unexpected value: ", c.length)
+		return
+	}
+	if c.Count() != 21 {
+		t.Error("Unexpected value: ", c.Count())
+		return
+	}
+	// an empty range is a no-op, even beyond the current length
+	if d := c.SetRange(100, 100); d.length != 25 || d.Count() != 21 {
+		t.Error("Unexpected value: ", d.length, d.Count())
+		return
+	}
+	//
+	for i := uint(0); i < 256; i++ {
+		for j := uint(0); j <= i; j++ {
+			bits := New(i)
+			bits.SetRange(0, j)
+			c := bits.Count()
+			if c != j {
+				t.Error("Unexpected value: ", c, " expected: ", j)
+				return
+			}
+		}
+	}
+	// every sub-range of a 256-bit set, checked bit by bit
+	for start := uint(0); start < 256; start++ {
+		for end := start; end <= 256; end++ {
+			bits := New(256)
+			bits.SetRange(start, end)
+			for i := uint(0); i < 256; i++ {
+				if bits.Test(i) != (i >= start && i < end) {
+					t.Error("Unexpected value at ", i, " for range [", start, ",", end, ")")
+					return
+				}
+			}
+		}
+	}
+}
+
 func TestCopy(t *testing.T) {
 	a := New(10)
 	if a.Copy(nil) != 0 {
