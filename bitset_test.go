@@ -3177,3 +3177,348 @@ func BenchmarkBitSetExtractDeposit(b *testing.B) {
 		})
 	}
 }
+
+func TestBinaryOrder(t *testing.T) {
+	defer func() {
+		binaryOrder = binary.BigEndian
+	}()
+
+	if BinaryOrder() != binary.BigEndian {
+		t.Error("expected the default binary order to be big endian")
+	}
+
+	LittleEndian()
+
+	if BinaryOrder() != binary.LittleEndian {
+		t.Error("expected little endian binary order after calling LittleEndian()")
+	}
+
+	BigEndian()
+
+	if BinaryOrder() != binary.BigEndian {
+		t.Error("expected big endian binary order after calling BigEndian()")
+	}
+}
+
+func TestFromWithLengthShortSlicePanics(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected a panic when the slice is shorter than the requested length")
+		}
+	}()
+
+	FromWithLength(128, []uint64{0})
+}
+
+func TestNewAllocationFailure(t *testing.T) {
+	// New(Cap()) can only be forced to fail its backing allocation on 64-bit
+	// platforms, where Cap() implies an astronomically large slice. On 32-bit
+	// platforms wordsNeeded caps the backing slice at about 512 MiB, which
+	// usually allocates successfully, so the recover path cannot be exercised.
+	if bits.UintSize < 64 {
+		t.Skip("allocation failure cannot be forced on 32-bit platforms")
+	}
+
+	b := New(Cap())
+	if b.Len() != 0 {
+		t.Errorf("expected an empty BitSet on allocation failure, got length %d", b.Len())
+	}
+
+	if b.Count() != 0 {
+		t.Errorf("expected no bits set on allocation failure, got %d", b.Count())
+	}
+}
+
+func TestCompactNoBitsSet(t *testing.T) {
+	b := New(1000)
+	b.Compact()
+
+	if b.Len() != 64 {
+		t.Errorf("expected Compact to preserve one word (64 bits), got length %d", b.Len())
+	}
+
+	if len(b.set) != 1 {
+		t.Errorf("expected a single backing word after Compact, got %d", len(b.set))
+	}
+}
+
+func TestNextClearShortBacking(t *testing.T) {
+	// A degenerate BitSet whose backing slice is shorter than its length
+	// must not panic.
+	b := &BitSet{length: 100, set: []uint64{}}
+
+	idx, found := b.NextClear(0)
+	if found || idx != 0 {
+		t.Errorf("expected (0, false) on a BitSet with a short backing slice, got (%d, %v)", idx, found)
+	}
+}
+
+func TestPreviousClearEarlierWord(t *testing.T) {
+	// The word containing the starting index is all ones, so the search
+	// must continue in the earlier words.
+	b := From([]uint64{^uint64(8), ^uint64(0)})
+
+	idx, found := b.PreviousClear(127)
+	if !found || idx != 3 {
+		t.Errorf("expected (3, true), got (%d, %v)", idx, found)
+	}
+}
+
+func TestCopyFullNilDestination(t *testing.T) {
+	b := New(100)
+	b.Set(5)
+	b.CopyFull(nil) // must be a no-op
+
+	if !b.Test(5) {
+		t.Error("expected the source BitSet to be unchanged")
+	}
+}
+
+func TestCopyFullEmptySource(t *testing.T) {
+	var b BitSet
+
+	c := New(100)
+	c.Set(5)
+	b.CopyFull(c)
+
+	if c.Len() != 0 || c.Count() != 0 {
+		t.Errorf("expected the destination to be emptied, got length %d with %d bits set", c.Len(), c.Count())
+	}
+}
+
+func TestCopyFullReuseCapacity(t *testing.T) {
+	b := From([]uint64{0xFF})
+	c := From([]uint64{0, 0}) // enough capacity, no allocation needed
+	b.CopyFull(c)
+
+	if c.Len() != 64 || len(c.set) != 1 || c.set[0] != 0xFF {
+		t.Errorf("expected an identical copy reusing the existing capacity, got length %d with %d words", c.Len(), len(c.set))
+	}
+}
+
+func TestEqualLengthOverflow(t *testing.T) {
+	// A degenerate length of Cap() makes the internal word count overflow
+	// to zero; Equal must still consider two such BitSets equal.
+	b := &BitSet{length: Cap()}
+
+	c := &BitSet{length: Cap()}
+	if !b.Equal(c) {
+		t.Error("expected two degenerate BitSets of maximal length to be equal")
+	}
+}
+
+func TestInPlaceDifferenceEmptyReceiver(t *testing.T) {
+	b := New(0)
+	compare := New(100)
+	compare.Set(5)
+	b.InPlaceDifference(compare) // must be a no-op
+
+	if b.Count() != 0 {
+		t.Errorf("expected no bits set, got %d", b.Count())
+	}
+}
+
+// failWriter accepts up to limit bytes and then fails.
+type failWriter struct {
+	limit int
+}
+
+func (w *failWriter) Write(p []byte) (int, error) {
+	if len(p) > w.limit {
+		return 0, errors.New("write failed")
+	}
+
+	w.limit -= len(p)
+
+	return len(p), nil
+}
+
+func TestWriteToFailingWriter(t *testing.T) {
+	b := New(64)
+	b.Set(1)
+
+	// Failure while writing the length header.
+	n, err := b.WriteTo(&failWriter{limit: 0})
+	if err == nil {
+		t.Error("expected an error when the length header cannot be written")
+	}
+
+	if n != 0 {
+		t.Errorf("expected 0 bytes written, got %d", n)
+	}
+
+	// Failure while writing the data words.
+	n, err = b.WriteTo(&failWriter{limit: wordBytes})
+	if err == nil {
+		t.Error("expected an error when the data words cannot be written")
+	}
+
+	if n != int64(wordBytes) {
+		t.Errorf("expected %d bytes written, got %d", wordBytes, n)
+	}
+}
+
+func TestReadFromTruncatedStream(t *testing.T) {
+	// A header declaring 64 bits, but no payload.
+	var buf bytes.Buffer
+
+	err := binary.Write(&buf, binaryOrder, uint64(64))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := New(0)
+
+	_, err = b.ReadFrom(&buf)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
+		t.Errorf("expected io.ErrUnexpectedEOF, got %v", err)
+	}
+
+	if b.Len() != 0 || len(b.set) != 0 {
+		t.Errorf("expected the BitSet to be reset after a read failure, got length %d", b.Len())
+	}
+}
+
+func TestUnmarshalJSONErrors(t *testing.T) {
+	var b BitSet
+
+	err := b.UnmarshalJSON([]byte(`42`))
+	if err == nil {
+		t.Error("expected an error when the JSON value is not a string")
+	}
+
+	err = b.UnmarshalJSON([]byte(`"@invalid@"`))
+	if err == nil {
+		t.Error("expected an error when the string is not valid base64")
+	}
+}
+
+func TestRankBeyondLength(t *testing.T) {
+	b := New(64)
+	b.Set(0)
+	b.Set(63)
+
+	if r := b.Rank(1000); r != 2 {
+		t.Errorf("expected rank 2 for an index beyond the length, got %d", r)
+	}
+}
+
+func TestSelectOutOfRange(t *testing.T) {
+	b := New(100)
+	b.Set(10)
+
+	if s := b.Select(1); s != 100 {
+		t.Errorf("expected the length (100) for an out of range rank, got %d", s)
+	}
+}
+
+func TestShiftEmptyBitSet(t *testing.T) {
+	b := New(100)
+	b.ShiftLeft(5)
+
+	if b.Count() != 0 {
+		t.Errorf("expected no bits set after shifting an empty BitSet left, got %d", b.Count())
+	}
+
+	b.ShiftRight(5)
+
+	if b.Count() != 0 {
+		t.Errorf("expected no bits set after shifting an empty BitSet right, got %d", b.Count())
+	}
+}
+
+func TestShiftLeftExceedsCapacityPanics(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected a panic when the shift exceeds the capacity")
+		}
+	}()
+
+	b := New(2)
+	b.Set(1)
+	b.ShiftLeft(Cap())
+}
+
+func TestExtract(t *testing.T) {
+	b := From([]uint64{0xDA})    // bits 1, 3, 4, 6, 7
+	mask := From([]uint64{0x66}) // bits 1, 2, 5, 6
+	got := b.Extract(mask)
+	// The bits of b at positions 1, 2, 5, 6 are 1, 0, 0, 1: packed 0b1001.
+	if got.set[0] != 0x9 {
+		t.Errorf("expected extracted word 0x9, got %#x", got.set[0])
+	}
+}
+
+func TestDeposit(t *testing.T) {
+	b := From([]uint64{0x9})     // bits 0, 3
+	mask := From([]uint64{0x66}) // bits 1, 2, 5, 6
+	got := b.Deposit(mask)
+	// The bits 0, 1, 2, 3 of b go to positions 1, 2, 5, 6: 0b01000010.
+	if got.set[0] != 0x42 {
+		t.Errorf("expected deposited word 0x42, got %#x", got.set[0])
+	}
+}
+
+func TestExtractToEdgeCases(t *testing.T) {
+	// An empty mask is a no-op.
+	b := From([]uint64{0xDA})
+	dst := New(64)
+	b.ExtractTo(New(0), dst)
+
+	if dst.Count() != 0 {
+		t.Errorf("expected no bits set with an empty mask, got %d", dst.Count())
+	}
+
+	// A destination that is too small is extended, and a mask longer than
+	// the source is truncated.
+	mask := From([]uint64{0x66, 0x1}) // 5 bits over two words, b has one word
+	small := New(0)
+	b.ExtractTo(mask, small)
+
+	if small.Len() != 5 {
+		t.Errorf("expected the destination to be extended to 5 bits, got %d", small.Len())
+	}
+
+	if small.set[0] != 0x9 {
+		t.Errorf("expected extracted word 0x9, got %#x", small.set[0])
+	}
+}
+
+func TestDepositToEdgeCases(t *testing.T) {
+	b := From([]uint64{0x9})
+	mask := From([]uint64{0x66})
+
+	// An empty destination is a no-op.
+	empty := New(0)
+	b.DepositTo(mask, empty)
+
+	if empty.Count() != 0 {
+		t.Errorf("expected no bits set with an empty destination, got %d", empty.Count())
+	}
+
+	// A destination shorter than the mask is truncated.
+	dst := From([]uint64{0})
+	longMask := From([]uint64{0x66, 0xF0})
+	b.DepositTo(longMask, dst)
+
+	if dst.set[0] != 0x42 {
+		t.Errorf("expected deposited word 0x42, got %#x", dst.set[0])
+	}
+}
+
+func TestDepositToShortSource(t *testing.T) {
+	// The mask requires 65 source bits but the source has a single word,
+	// so the deposit must stop after the first word.
+	b := From([]uint64{0xF})
+	mask := From([]uint64{^uint64(0), 0x1})
+	dst := From([]uint64{0, 0})
+	b.DepositTo(mask, dst)
+
+	if dst.set[0] != 0xF {
+		t.Errorf("expected deposited word 0xF, got %#x", dst.set[0])
+	}
+
+	if dst.set[1] != 0 {
+		t.Errorf("expected the second word to be untouched, got %#x", dst.set[1])
+	}
+}

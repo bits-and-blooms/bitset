@@ -41,6 +41,24 @@ func TestIter(t *testing.T) {
 		t.Errorf("Got extra values: %v", got[len(expected):])
 	}
 }
+
+func TestIterEarlyStop(t *testing.T) {
+	var b BitSet
+	b.Set(2).Set(7).Set(90)
+
+	got := make([]uint, 0)
+	for i := range b.EachSet() {
+		got = append(got, i)
+		if len(got) == 2 {
+			break
+		}
+	}
+
+	if len(got) != 2 || got[0] != 2 || got[1] != 7 {
+		t.Errorf("Expected [2 7], got %v", got)
+	}
+}
+
 func BenchmarkIter(b *testing.B) {
 	b.StopTimer()
 	s := New(10000)
