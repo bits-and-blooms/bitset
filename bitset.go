@@ -1626,6 +1626,11 @@ func (b *BitSet) ShiftRight(bits uint) {
 func (b *BitSet) OnesBetween(from, to uint) uint {
 	panicIfNull(b)
 
+	// Bits at or past length are unset, so clamp before indexing b.set.
+	if to > b.length {
+		to = b.length
+	}
+
 	if from >= to {
 		return 0
 	}

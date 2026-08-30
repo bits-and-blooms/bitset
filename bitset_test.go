@@ -2706,6 +2706,8 @@ func TestBitSetOnesBetween(t *testing.T) {
 		{"cross word boundary", New(128).Set(63).Set(64).Set(65), 63, 66, 3},
 		{"multiple words", New(256).Set(0).Set(63).Set(64).Set(127).Set(128), 0, 129, 5},
 		{"large gap", New(256).Set(0).Set(100).Set(200), 0, 201, 3},
+		{"to past length", New(64).Set(1).Set(3), 0, 128, 2},
+		{"from past length", New(64).Set(1).Set(3), 100, 200, 0},
 	}
 
 	for _, tc := range testCases {
