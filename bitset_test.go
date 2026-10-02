@@ -3524,3 +3524,28 @@ func TestDepositToShortSource(t *testing.T) {
 		t.Errorf("expected the second word to be untouched, got %#x", dst.set[1])
 	}
 }
+
+func TestRankBoundaryIndices(t *testing.T) {
+	for _, length := range []uint{0, 1, 64, 65, 128, 129} {
+		b := New(length)
+		for i := uint(0); i < length; i += 3 {
+			b.Set(i)
+		}
+		for _, bit := range []uint{63, 64, 127, 128} {
+			if bit < length {
+				b.Set(bit)
+			}
+		}
+		for _, index := range []uint{0, 1, 63, 64, 127, 128, ^uint(0) - 1, ^uint(0)} {
+			var want uint
+			for i := uint(0); i < length && i <= index; i++ {
+				if b.Test(i) {
+					want++
+				}
+			}
+			if got := b.Rank(index); got != want {
+				t.Errorf("length=%d index=%d: Rank=%d, want %d", length, index, got, want)
+			}
+		}
+	}
+}
