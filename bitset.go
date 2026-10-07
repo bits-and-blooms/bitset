@@ -218,7 +218,15 @@ func (b *BitSet) extendSet(i uint) {
 	if b.set == nil {
 		b.set = make([]uint64, nsize)
 	} else if cap(b.set) >= nsize {
-		b.set = b.set[:nsize] // fast resize
+		// New words must be zeroed. They may hold stale bits because functions
+		// such as CopyFull and ReadFrom shrink the slice, and extendSet accept
+		// slices whose capacity is arbitrary. After extension those stale bits
+		// will get revived.
+		oldLen := len(b.set)
+		b.set = b.set[:nsize]
+		for j := oldLen; j < nsize; j++ {
+			b.set[j] = 0
+		}
 	} else if len(b.set) < nsize {
 		newset := make([]uint64, nsize, 2*nsize) // increase capacity 2x
 		copy(newset, b.set)
