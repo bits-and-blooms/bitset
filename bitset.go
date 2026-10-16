@@ -219,13 +219,16 @@ func (b *BitSet) extendSet(i uint) {
 		b.set = make([]uint64, nsize)
 	} else if cap(b.set) >= nsize {
 		// New words must be zeroed. They may hold stale bits because functions
-		// such as CopyFull and ReadFrom shrink the slice, and extendSet accept
-		// slices whose capacity is arbitrary. After extension those stale bits
-		// will get revived.
+		// such as CopyFull, ReadFrom, and DeleteAt shrink the slice, and
+		// extendSet accepts slices whose capacity is arbitrary. After extension
+		// those stale bits would get revived unless zeroed here.
 		oldLen := len(b.set)
 		b.set = b.set[:nsize]
-		for j := oldLen; j < nsize; j++ {
-			b.set[j] = 0
+		if oldLen < nsize {
+			newWords := b.set[oldLen:]
+			for j := range newWords {
+				newWords[j] = 0
+			}
 		}
 	} else if len(b.set) < nsize {
 		newset := make([]uint64, nsize, 2*nsize) // increase capacity 2x
@@ -573,12 +576,9 @@ func (b *BitSet) DeleteAt(i uint) *BitSet {
 	// of the package expects. Otherwise, functions that scan the whole
 	// slice (e.g., SetAll, Count) would operate on a word that lies
 	// beyond the length of the bitset.
+	// Note that discarded words are not zeroed here. extendSet zeroes
+	// words on growth.
 	if wordCount := b.wordCount(); wordCount < len(b.set) {
-		// the discarded words must be zeroed: extendSet may later revive
-		// them with a fast resize, and they must not carry stale bits.
-		for i := wordCount; i < len(b.set); i++ {
-			b.set[i] = 0
-		}
 		b.set = b.set[:wordCount]
 	}
 
