@@ -791,6 +791,9 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 // including possibly the current index
 // along with an error code (true = valid, false = no clear bit found i.e. all bits are set)
 func (b *BitSet) PreviousClear(i uint) (uint, bool) {
+	if i >= b.length {
+		return 0, false
+	}
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false

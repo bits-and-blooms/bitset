@@ -2691,6 +2691,25 @@ func TestPreviousClear(t *testing.T) {
 	}
 }
 
+func TestPreviousClearBeyondLength(t *testing.T) {
+	for _, length := range []uint{0, 1, 63, 64, 65, 127, 128} {
+		t.Run(fmt.Sprintf("length=%d", length), func(t *testing.T) {
+			b := New(length).SetAll()
+			for _, index := range []uint{length, length + 1, length + wordSize} {
+				if got, found := b.PreviousClear(index); found || got != 0 {
+					t.Errorf("PreviousClear(%d) = (%d, %v), want (0, false)", index, got, found)
+				}
+			}
+			if length > 0 {
+				b.Clear(length - 1)
+				if got, found := b.PreviousClear(length - 1); !found || got != length-1 {
+					t.Errorf("PreviousClear(%d) = (%d, %v), want (%d, true)", length-1, got, found, length-1)
+				}
+			}
+		})
+	}
+}
+
 func TestBitSetOnesBetween(t *testing.T) {
 	testCases := []struct {
 		name     string
