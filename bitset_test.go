@@ -3317,6 +3317,33 @@ func TestCopyFullReuseCapacity(t *testing.T) {
 	}
 }
 
+func TestExtendSetClearsStaleWords(t *testing.T) {
+	a := New(1)            // a == 0b0
+	b := New(128).SetAll() // b == 0b111...111 (128 bits)
+
+	a.CopyFull(b) // b shrinks to 1 word but the 2nd word (with all bits set) stays in capacity
+	// b == 0b0 (64 bits)
+	b.Set(127) // grows b back into the stale word
+	// b == 0b000...001 (128 bits)
+
+	if b.Count() != 1 {
+		t.Errorf("expected 1 bit set, got %d: stale bits were revived", b.Count())
+	}
+}
+
+func TestExtendSetClearsCallerSpareCapacity(t *testing.T) {
+	buf := []uint64{0, allBits} // buf == 0b111...111
+	buf = buf[:1]               // the caller's slice has garbage in its spare capacity
+	b := From(buf)              // b == 0b0 (64 bits), cap(b.set) == 2
+
+	b.Set(127) // grows b into buf[1], which this package never wrote
+	// b == 0b100...000 (128 bits)
+
+	if b.Count() != 1 {
+		t.Errorf("expected 1 bit set, got %d: stale bits were revived", b.Count())
+	}
+}
+
 func TestEqualLengthOverflow(t *testing.T) {
 	// A degenerate length of Cap() makes the internal word count overflow
 	// to zero; Equal must still consider two such BitSets equal.
