@@ -3568,3 +3568,46 @@ func TestRankBoundaryIndices(t *testing.T) {
 		}
 	}
 }
+
+func TestReadFromDirtyLastWord(t *testing.T) {
+	for _, length := range []uint{1, 10, 63, 65, 100, 127} {
+		t.Run(fmt.Sprintf("length=%d", length), func(t *testing.T) {
+			nWords := wordsNeeded(length)
+
+			// Initialize a binary payload where all bits in every word, including
+			// unused padding bits >= length in the last word, are set to 1.
+			var buf bytes.Buffer
+			if err := binary.Write(&buf, binaryOrder, uint64(length)); err != nil {
+				t.Fatalf("Failed to initialize test data header: %v. This is a bug in tests", err)
+			}
+			for i := 0; i < nWords; i++ {
+				if err := binary.Write(&buf, binaryOrder, allBits); err != nil {
+					t.Fatalf("Failed to initialize test data payload: %v. This is a bug in tests", err)
+				}
+			}
+
+			var b BitSet
+			if err := b.UnmarshalBinary(buf.Bytes()); err != nil {
+				t.Fatalf("UnmarshalBinary failed: %v", err)
+			}
+
+			if b.Len() != length {
+				t.Errorf("Len() = %d, want %d", b.Len(), length)
+			}
+			if b.Count() != length {
+				t.Errorf("Count() = %d, want %d (padding bits in last word were not cleaned)", b.Count(), length)
+			}
+			if !b.All() {
+				t.Errorf("All() = false, want true")
+			}
+			if idx, ok := b.NextSet(length); ok {
+				t.Errorf("NextSet(%d) = (%d, true), want (0, false)", length, idx)
+			}
+
+			want := New(length).SetAll()
+			if !b.Equal(want) {
+				t.Errorf("unmarshaled BitSet does not equal New(%d).SetAll()", length)
+			}
+		})
+	}
+}

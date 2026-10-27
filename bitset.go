@@ -1402,6 +1402,8 @@ func (b *BitSet) ReadFrom(stream io.Reader) (int64, error) {
 		return 0, err
 	}
 
+	b.cleanLastWord()
+
 	return int64(b.BinaryStorageSize()), nil
 }
 
