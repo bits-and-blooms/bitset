@@ -2543,6 +2543,24 @@ func TestShiftRightFull(t *testing.T) {
 	}
 }
 
+func TestShiftRightEquiv(t *testing.T) {
+	a := New(200).Set(100)
+	a.ShiftRight(uint(wordSize))
+
+	for _, k := range []uint{0, 1, 3, 7, 16, 31, 32, 33, wordSize - 1, wordSize} {
+		b := New(200).Set(100)
+		b.ShiftRight(k)
+		b.ShiftRight(wordSize - k)
+
+		if !a.Equal(b) {
+			t.Errorf(
+				"expected ShiftRight(%d) to equal two consecutive ShiftRight(%d) and ShiftRight(%d) calls, got lengths %d and %d",
+				wordSize, k, wordSize-k, a.Len(), b.Len(),
+			)
+		}
+	}
+}
+
 func TestWord(t *testing.T) {
 	data := []uint64{0x0bfd85fc01af96dd, 0x3fe212a7eae11414, 0x7aa412221245dee1, 0x557092c1711306d5}
 	testCases := map[string]struct {

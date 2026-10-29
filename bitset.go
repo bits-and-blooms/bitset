@@ -1609,9 +1609,8 @@ func (b *BitSet) ShiftRight(bits uint) {
 
 	pad, idx := top%wordSize, top>>log2WordSize
 	shift, pages := bits%wordSize, bits>>log2WordSize
-	if bits%wordSize == 0 { // happy case: just clear pages
-		b.set = b.set[pages:]
-		b.length -= pages * wordSize
+	if bits%wordSize == 0 { // happy case: just copy pages
+		copy(b.set, b.set[pages:idx+1])
 	} else {
 		for i := 0; i <= int(idx-pages); i++ {
 			if i < int(idx-pages) {
