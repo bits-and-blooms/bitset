@@ -429,6 +429,9 @@ func (b *BitSet) FlipRange(start, end uint) *BitSet {
 // remain in memory until the GC frees it.
 // If you are memory constrained, this function may cause a panic.
 func (b *BitSet) Shrink(lastbitindex uint) *BitSet {
+	if lastbitindex >= b.length {
+		return b
+	}
 	length := lastbitindex + 1
 	idx := wordsNeeded(length)
 	if idx > len(b.set) {
@@ -544,6 +547,9 @@ func (b *BitSet) String() string {
 // The running time of this operation may potentially be
 // relatively slow, O(length)
 func (b *BitSet) DeleteAt(i uint) *BitSet {
+	if i >= b.length {
+		return b
+	}
 	// the index of the slice element where we'll delete a bit
 	deleteAtElement := i >> log2WordSize
 

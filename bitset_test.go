@@ -1065,6 +1065,21 @@ func TestShrink(t *testing.T) {
 	}
 }
 
+func TestShrinkOutOfBounds(t *testing.T) {
+	idx := uint(100)
+	b := New(idx).SetAll()
+	oldLen := b.Len()
+	shrinkIdx := idx + 1
+	b.Shrink(shrinkIdx)
+
+	if b.Len() != oldLen {
+		t.Errorf(
+			"Shrink(%d) on BitSet with length %d (%d>%d) changed length: got %d, want %d",
+			shrinkIdx, oldLen, shrinkIdx, idx, b.Len(), oldLen,
+		)
+	}
+}
+
 func TestInsertAtWithSet(t *testing.T) {
 	b := New(0)
 	b.Set(0)
@@ -2219,6 +2234,16 @@ func TestDeleteWithBitSetInstance(t *testing.T) {
 				t.Errorf("Expected index %d to not be set, but was", i)
 			}
 		}
+	}
+}
+
+func TestDeleteAtOutOfBounds(t *testing.T) {
+	a := New(10).Set(9)
+	b := New(10).Set(9)
+	b.DeleteAt(20)
+
+	if !a.Equal(b) {
+		t.Error("DeleteAt out of bounds modified BitSet")
 	}
 }
 
