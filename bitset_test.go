@@ -1065,6 +1065,21 @@ func TestShrink(t *testing.T) {
 	}
 }
 
+func TestShrinkOutOfBounds(t *testing.T) {
+	idx := uint(100)
+	b := New(idx).SetAll()
+	oldLen := b.Len()
+	shrinkIdx := idx + 1
+	b.Shrink(shrinkIdx)
+
+	if b.Len() != oldLen {
+		t.Errorf(
+			"Shrink(%d) on BitSet with length %d (%d>%d) changed length: got %d, want %d",
+			shrinkIdx, oldLen, shrinkIdx, idx, b.Len(), oldLen,
+		)
+	}
+}
+
 func TestInsertAtWithSet(t *testing.T) {
 	b := New(0)
 	b.Set(0)
@@ -2222,6 +2237,16 @@ func TestDeleteWithBitSetInstance(t *testing.T) {
 	}
 }
 
+func TestDeleteAtOutOfBounds(t *testing.T) {
+	a := New(10).Set(9)
+	b := New(10).Set(9)
+	b.DeleteAt(20)
+
+	if !a.Equal(b) {
+		t.Error("DeleteAt out of bounds modified BitSet")
+	}
+}
+
 // DeleteAt reduces the length of the bitset, and it must shrink the
 // underlying slice accordingly, otherwise operations that scan the whole
 // slice see words beyond the length of the bitset. See issue #225.
@@ -2540,6 +2565,24 @@ func TestShiftRightFull(t *testing.T) {
 
 	for i := range testCases {
 		test(testCases[i].data, testCases[i].shiftDistance)
+	}
+}
+
+func TestShiftRightEquiv(t *testing.T) {
+	a := New(200).Set(100)
+	a.ShiftRight(uint(wordSize))
+
+	for _, k := range []uint{0, 1, 3, 7, 16, 31, 32, 33, wordSize - 1, wordSize} {
+		b := New(200).Set(100)
+		b.ShiftRight(k)
+		b.ShiftRight(wordSize - k)
+
+		if !a.Equal(b) {
+			t.Errorf(
+				"expected ShiftRight(%d) to equal two consecutive ShiftRight(%d) and ShiftRight(%d) calls, got lengths %d and %d",
+				wordSize, k, wordSize-k, a.Len(), b.Len(),
+			)
+		}
 	}
 }
 
