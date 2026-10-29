@@ -1080,6 +1080,19 @@ func TestShrinkOutOfBounds(t *testing.T) {
 	}
 }
 
+// Shrink(^uint(0)) must not overflow lastbitindex+1 to 0 and empty the set.
+func TestShrinkMaxIndex(t *testing.T) {
+	b := New(100).Set(5)
+	b.Shrink(^uint(0))
+
+	if b.Len() != 100 {
+		t.Errorf("Shrink(^uint(0)) changed length: got %d, want 100", b.Len())
+	}
+	if !b.Test(5) {
+		t.Error("Shrink(^uint(0)) cleared bit 5")
+	}
+}
+
 func TestInsertAtWithSet(t *testing.T) {
 	b := New(0)
 	b.Set(0)
@@ -3299,6 +3312,20 @@ func TestCompactNoBitsSet(t *testing.T) {
 
 	if b.Len() != 64 {
 		t.Errorf("expected Compact to preserve one word (64 bits), got length %d", b.Len())
+	}
+
+	if len(b.set) != 1 {
+		t.Errorf("expected a single backing word after Compact, got %d", len(b.set))
+	}
+}
+
+// Compact must never grow a BitSet shorter than one word.
+func TestCompactNoBitsSetShort(t *testing.T) {
+	b := New(10)
+	b.Compact()
+
+	if b.Len() != 10 {
+		t.Errorf("expected Compact to keep length 10, got %d", b.Len())
 	}
 
 	if len(b.set) != 1 {
