@@ -1603,7 +1603,7 @@ func (b *BitSet) ShiftRight(bits uint) {
 	}
 
 	if bits > top {
-		b.set = make([]uint64, wordsNeeded(b.length))
+		b.ClearAll()
 		return
 	}
 
