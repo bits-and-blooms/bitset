@@ -1126,6 +1126,20 @@ func TestInsertAtWithSet(t *testing.T) {
 		t.Error("66 should be set")
 		return
 	}
+
+	// Inserting at an index in a later word must not shift or corrupt
+	// bits that are less than that index.
+	b2 := New(0).Set(9) // 1st word
+	b2.InsertAt(64)     // 2nd word
+	if b2.Test(8) {
+		t.Errorf("bit 8 should not be set after InsertAt(64)")
+	}
+	if !b2.Test(9) {
+		t.Errorf("bit 9 should still be set after InsertAt(64)")
+	}
+	if b2.Test(10) {
+		t.Errorf("bit 10 should not be set after InsertAt(64)")
+	}
 }
 
 func TestInsertAt(t *testing.T) {
@@ -1202,6 +1216,37 @@ func TestInsertAt(t *testing.T) {
 			expected: []string{
 				"1111111111111111111111111111111111111111111111111111101111110000",
 				"0000000000000000000000000000000000000000000000000000000000000001",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(64),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"0000000000000000000000000000000000000000000000000000000000000000",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(70),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"0000000000000000000000000000000000000000000000000000000000000000",
+			},
+		},
+		{
+			input: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+			},
+			insertIdx: uint(130),
+			expected: []string{
+				"1111111111111111111111111111111111111111111111111111111111111111",
+				"0000000000000000000000000000000000000000000000000000000000000000",
+				"0000000000000000000000000000000000000000000000000000000000000000",
 			},
 		},
 	}
