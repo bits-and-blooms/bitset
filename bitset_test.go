@@ -2127,6 +2127,73 @@ func TestCopyUnaligned(t *testing.T) {
 	}
 }
 
+func TestCopyPreservesUncopiedBits(t *testing.T) {
+	for _, sourceLength := range []uint{0, 1, 63, 64, 65, 127, 128, 129} {
+		for _, destinationLength := range []uint{0, 1, 63, 64, 65, 127, 128, 129, 193} {
+			t.Run(fmt.Sprintf("%d_to_%d", sourceLength, destinationLength), func(t *testing.T) {
+				source := New(sourceLength)
+				for i := uint(0); i < sourceLength; i += 3 {
+					source.Set(i)
+				}
+				destination := New(destinationLength).SetAll()
+				wantCount := sourceLength
+				if destinationLength < wantCount {
+					wantCount = destinationLength
+				}
+				if got := source.Copy(destination); got != wantCount {
+					t.Fatalf("copied %d bits, want %d", got, wantCount)
+				}
+				if destination.Len() != destinationLength {
+					t.Fatalf("destination length changed to %d", destination.Len())
+				}
+				for i := uint(0); i < sourceLength; i++ {
+					if source.Test(i) != (i%3 == 0) {
+						t.Fatalf("source bit %d changed", i)
+					}
+				}
+				var wantSet uint
+				for i := uint(0); i < destinationLength; i++ {
+					want := i >= wantCount || i%3 == 0
+					if want {
+						wantSet++
+					}
+					if destination.Test(i) != want {
+						t.Fatalf("bit %d = %v, want %v", i, destination.Test(i), want)
+					}
+				}
+				if destination.Count() != wantSet {
+					t.Fatalf("destination count = %d, want %d", destination.Count(), wantSet)
+				}
+			})
+		}
+	}
+}
+
+func TestCopyOverlappingWords(t *testing.T) {
+	for _, offsets := range [][2]int{{0, 0}, {0, 1}, {1, 0}} {
+		t.Run(fmt.Sprint(offsets), func(t *testing.T) {
+			words := []uint64{0x5555555555555555, 0xAAAAAAAAAAAAAAAA, 0x3333333333333333, 0}
+			source := FromWithLength(65, words[offsets[0]:])
+			destination := FromWithLength(128, words[offsets[1]:offsets[1]+2])
+			var want [128]bool
+			for i := uint(0); i < 128; i++ {
+				want[i] = destination.Test(i)
+				if i < 65 {
+					want[i] = source.Test(i)
+				}
+			}
+			if got := source.Copy(destination); got != 65 {
+				t.Fatalf("copied %d bits, want 65", got)
+			}
+			for i, value := range want {
+				if destination.Test(uint(i)) != value {
+					t.Fatalf("bit %d = %v, want %v", i, destination.Test(uint(i)), value)
+				}
+			}
+		})
+	}
+}
+
 func TestCopyFull(t *testing.T) {
 	a := New(10)
 	b := &BitSet{}

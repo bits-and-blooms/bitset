@@ -877,12 +877,21 @@ func (b *BitSet) Copy(c *BitSet) (count uint) {
 	if c == nil {
 		return
 	}
-	if b.set != nil { // Copy should not modify current object
-		copy(c.set, b.set)
-	}
 	count = c.length
 	if b.length < c.length {
 		count = b.length
+	}
+	fullWords := count >> log2WordSize
+	remainingBits := count & wordMask
+	var lastWord uint64
+	if remainingBits != 0 {
+		// Save before copy in case the source and destination overlap.
+		lastWord = b.set[fullWords]
+	}
+	copy(c.set[:fullWords], b.set[:fullWords])
+	if remainingBits != 0 {
+		mask := uint64(1)<<remainingBits - 1
+		c.set[fullWords] = c.set[fullWords]&^mask | lastWord&mask
 	}
 	// Cleaning the last word is needed to keep the invariant that other functions, such as Count, require
 	// that any bits in the last word that would exceed the length of the bitmask are set to 0.
