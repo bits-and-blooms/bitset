@@ -1691,8 +1691,11 @@ func (b *BitSet) Extract(mask *BitSet) *BitSet {
 }
 
 // ExtractTo copies bits from the BitSet using positions specified in mask
-// into a compacted form in dst. The number of set bits in mask determines
-// the number of bits that will be extracted.
+// into a compacted form in dst. If the source or mask has no backing words,
+// dst is unchanged. Otherwise, dst is grown to hold mask.Count() bits, but mask
+// words beyond the source's backing words are ignored.
+// Only the resulting compacted prefix is overwritten; destination bits beyond
+// it are left unchanged.
 //
 // For example, if mask has bits set at positions 1,4,5, then ExtractTo will
 // take bits at those positions from the source BitSet and pack them into
@@ -1706,36 +1709,41 @@ func (b *BitSet) ExtractTo(mask *BitSet, dst *BitSet) {
 		return
 	}
 
+	// Growing an aliased destination may resize either input's backing slice.
+	sourceWords, maskWords := b.set, mask.set
+	length := len(maskWords)
+	if len(sourceWords) < length {
+		length = len(sourceWords)
+	}
+
 	// Ensure destination has enough space for extracted bits
-	resultBits := uint(popcntSlice(mask.set))
+	resultBits := uint(popcntSlice(maskWords))
 	if dst.length < resultBits {
 		dst.extendSet(resultBits - 1)
 	}
 
 	outPos := uint(0)
-	length := len(mask.set)
-	if len(b.set) < length {
-		length = len(b.set)
-	}
 
 	// Process each word
 	for i := 0; i < length; i++ {
-		if mask.set[i] == 0 {
+		if maskWords[i] == 0 {
 			continue // Skip words with no bits to extract
 		}
 
 		// Extract and compact bits according to mask
-		extracted := pext(b.set[i], mask.set[i])
-		bitsExtracted := uint(bits.OnesCount64(mask.set[i]))
+		extracted := pext(sourceWords[i], maskWords[i])
+		bitsExtracted := uint(bits.OnesCount64(maskWords[i]))
 
 		// Calculate destination position
 		wordIdx := outPos >> log2WordSize
 		bitOffset := outPos & wordMask
 
-		// Write extracted bits, handling word boundary crossing
-		dst.set[wordIdx] |= extracted << bitOffset
+		// Replace the extracted prefix, preserving bits outside of it.
+		writeMask := ^uint64(0) >> (wordSize - bitsExtracted)
+		dst.set[wordIdx] = (dst.set[wordIdx] &^ (writeMask << bitOffset)) | (extracted << bitOffset)
 		if bitOffset+bitsExtracted > wordSize {
-			dst.set[wordIdx+1] = extracted >> (wordSize - bitOffset)
+			shift := wordSize - bitOffset
+			dst.set[wordIdx+1] = (dst.set[wordIdx+1] &^ (writeMask >> shift)) | (extracted >> shift)
 		}
 
 		outPos += bitsExtracted
