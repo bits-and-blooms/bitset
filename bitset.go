@@ -151,7 +151,7 @@ func wordsNeeded(i uint) int {
 // wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
 // This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing BitSet).
 func wordsNeededUnbound(i uint) int {
-	return (int(i) + wordMask) >> log2WordSize
+	return int((i + wordMask) >> log2WordSize)
 }
 
 // wordsIndex calculates the index of words in a `uint64`
@@ -640,6 +640,9 @@ func (b *BitSet) AsSlice(buf []uint) []uint {
 // Users concerned with performance may want to use NextSetMany to
 // retrieve several values at once.
 func (b *BitSet) NextSet(i uint) (uint, bool) {
+	if i >= b.length {
+		return 0, false
+	}
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
@@ -692,8 +695,12 @@ func (b *BitSet) NextSetMany(i uint, buffer []uint) (uint, []uint) {
 	capacity := cap(buffer)
 	result := buffer[:capacity]
 
+	if i >= b.length || capacity == 0 {
+		return 0, result[:0]
+	}
+
 	x := int(i >> log2WordSize)
-	if x >= len(b.set) || capacity == 0 {
+	if x >= len(b.set) {
 		return 0, result[:0]
 	}
 
@@ -777,6 +784,9 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 // including possibly the current index
 // along with an error code (true = valid, false = no bit found i.e. all bits are clear)
 func (b *BitSet) PreviousSet(i uint) (uint, bool) {
+	if i >= b.length {
+		return 0, false
+	}
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
@@ -784,7 +794,7 @@ func (b *BitSet) PreviousSet(i uint) (uint, bool) {
 	word := b.set[x]
 
 	// Clear the bits above the index
-	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+	word = word & (allBits >> (wordSize - 1 - wordsIndex(i)))
 	if word != 0 {
 		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
 	}
@@ -815,7 +825,7 @@ func (b *BitSet) PreviousClear(i uint) (uint, bool) {
 	word = ^word
 
 	// Clear the bits above the index
-	word = word & ((1 << (wordsIndex(i) + 1)) - 1)
+	word = word & (allBits >> (wordSize - 1 - wordsIndex(i)))
 
 	if word != 0 {
 		return uint(x<<log2WordSize+bits.Len64(word)) - 1, true
