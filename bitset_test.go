@@ -2811,6 +2811,90 @@ func TestPreviousClearBeyondLength(t *testing.T) {
 	}
 }
 
+func TestPreviousSetBeyondLength(t *testing.T) {
+	for _, length := range []uint{0, 1, 63, 64, 65, 127, 128} {
+		t.Run(fmt.Sprintf("length=%d", length), func(t *testing.T) {
+			b := New(length)
+			if length > 0 {
+				b.Set(0)
+				b.Set(length - 1)
+			}
+			for _, index := range []uint{length, length + 1, length + wordSize} {
+				if got, found := b.PreviousSet(index); found || got != 0 {
+					t.Errorf("PreviousSet(%d) = (%d, %v), want (0, false)", index, got, found)
+				}
+			}
+			if length > 0 {
+				if got, found := b.PreviousSet(length - 1); !found || got != length-1 {
+					t.Errorf("PreviousSet(%d) = (%d, %v), want (%d, true)", length-1, got, found, length-1)
+				}
+			}
+		})
+	}
+}
+
+func TestNextSetBeyondLength(t *testing.T) {
+	for _, length := range []uint{0, 1, 63, 64, 65, 127, 128} {
+		t.Run(fmt.Sprintf("length=%d", length), func(t *testing.T) {
+			b := New(length).SetAll()
+			for _, index := range []uint{length, length + 1, length + wordSize} {
+				if got, found := b.NextSet(index); found || got != 0 {
+					t.Errorf("NextSet(%d) = (%d, %v), want (0, false)", index, got, found)
+				}
+			}
+		})
+	}
+}
+
+func TestNextSetManyBeyondLength(t *testing.T) {
+	buf := make([]uint, 10)
+	for _, length := range []uint{0, 1, 63, 64, 65, 127, 128} {
+		t.Run(fmt.Sprintf("length=%d", length), func(t *testing.T) {
+			b := New(length).SetAll()
+			for _, index := range []uint{length, length + 1, length + wordSize} {
+				if got, res := b.NextSetMany(index, buf); len(res) != 0 || got != 0 {
+					t.Errorf("NextSetMany(%d) = (%d, %v), want (0, [])", index, got, res)
+				}
+			}
+		})
+	}
+}
+
+func TestWordsNeededUnboundSignedCast(t *testing.T) {
+	// Verify that indices with high bit set do not become negative when converted to int
+	for _, idx := range []uint{^uint(0) >> 1, uint(1) << (bits.UintSize - 1), ^uint(0) - wordMask, ^uint(0)} {
+		words := wordsNeededUnbound(idx)
+		if words < 0 {
+			t.Errorf("wordsNeededUnbound(%d) = %d, expected >= 0", idx, words)
+		}
+	}
+}
+
+func TestPreviousSetWordBoundary(t *testing.T) {
+	// Test index on boundary wordsIndex == 63 without shift-by-64 issues
+	b := New(128)
+	b.Set(63)
+	b.Set(127)
+
+	if got, found := b.PreviousSet(63); !found || got != 63 {
+		t.Errorf("PreviousSet(63) = (%d, %v), want (63, true)", got, found)
+	}
+	if got, found := b.PreviousSet(127); !found || got != 127 {
+		t.Errorf("PreviousSet(127) = (%d, %v), want (127, true)", got, found)
+	}
+
+	bClear := New(128).SetAll()
+	bClear.Clear(63)
+	bClear.Clear(127)
+
+	if got, found := bClear.PreviousClear(63); !found || got != 63 {
+		t.Errorf("PreviousClear(63) = (%d, %v), want (63, true)", got, found)
+	}
+	if got, found := bClear.PreviousClear(127); !found || got != 127 {
+		t.Errorf("PreviousClear(127) = (%d, %v), want (127, true)", got, found)
+	}
+}
+
 func TestBitSetOnesBetween(t *testing.T) {
 	testCases := []struct {
 		name     string
