@@ -2716,7 +2716,7 @@ func TestPreviousSet(t *testing.T) {
 		{100, 4, true},
 		{120, 120, true},
 		{121, 120, true},
-		{1024, 0, false},
+		{1024, 120, true}, // beyond length: clamped to length-1
 	} {
 		t.Run(fmt.Sprintf("@%d", tt.index), func(t *testing.T) {
 			got, found := v.PreviousSet(tt.index)
@@ -2789,6 +2789,38 @@ func TestPreviousClear(t *testing.T) {
 				t.Errorf("PreviousClear(%d) = %d, %v, want %d, %v", tt.index, got, found, tt.want, tt.wantFound)
 			}
 		})
+	}
+}
+
+func TestPreviousSetBeyondLength(t *testing.T) {
+	for _, length := range []uint{0, 1, 10, 63, 64, 65, 127, 128} {
+		t.Run(fmt.Sprintf("length=%d", length), func(t *testing.T) {
+			b := New(length)
+			indexes := []uint{length, length + 1, length + wordSize, ^uint(0)}
+			for _, index := range indexes {
+				if got, found := b.PreviousSet(index); found || got != 0 {
+					t.Errorf("empty: PreviousSet(%d) = (%d, %v), want (0, false)", index, got, found)
+				}
+			}
+			if length == 0 {
+				return
+			}
+			last := (length - 1) / 2
+			b.Set(last)
+			for _, index := range indexes {
+				if got, found := b.PreviousSet(index); !found || got != last {
+					t.Errorf("PreviousSet(%d) = (%d, %v), want (%d, true)", index, got, found, last)
+				}
+			}
+		})
+	}
+}
+
+func TestWordsNeededUnboundLarge(t *testing.T) {
+	i := uint(1) << (bits.UintSize - 1)
+	want := int(i >> log2WordSize)
+	if got := wordsNeededUnbound(i); got != want {
+		t.Errorf("wordsNeededUnbound(%d) = %d, want %d", i, got, want)
 	}
 }
 
