@@ -151,7 +151,7 @@ func wordsNeeded(i uint) int {
 // wordsNeededUnbound calculates the number of words needed for i bits, possibly exceeding the capacity.
 // This function is useful if you know that the capacity cannot be exceeded (e.g., you have an existing BitSet).
 func wordsNeededUnbound(i uint) int {
-	return (int(i) + wordMask) >> log2WordSize
+	return int((i + wordMask) >> log2WordSize)
 }
 
 // wordsIndex calculates the index of words in a `uint64`
@@ -775,8 +775,16 @@ func (b *BitSet) NextClear(i uint) (uint, bool) {
 
 // PreviousSet returns the previous set bit from the specified index,
 // including possibly the current index
-// along with an error code (true = valid, false = no bit found i.e. all bits are clear)
+// along with an error code (true = valid, false = no bit found i.e. all bits are clear).
+// An index at or beyond the length is treated as length-1, so PreviousSet(^uint(0))
+// returns the last set bit.
 func (b *BitSet) PreviousSet(i uint) (uint, bool) {
+	if i >= b.length {
+		if b.length == 0 {
+			return 0, false
+		}
+		i = b.length - 1
+	}
 	x := int(i >> log2WordSize)
 	if x >= len(b.set) {
 		return 0, false
