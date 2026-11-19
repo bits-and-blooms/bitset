@@ -259,7 +259,7 @@ func (b *BitSet) GetWord64AtBit(i uint) uint64 {
 
 	// The next word, masked to only include the necessary bits and shifted to cover the
 	// top of the word
-	if subWordIndex != 0 && (firstWordIndex+1) < len(b.set) {
+	if (firstWordIndex + 1) < len(b.set) {
 		secondWord = b.set[firstWordIndex+1] << uint64(wordSize-subWordIndex)
 	}
 
