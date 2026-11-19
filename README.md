@@ -147,9 +147,20 @@ go get github.com/bits-and-blooms/bitset
 ## Users
 
 
-
 Databases & Storage
 - [milvus-io/milvus](https://github.com/milvus-io/milvus) — popular open-source vector database
+- [pingcap/tidb](https://github.com/pingcap/tidb) — distributed SQL database
+- [cockroachdb/cockroach](https://github.com/cockroachdb/cockroach) — distributed SQL database
+- [apache/doris](https://github.com/apache/doris) — real-time analytics database
+- [dgraph-io/dgraph](https://github.com/dgraph-io/dgraph) — graph database
+- [influxdata/influxdb](https://github.com/influxdata/influxdb) — time series database
+- [weaviate/weaviate](https://github.com/weaviate/weaviate) — vector database
+- [chroma-core/chroma](https://github.com/chroma-core/chroma) — embedding database
+- [seaweedfs/seaweedfs](https://github.com/seaweedfs/seaweedfs) — distributed file and object store
+- [juicedata/juicefs](https://github.com/juicedata/juicefs) — distributed POSIX file system
+- [goharbor/harbor](https://github.com/goharbor/harbor) — container registry
+- [AlistGo/alist](https://github.com/AlistGo/alist) — file listing across many storage backends
+- [OpenListTeam/OpenList](https://github.com/OpenListTeam/OpenList) — community fork of AList
 - [cubefs/cubefs](https://github.com/cubefs/cubefs) — CNCF distributed filesystem (used at JD.com)
 - [sourcenetwork/defradb](https://github.com/sourcenetwork/defradb) — decentralized document database
 - [siglens/siglens](https://github.com/siglens/siglens) — open-source observability/log analytics platform
@@ -157,11 +168,17 @@ Databases & Storage
 
 Search & Indexing
 - [blevesearch/bleve](https://github.com/blevesearch/bleve) — full-text search library for Go
+- [zincsearch/zincsearch](https://github.com/zincsearch/zincsearch) — search engine
 - [blevesearch/vellum](https://github.com/blevesearch/vellum) — FST library used internally by Bleve
 - [blugelabs/bluge](https://github.com/blugelabs/bluge) — modern Go search library (successor to Bleve)
 - [geange/lucene-go](https://github.com/geange/lucene-go) — Lucene port to Go
 
 Blockchain & Cryptography
+- [ethereum/go-ethereum](https://github.com/ethereum/go-ethereum) — Ethereum client
+- [hyperledger/fabric](https://github.com/hyperledger/fabric) — permissioned blockchain
+- [ccxt/ccxt](https://github.com/ccxt/ccxt) — cryptocurrency exchange library
+- [unionlabs/union](https://github.com/unionlabs/union) — zero-knowledge bridge
+- [canopy-network/canopy](https://github.com/canopy-network/canopy) — Canopy protocol implementation
 - [consensys/gnark](https://github.com/consensys/gnark) — zk-SNARK proving system
 - [consensys/gnark-crypto](https://github.com/consensys/gnark-crypto) — elliptic curve cryptography for ZK proofs
 - [NethermindEth/juno](https://github.com/NethermindEth/juno) — StarkNet full node
@@ -171,6 +188,35 @@ Blockchain & Cryptography
 - [bnb-chain/greenfield](https://github.com/bnb-chain/greenfield) — BNB Chain decentralized storage
 
 Infrastructure & Networking
+- [caddyserver/caddy](https://github.com/caddyserver/caddy) — HTTP server
+- [traefik/traefik](https://github.com/traefik/traefik) — reverse proxy
+- [moby/moby](https://github.com/moby/moby) — container engine
+- [docker/compose](https://github.com/docker/compose) — multi-container applications
+- [moby/buildkit](https://github.com/moby/buildkit) — container image builder
+- [podman-container-tools/podman](https://github.com/podman-container-tools/podman) — container engine
+- [opencontainers/runc](https://github.com/opencontainers/runc) — OCI container runtime
+- [podman-container-tools/skopeo](https://github.com/podman-container-tools/skopeo) — container image tool
+- [kubernetes-sigs/kind](https://github.com/kubernetes-sigs/kind) — local Kubernetes clusters
+- [kubernetes-sigs/kustomize](https://github.com/kubernetes-sigs/kustomize) — Kubernetes configuration
+- [rancher/rancher](https://github.com/rancher/rancher) — Kubernetes management
+- [portainer/portainer](https://github.com/portainer/portainer) — container management UI
+- [hashicorp/nomad](https://github.com/hashicorp/nomad) — workload orchestrator
+- [grafana/grafana](https://github.com/grafana/grafana) — metrics and dashboards
+- [grafana/loki](https://github.com/grafana/loki) — log aggregation
+- [google/cadvisor](https://github.com/google/cadvisor) — container resource usage
+- [velero-io/velero](https://github.com/velero-io/velero) — Kubernetes backup
+- [stakater/Reloader](https://github.com/stakater/Reloader) — reload pods when config changes
+- [tilt-dev/tilt](https://github.com/tilt-dev/tilt) — local Kubernetes development
+- [TykTechnologies/tyk](https://github.com/TykTechnologies/tyk) — API gateway
+- [imgproxy/imgproxy](https://github.com/imgproxy/imgproxy) — on-the-fly image processing
+- [php/frankenphp](https://github.com/php/frankenphp) — PHP application server
+- [0xJacky/nginx-ui](https://github.com/0xJacky/nginx-ui) — Nginx management UI
+- [slackhq/nebula](https://github.com/slackhq/nebula) — overlay network
+- [juanfont/headscale](https://github.com/juanfont/headscale) — self-hosted Tailscale control server
+- [SagerNet/sing-box](https://github.com/SagerNet/sing-box) — proxy platform
+- [alireza0/s-ui](https://github.com/alireza0/s-ui) — web panel for sing-box
+- [getlantern/lantern](https://github.com/getlantern/lantern) — censorship-circumvention proxy
+- [IceWhaleTech/CasaOS](https://github.com/IceWhaleTech/CasaOS) — personal cloud system
 - [moby/swarmkit](https://github.com/moby/swarmkit) — Docker Swarm orchestration (ID management)
 - [coredhcp/coredhcp](https://github.com/coredhcp/coredhcp) — pluggable DHCP server (bitmap IP allocation)
 - [Scalingo/sand](https://github.com/Scalingo/sand) — private networking for containers (IP allocation)
@@ -178,24 +224,54 @@ Infrastructure & Networking
 - [pomerium/pomerium](https://github.com/pomerium/pomerium) — identity-aware access proxy
 
 Distributed Systems & Messaging
+- [temporalio/temporal](https://github.com/temporalio/temporal) — durable workflow engine
+- [apache/pulsar](https://github.com/apache/pulsar) — pub-sub messaging
+- [dapr/dapr](https://github.com/dapr/dapr) — distributed application runtime
+- [mattermost/mattermost](https://github.com/mattermost/mattermost) — team messaging
+- [heroiclabs/nakama](https://github.com/heroiclabs/nakama) — game server
 - [apache/pulsar-client-go](https://github.com/apache/pulsar-client-go) — official Apache Pulsar Go client
 - [d7y.io/dragonfly](https://github.com/dragonflyoss/Dragonfly2) — CNCF P2P file distribution system
 - [RoaringBitmap/roaring](https://github.com/RoaringBitmap/roaring) — compressed bitmap library (interops with bitset)
 - [zhenghaoz/gorse](https://github.com/zhenghaoz/gorse) — Go recommendation engine
 
 Machine Learning / Vector Search
+- [mudler/LocalAI](https://github.com/mudler/LocalAI) — local model inference
+- [coze-dev/coze-studio](https://github.com/coze-dev/coze-studio) — AI agent platform
+- [kortix-ai/suna](https://github.com/kortix-ai/suna) — AI agents
+- [NoFxAiOS/nofx](https://github.com/NoFxAiOS/nofx) — AI trading assistant
 - [fogfish/hnsw](https://github.com/fogfish/hnsw) — HNSW approximate nearest-neighbor graph
 - [semafind/semadb](https://github.com/semafind/semadb) — vector database
 
 Developer Tools & Security
+- [gohugoio/hugo](https://github.com/gohugoio/hugo) — the Hugo static site generator
+- [go-gitea/gitea](https://github.com/go-gitea/gitea) — self-hosted Git service
+- [harness/harness](https://github.com/harness/harness) — CI/CD platform
+- [coder/coder](https://github.com/coder/coder) — cloud development environments
+- [gitpod-io/gitpod](https://github.com/gitpod-io/gitpod) — cloud development environments
+- [loft-sh/devpod](https://github.com/loft-sh/devpod) — development environments
+- [earthly/earthly](https://github.com/earthly/earthly) — containerized builds
+- [beego/beego](https://github.com/beego/beego) — web framework
+- [air-verse/air](https://github.com/air-verse/air) — live reload for Go
+- [pressly/goose](https://github.com/pressly/goose) — database migrations
+- [gocolly/colly](https://github.com/gocolly/colly) — web crawler
+- [iawia002/lux](https://github.com/iawia002/lux) — video download library
+- [GopeedLab/gopeed](https://github.com/GopeedLab/gopeed) — download manager
+- [bcicen/ctop](https://github.com/bcicen/ctop) — container metrics
+- [amir20/dozzle](https://github.com/amir20/dozzle) — container log viewer
+- [darrenburns/posting](https://github.com/darrenburns/posting) — terminal API client
+- [git-bug/git-bug](https://github.com/git-bug/git-bug) — distributed bug tracker
+- [google/skia](https://github.com/google/skia) — 2D graphics library
+- [google/gvisor](https://github.com/google/gvisor) — sandbox for containers
+- [Mrs4s/go-cqhttp](https://github.com/Mrs4s/go-cqhttp) — CQHTTP implementation
+- [BishopFox/sliver](https://github.com/BishopFox/sliver) — adversary emulation
+- [projectdiscovery/nuclei](https://github.com/projectdiscovery/nuclei) — vulnerability scanner
+- [projectdiscovery/katana](https://github.com/projectdiscovery/katana) — web crawler
+- [projectdiscovery/httpx](https://github.com/projectdiscovery/httpx) — HTTP probing toolkit
 - [bearer/bearer](https://github.com/bearer/bearer) — security code scanner (AST traversal)
 - [zrepl/zrepl](https://github.com/zrepl/zrepl) — ZFS replication tool
 - [NVIDIA/dcgm-exporter](https://github.com/NVIDIA/dcgm-exporter) — NVIDIA GPU Prometheus exporter
 - [NVIDIA/go-dcgm](https://github.com/NVIDIA/go-dcgm) — NVIDIA datacenter GPU management bindings
-- [gohugoio/hugo](https://github.com/gohugoio/hugo) — the Hugo static site generator
 - [godoctor/godoctor](https://github.com/godoctor/godoctor) — Go refactoring tool (dataflow analysis)
-
-
 
 ## Contributing
 
