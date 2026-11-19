@@ -248,6 +248,9 @@ func (b *BitSet) Test(i uint) bool {
 
 // GetWord64AtBit retrieves bits i through i+63 as a single uint64 value
 func (b *BitSet) GetWord64AtBit(i uint) uint64 {
+	if b == nil {
+		return 0
+	}
 	firstWordIndex := int(i >> log2WordSize)
 	subWordIndex := wordsIndex(i)
 
@@ -259,7 +262,7 @@ func (b *BitSet) GetWord64AtBit(i uint) uint64 {
 
 	// The next word, masked to only include the necessary bits and shifted to cover the
 	// top of the word
-	if (firstWordIndex + 1) < len(b.set) {
+	if subWordIndex != 0 && (firstWordIndex+1) < len(b.set) {
 		secondWord = b.set[firstWordIndex+1] << uint64(wordSize-subWordIndex)
 	}
 
@@ -870,6 +873,9 @@ func (b *BitSet) wordCount() int {
 // Clone this BitSet, returning a new BitSet that has the same bits set.
 // In case of allocation failure, the function will return an empty BitSet.
 func (b *BitSet) Clone() *BitSet {
+	if b == nil {
+		return nil
+	}
 	c := New(b.length)
 	if b.set != nil { // Clone should not modify current object
 		copy(c.set, b.set)
@@ -1286,6 +1292,9 @@ func (b *BitSet) DumpAsBits() string {
 
 // BinaryStorageSize returns the binary storage requirements (see WriteTo) in bytes.
 func (b *BitSet) BinaryStorageSize() int {
+	if b == nil {
+		return wordBytes
+	}
 	return wordBytes + wordBytes*b.wordCount()
 }
 

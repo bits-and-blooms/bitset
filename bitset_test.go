@@ -3785,3 +3785,41 @@ func TestReadFromDirtyLastWord(t *testing.T) {
 		})
 	}
 }
+
+func TestNilBitSetSafety(t *testing.T) {
+	var b *BitSet
+
+	if clone := b.Clone(); clone != nil {
+		t.Errorf("expected nil clone for nil bitset, got %v", clone)
+	}
+
+	if sz := b.BinaryStorageSize(); sz != wordBytes {
+		t.Errorf("expected %d bytes for nil bitset, got %d", wordBytes, sz)
+	}
+
+	if word := b.GetWord64AtBit(0); word != 0 {
+		t.Errorf("expected 0 for nil bitset, got %d", word)
+	}
+}
+
+func TestGetWord64AtBitExactBoundary(t *testing.T) {
+	b := From([]uint64{0x1122334455667788, 0x99AABBCCDDEEFF00})
+
+	// Exact boundary (subWordIndex == 0)
+	word0 := b.GetWord64AtBit(0)
+	if word0 != 0x1122334455667788 {
+		t.Errorf("expected 0x1122334455667788, got %#x", word0)
+	}
+
+	word64 := b.GetWord64AtBit(64)
+	if word64 != 0x99AABBCCDDEEFF00 {
+		t.Errorf("expected 0x99AABBCCDDEEFF00, got %#x", word64)
+	}
+
+	// Single word bitset at boundary
+	b1 := From([]uint64{0xCAFEBABECAFEBABE})
+	w := b1.GetWord64AtBit(0)
+	if w != 0xCAFEBABECAFEBABE {
+		t.Errorf("expected 0xCAFEBABECAFEBABE, got %#x", w)
+	}
+}

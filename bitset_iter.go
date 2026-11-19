@@ -18,13 +18,15 @@ import (
 // Breaking out of the loop stops the iteration early.
 func (b *BitSet) EachSet() iter.Seq[uint] {
 	return func(yield func(uint) bool) {
+		if b == nil {
+			return
+		}
 		for wordIndex, word := range b.set {
-			idx := 0
-			for trail := bits.TrailingZeros64(word); trail != 64; trail = bits.TrailingZeros64(word >> idx) {
-				if !yield(uint(wordIndex<<log2WordSize + idx + trail)) {
+			for word != 0 {
+				if !yield(uint(wordIndex<<log2WordSize + bits.TrailingZeros64(word))) {
 					return
 				}
-				idx += trail + 1
+				word &= word - 1
 			}
 		}
 	}

@@ -59,6 +59,13 @@ func TestIterEarlyStop(t *testing.T) {
 	}
 }
 
+func TestIterNil(t *testing.T) {
+	var b *BitSet
+	for i := range b.EachSet() {
+		t.Errorf("expected no iteration for nil BitSet, got %d", i)
+	}
+}
+
 func BenchmarkIter(b *testing.B) {
 	b.StopTimer()
 	s := New(10000)
