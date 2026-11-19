@@ -3785,3 +3785,25 @@ func TestReadFromDirtyLastWord(t *testing.T) {
 		})
 	}
 }
+
+func TestGetWord64AtBitExactBoundary(t *testing.T) {
+	b := From([]uint64{0x1122334455667788, 0x99AABBCCDDEEFF00})
+
+	// Exact boundary (subWordIndex == 0)
+	if w := b.GetWord64AtBit(0); w != 0x1122334455667788 {
+		t.Errorf("expected 0x1122334455667788, got %#x", w)
+	}
+	if w := b.GetWord64AtBit(64); w != 0x99AABBCCDDEEFF00 {
+		t.Errorf("expected 0x99AABBCCDDEEFF00, got %#x", w)
+	}
+	// Straddling a word boundary
+	if w := b.GetWord64AtBit(8); w != 0x0011223344556677 {
+		t.Errorf("expected 0x0011223344556677, got %#x", w)
+	}
+
+	// Single word bitset at boundary
+	b1 := From([]uint64{0xCAFEBABECAFEBABE})
+	if w := b1.GetWord64AtBit(0); w != 0xCAFEBABECAFEBABE {
+		t.Errorf("expected 0xCAFEBABECAFEBABE, got %#x", w)
+	}
+}

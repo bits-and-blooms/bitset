@@ -4,6 +4,7 @@
 package bitset
 
 import (
+	"math/rand"
 	"testing"
 )
 
@@ -56,6 +57,31 @@ func TestIterEarlyStop(t *testing.T) {
 
 	if len(got) != 2 || got[0] != 2 || got[1] != 7 {
 		t.Errorf("Expected [2 7], got %v", got)
+	}
+}
+
+func TestIterMatchesAppendTo(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+	for _, density := range []float64{0, 0.01, 0.5, 1} {
+		var b BitSet
+		for i := uint(0); i < 4096; i++ {
+			if r.Float64() < density {
+				b.Set(i)
+			}
+		}
+		want := b.AppendTo(nil)
+		got := make([]uint, 0, len(want))
+		for i := range b.EachSet() {
+			got = append(got, i)
+		}
+		if len(got) != len(want) {
+			t.Fatalf("density %v: got %d values, want %d", density, len(got), len(want))
+		}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Fatalf("density %v: position %d: got %d, want %d", density, i, got[i], want[i])
+			}
+		}
 	}
 }
 

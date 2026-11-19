@@ -695,3 +695,40 @@ func BenchmarkSetVsSetRange(b *testing.B) {
 		}
 	})
 }
+
+// BenchmarkCardinalitySmall covers the binary cardinality operations on
+// small bitsets, where call overhead dominates and inlining matters.
+func BenchmarkCardinalitySmall(b *testing.B) {
+	r := rand.New(rand.NewSource(1))
+	for _, n := range []int{1, 4, 16, 1024} {
+		x := make([]uint64, n)
+		y := make([]uint64, n)
+		for i := range x {
+			x[i] = r.Uint64()
+			y[i] = r.Uint64()
+		}
+		s1, s2 := From(x), From(y)
+		var sink uint
+		b.Run(fmt.Sprintf("Intersection/words=%d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				sink += s1.IntersectionCardinality(s2)
+			}
+		})
+		b.Run(fmt.Sprintf("Union/words=%d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				sink += s1.UnionCardinality(s2)
+			}
+		})
+		b.Run(fmt.Sprintf("SymmetricDifference/words=%d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				sink += s1.SymmetricDifferenceCardinality(s2)
+			}
+		})
+		b.Run(fmt.Sprintf("Difference/words=%d", n), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				sink += s1.DifferenceCardinality(s2)
+			}
+		})
+		_ = sink
+	}
+}
