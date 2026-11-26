@@ -1034,8 +1034,8 @@ func (b *BitSet) Intersection(compare *BitSet) (result *BitSet) {
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
 	result = New(b.length)
-	for i, word := range b.set {
-		result.set[i] = word & compare.set[i]
+	for i := range result.set {
+		result.set[i] = b.set[i] & compare.set[i]
 	}
 	return
 }
@@ -1091,8 +1091,8 @@ func (b *BitSet) Union(compare *BitSet) (result *BitSet) {
 	panicIfNull(compare)
 	b, compare = sortByLength(b, compare)
 	result = compare.Clone()
-	for i, word := range b.set {
-		result.set[i] = word | compare.set[i]
+	for i := 0; i < b.wordCount(); i++ {
+		result.set[i] = b.set[i] | compare.set[i]
 	}
 	return
 }
@@ -1150,8 +1150,8 @@ func (b *BitSet) SymmetricDifference(compare *BitSet) (result *BitSet) {
 	b, compare = sortByLength(b, compare)
 	// compare is bigger, so clone it
 	result = compare.Clone()
-	for i, word := range b.set {
-		result.set[i] = word ^ compare.set[i]
+	for i := 0; i < b.wordCount(); i++ {
+		result.set[i] = b.set[i] ^ compare.set[i]
 	}
 	return
 }
@@ -1216,8 +1216,8 @@ func (b *BitSet) cleanLastWord() {
 func (b *BitSet) Complement() (result *BitSet) {
 	panicIfNull(b)
 	result = New(b.length)
-	for i, word := range b.set {
-		result.set[i] = ^word
+	for i := range result.set {
+		result.set[i] = ^b.set[i]
 	}
 	result.cleanLastWord()
 	return
